@@ -10,6 +10,7 @@ import 'features/auth/presentation/screens/confirm_screen.dart';
 import 'features/auth/presentation/screens/home_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/main_screen.dart';
+import 'features/auth/presentation/screens/privacy_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
 import 'features/auth/presentation/screens/reset_password_screen.dart';
 
@@ -71,6 +72,11 @@ class _DrawbackAppState extends State<DrawbackApp> {
           ),
         ),
         GoRoute(
+          path: '/privacy',
+          builder: (BuildContext context, GoRouterState state) =>
+              const PrivacyScreen(),
+        ),
+        GoRoute(
           path: '/home',
           builder: (BuildContext context, GoRouterState state) => HomeScreen(
             controller: _authController,
@@ -82,6 +88,7 @@ class _DrawbackAppState extends State<DrawbackApp> {
             state.fullPath == '/register' ||
             state.fullPath == '/reset-password' ||
             state.fullPath == '/confirm' ||
+            state.fullPath == '/privacy' ||
             state.fullPath == '/';
 
         if (_authController.isBootstrapping) {

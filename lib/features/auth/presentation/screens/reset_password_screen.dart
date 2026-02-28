@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../auth_controller.dart';
 import '../widgets/auth_page_scaffold.dart';
@@ -76,7 +77,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         if (_resultStatus != null) {
           final bool success = _resultStatus == 'success';
           return AuthPageScaffold(
-            title: success ? 'Password reset successful' : 'Password reset failed',
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -101,7 +101,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
         final String? notice = widget.controller.notice;
 
         return AuthPageScaffold(
-          title: 'Reset password',
           child: Form(
             key: _formKey,
             child: Column(

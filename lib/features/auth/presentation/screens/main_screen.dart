@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../widgets/drawback_app_bar.dart';
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
@@ -8,12 +9,7 @@ class MainScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFAF5F5), // rose-50
-      appBar: AppBar(
-        title: const Text('DrawkcaB'),
-        backgroundColor: const Color(0xFFFAF5F5),
-        elevation: 0,
-        foregroundColor: const Color(0xFF9F1239), // rose-800
-      ),
+      appBar: const DrawbackAppBar(),
       body: SafeArea(
         child: Center(
           child: ConstrainedBox(
@@ -30,6 +26,7 @@ class MainScreen extends StatelessWidget {
                         color: const Color(0xFFFCE7F3), // rose-100
                         border: Border.all(
                           color: const Color(0xFFFBE7EB), // rose-300
+                          width: 1,
                         ),
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
@@ -72,6 +69,9 @@ class MainScreen extends StatelessWidget {
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 12,
                                     ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6), // md radius
+                                    ),
                                   ),
                                   child: const Text(
                                     'Get Started',
@@ -93,6 +93,9 @@ class MainScreen extends StatelessWidget {
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 12,
                                     ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(6), // md radius
+                                    ),
                                   ),
                                   child: const Text(
                                     'Login',
@@ -107,11 +110,9 @@ class MainScreen extends StatelessWidget {
                           const SizedBox(height: 24),
                           Center(
                             child: TextButton(
-                              onPressed: () {
-                                // TODO: Navigate to privacy page (phase 2)
-                              },
+                              onPressed: () => context.go('/privacy'),
                               style: TextButton.styleFrom(
-                                foregroundColor: const Color(0xFF9F1239), // rose-800
+                                foregroundColor: const Color(0xFFE11D48), // rose-600
                               ),
                               child: const Text(
                                 'Privacy Policy',

@@ -20,7 +20,6 @@ class HomeScreen extends StatelessWidget {
         final error = controller.error;
 
         return AuthPageScaffold(
-          title: 'Home',
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
