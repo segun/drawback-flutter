@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../auth_controller.dart';
 import '../widgets/auth_page_scaffold.dart';
+import '../widgets/custom_text_field.dart';
 import '../widgets/status_banner.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
@@ -115,11 +116,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   StatusBanner(text: notice, kind: BannerKind.success),
                   const SizedBox(height: 12),
                 ],
-                TextFormField(
+                CustomTextField(
                   controller: _emailController,
+                  labelText: 'Email',
                   keyboardType: TextInputType.emailAddress,
                   maxLength: 254,
-                  decoration: const InputDecoration(labelText: 'Email'),
                   validator: (String? value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Email is required.';
@@ -127,10 +128,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
+                const SizedBox(height: 10),
+                CustomTextField(
                   controller: _tokenController,
-                  decoration: const InputDecoration(labelText: 'Reset token'),
+                  labelText: 'Reset token',
                   validator: (String? value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Reset token is required.';
@@ -138,12 +139,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 12),
-                TextFormField(
+                const SizedBox(height: 10),
+                CustomTextField(
                   controller: _passwordController,
+                  labelText: 'New password',
                   obscureText: true,
                   maxLength: 72,
-                  decoration: const InputDecoration(labelText: 'New password'),
                   validator: (String? value) {
                     if (value == null || value.isEmpty) {
                       return 'Password is required.';
@@ -158,19 +159,17 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   },
                 ),
                 const SizedBox(height: 12),
-                TextFormField(
+                CustomTextField(
                   controller: _confirmPasswordController,
+                  labelText: 'Confirm password',
                   obscureText: true,
                   maxLength: 72,
-                  decoration: InputDecoration(
-                    labelText: 'Confirm password',
-                    errorText: _passwordController.text.isNotEmpty &&
-                            _confirmPasswordController.text.isNotEmpty &&
-                            _passwordController.text !=
-                                _confirmPasswordController.text
-                        ? 'Passwords do not match'
-                        : null,
-                  ),
+                  errorText: _passwordController.text.isNotEmpty &&
+                          _confirmPasswordController.text.isNotEmpty &&
+                          _passwordController.text !=
+                              _confirmPasswordController.text
+                      ? 'Passwords do not match'
+                      : null,
                   validator: (String? value) {
                     if (value == null || value.isEmpty) {
                       return 'Confirm password is required.';
@@ -187,7 +186,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                     setState(() {});
                   },
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
                 FilledButton(
                   onPressed: widget.controller.isBusy ||
                           (_passwordController.text.isNotEmpty &&
@@ -196,13 +195,20 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                                   _confirmPasswordController.text)
                       ? null
                       : _submit,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFBE185D), // rose-700
+                    foregroundColor: const Color(0xFFFCE7F3), // rose-100
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 9,
+                    ),
+                  ),
                   child: widget.controller.isBusy
                       ? const SizedBox(
                           width: 18,
                           height: 18,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Text('Reset password'),
+                      : const Text('Reset password', style: TextStyle(fontSize: 13)),
                 ),
               ],
             ),

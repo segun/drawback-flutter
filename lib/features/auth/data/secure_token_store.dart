@@ -5,11 +5,7 @@ import 'token_store.dart';
 class SecureTokenStore implements TokenStore {
   static const String _tokenKey = 'drawkcab-access-token';
 
-  final FlutterSecureStorage _storage = const FlutterSecureStorage(
-    aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
-    ),
-  );
+  final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   @override
   Future<void> writeToken(String token) => _storage.write(key: _tokenKey, value: token);

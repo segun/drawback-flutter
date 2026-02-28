@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
 
+import '../widgets/auth_page_scaffold.dart';
 import '../widgets/status_banner.dart';
 
 class ConfirmScreen extends StatefulWidget {
@@ -68,76 +69,61 @@ class _ConfirmScreenState extends State<ConfirmScreen> {
           : widget.reason!;
     }
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFFAF5F5), // rose-50
-      appBar: AppBar(
-        title: const Text('DrawkcaB'),
-        backgroundColor: const Color(0xFFFAF5F5),
-        elevation: 0,
-        foregroundColor: const Color(0xFF9F1239), // rose-800
-      ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 460),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: <Widget>[
-                  Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFCE7F3), // rose-100
-                      border: Border.all(
-                        color: const Color(0xFFFBE7EB), // rose-300
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFFFBE7EB).withValues(
-                            alpha: 0.3,
-                          ),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        StatusBanner(
-                          text: title,
-                          kind: success ? BannerKind.success : BannerKind.error,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          details,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 16),
-                        FilledButton(
-                          onPressed: () => context.go('/login'),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: const Color(0xFFBE185D), // rose-700
-                            foregroundColor: const Color(0xFFFCE7F3), // rose-100
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 12,
-                            ),
-                          ),
-                          child: const Text('Go to login'),
-                        ),
-                      ],
+    return AuthPageScaffold(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFFFCE7F3), // rose-100
+              border: Border.all(
+                color: const Color(0xFFFBE7EB), // rose-300
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFFFBE7EB).withValues(
+                    alpha: 0.3,
+                  ),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                StatusBanner(
+                  text: title,
+                  kind:
+                      success ? BannerKind.success : BannerKind.error,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  details,
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                FilledButton(
+                  onPressed: () => context.go('/login'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor:
+                        const Color(0xFFBE185D), // rose-700
+                    foregroundColor:
+                        const Color(0xFFFCE7F3), // rose-100
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
                     ),
                   ),
-                ],
-              ),
+                  child: const Text('Go to login'),
+                ),
+              ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
-

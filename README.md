@@ -44,3 +44,18 @@ flutter run -d chrome --dart-define=BACKEND_URL=http://localhost:3000/api
 ```
 
 For mobile targets, replace the device selector with an emulator or attached device.
+
+## VS Code one-click run
+
+This repo now includes launch configs in `.vscode/launch.json`:
+
+- `Flutter: Chrome (Local API)`
+- `Flutter: iPhone (LAN API)`
+- `Flutter: Emulator (Local API)`
+
+Use **Run and Debug** in VS Code and select one of these configurations.
+
+Notes:
+- The iPhone config uses your current LAN backend URL (`http://192.168.1.147:3000/api`).
+- If your IP changes, update the `BACKEND_URL` value in `.vscode/launch.json`.
+- For emulator runs, launch the emulator first (for example `flutter emulators --launch apple_ios_simulator`), then run `Flutter: Emulator (Local API)`.

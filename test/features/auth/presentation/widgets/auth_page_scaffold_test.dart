@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:drawback_flutter/features/auth/presentation/widgets/auth_page_scaffold.dart';
-import 'package:drawback_flutter/features/auth/presentation/widgets/drawback_app_bar.dart';
 
 void main() {
   group('AuthPageScaffold', () {
@@ -17,7 +16,6 @@ void main() {
       );
 
       expect(find.byType(Scaffold), findsOneWidget);
-      expect(find.byType(DrawbackAppBar), findsOneWidget);
       expect(find.text('Test Content'), findsOneWidget);
     });
 

@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../auth_controller.dart';
 import '../widgets/auth_page_scaffold.dart';
+import '../widgets/auth_text_styles.dart';
+import '../widgets/custom_text_field.dart';
 import '../widgets/status_banner.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -125,65 +127,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       ),
                     ],
                   ),
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: <Widget>[
-                          Text(
-                            'Create Account',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFFBE185D), // rose-700
-                                ),
-                          ),
-                          Flexible(
-                            child: TextButton(
-                              onPressed: () => context.go('/login'),
-                              style: TextButton.styleFrom(
-                                foregroundColor: const Color(0xFFBE185D), // rose-700
-                                padding: EdgeInsets.zero,
-                                minimumSize: const Size(0, 0),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: const Text(
-                                'Already have an account? Login',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        'Create Account',
+                        style: AuthTextStyles.header(context),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
                       Text(
                         'Register with email, password, and display name. Login is allowed only after email confirmation.',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF9F1239), // rose-800
-                        ),
+                        style: AuthTextStyles.bodyText(context),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       Form(
                         key: _formKey,
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: <Widget>[
-                            TextFormField(
+                            CustomTextField(
                               controller: _emailController,
+                              labelText: 'Email',
                               keyboardType: TextInputType.emailAddress,
                               maxLength: 254,
-                              decoration: const InputDecoration(
-                                labelText: 'Email',
-                                counterText: '',
-                              ),
                               validator: (String? value) {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Email is required.';
@@ -191,29 +159,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 12),
-                            TextFormField(
+                            const SizedBox(height: 10),
+                            CustomTextField(
                               controller: _displayNameController,
+                              labelText: 'Display name',
+                              hintText: '@alice',
                               maxLength: 32,
-                              decoration: InputDecoration(
-                                labelText: 'Display name',
-                                hintText: '@alice',
-                                counterText: '',
-                                suffixIcon: IconButton(
-                                  onPressed: _checkingAvailability ||
-                                          widget.controller.isBusy
-                                      ? null
-                                      : _checkDisplayName,
-                                  icon: _checkingAvailability
-                                      ? const SizedBox(
-                                          width: 16,
-                                          height: 16,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : const Icon(Icons.search),
-                                ),
+                              suffixIcon: IconButton(
+                                onPressed: _checkingAvailability ||
+                                        widget.controller.isBusy
+                                    ? null
+                                    : _checkDisplayName,
+                                icon: _checkingAvailability
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(Icons.search),
                               ),
                               validator: (String? value) {
                                 if (value == null || value.trim().isEmpty) {
@@ -244,14 +209,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                               ],
                             const SizedBox(height: 12),
-                            TextFormField(
+                            CustomTextField(
                               controller: _passwordController,
+                              labelText: 'Password',
                               obscureText: true,
                               maxLength: 72,
-                              decoration: const InputDecoration(
-                                labelText: 'Password',
-                                counterText: '',
-                              ),
                               validator: (String? value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Password is required.';
@@ -262,22 +224,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 12),
-                            TextFormField(
+                            const SizedBox(height: 10),
+                            CustomTextField(
                               controller: _confirmPasswordController,
+                              labelText: 'Confirm password',
                               obscureText: true,
                               maxLength: 72,
-                              decoration: InputDecoration(
-                                labelText: 'Confirm password',
-                                counterText: '',
-                                errorText: _passwordController.text.isNotEmpty &&
-                                        _confirmPasswordController
-                                            .text.isNotEmpty &&
-                                        _passwordController.text !=
-                                            _confirmPasswordController.text
-                                    ? 'Passwords do not match'
-                                    : null,
-                              ),
+                              errorText: _passwordController.text.isNotEmpty &&
+                                      _confirmPasswordController
+                                          .text.isNotEmpty &&
+                                      _passwordController.text !=
+                                          _confirmPasswordController.text
+                                  ? 'Passwords do not match'
+                                  : null,
                               validator: (String? value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Confirm password is required.';
@@ -291,7 +250,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 setState(() {});
                               },
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 12),
                             FilledButton(
                               onPressed: widget.controller.isBusy ||
                                       (_passwordController.text.isNotEmpty &&
@@ -305,7 +264,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 backgroundColor: const Color(0xFFBE185D), // rose-700
                                 foregroundColor: const Color(0xFFFCE7F3), // rose-100
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
+                                  vertical: 9,
                                 ),
                               ),
                               child: widget.controller.isBusy
@@ -316,7 +275,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         strokeWidth: 2,
                                       ),
                                     )
-                                  : const Text('Create account'),
+                                  : const Text('Create account', style: TextStyle(fontSize: 13)),
+                            ),
+                            const SizedBox(height: 6),
+                            TextButton(
+                              onPressed: () => context.go('/login'),
+                              style: AuthTextStyles.linkButtonStyle(),
+                              child: Text(
+                                'Already have an account? Login',
+                                style: AuthTextStyles.link(),
+                              ),
                             ),
                           ],
                         ),

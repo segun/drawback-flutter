@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../auth_controller.dart';
 import '../widgets/auth_page_scaffold.dart';
+import '../widgets/auth_text_styles.dart';
+import '../widgets/custom_text_field.dart';
 import '../widgets/status_banner.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -119,58 +121,26 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: <Widget>[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: <Widget>[
-                          Text(
-                            'Login',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFFBE185D), // rose-700
-                                ),
-                          ),
-                          Flexible(
-                            child: TextButton(
-                              onPressed: () => context.go('/register'),
-                              style: TextButton.styleFrom(
-                                foregroundColor: const Color(0xFFBE185D), // rose-700
-                                padding: EdgeInsets.zero,
-                                minimumSize: const Size(0, 0),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: const Text(
-                                'Need an account? Register',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        'Login',
+                        style: AuthTextStyles.header(context),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       Form(
                         key: _formKey,
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: <Widget>[
-                            TextFormField(
+                            CustomTextField(
                               controller: _emailController,
+                              labelText: 'Email',
                               keyboardType: TextInputType.emailAddress,
                               maxLength: 254,
-                              decoration: const InputDecoration(
-                                labelText: 'Email',
-                                counterText: '',
-                              ),
                               validator: (String? value) {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Email is required.';
@@ -178,15 +148,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 12),
-                            TextFormField(
+                            const SizedBox(height: 10),
+                            CustomTextField(
                               controller: _passwordController,
+                              labelText: 'Password',
                               obscureText: true,
                               maxLength: 72,
-                              decoration: const InputDecoration(
-                                labelText: 'Password',
-                                counterText: '',
-                              ),
                               validator: (String? value) {
                                 if (value == null || value.isEmpty) {
                                   return 'Password is required.';
@@ -194,14 +161,14 @@ class _LoginScreenState extends State<LoginScreen> {
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 12),
                             FilledButton(
                               onPressed: widget.controller.isBusy ? null : _submit,
                               style: FilledButton.styleFrom(
                                 backgroundColor: const Color(0xFFBE185D), // rose-700
                                 foregroundColor: const Color(0xFFFCE7F3), // rose-100
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
+                                  vertical: 9,
                                 ),
                               ),
                               child: widget.controller.isBusy
@@ -212,14 +179,34 @@ class _LoginScreenState extends State<LoginScreen> {
                                         strokeWidth: 2,
                                       ),
                                     )
-                                  : const Text('Login'),
+                                  : const Text('Login', style: TextStyle(fontSize: 13)),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: 6),
                             TextButton(
                               onPressed: widget.controller.isBusy
                                   ? null
                                   : _openForgotPasswordDialog,
-                              child: const Text('Forgot password?'),
+                              style: AuthTextStyles.linkButtonStyle(),
+                              child: Text(
+                                'Forgot password?',
+                                style: AuthTextStyles.link(),
+                              ),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 4),
+                              child: Divider(
+                                height: 8,
+                                thickness: 1,
+                                color: Color.fromARGB(255, 234, 12, 57), // rose-300
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => context.go('/register'),
+                              style: AuthTextStyles.linkButtonStyle(),
+                              child: Text(
+                                'Need an account? Register',
+                                style: AuthTextStyles.link(),
+                              ),
                             ),
                           ],
                         ),
