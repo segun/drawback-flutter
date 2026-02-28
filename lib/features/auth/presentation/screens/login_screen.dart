@@ -136,19 +136,21 @@ class _LoginScreenState extends State<LoginScreen> {
                                   color: const Color(0xFFBE185D), // rose-700
                                 ),
                           ),
-                          TextButton(
-                            onPressed: () => context.go('/register'),
-                            style: TextButton.styleFrom(
-                              foregroundColor: const Color(0xFFBE185D), // rose-700
-                              padding: EdgeInsets.zero,
-                              minimumSize: const Size(0, 0),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: const Text(
-                              'Need an account? Register',
-                              style: TextStyle(
-                                fontSize: 12,
-                                decoration: TextDecoration.underline,
+                          Flexible(
+                            child: TextButton(
+                              onPressed: () => context.go('/register'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(0xFFBE185D), // rose-700
+                                padding: EdgeInsets.zero,
+                                minimumSize: const Size(0, 0),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: const Text(
+                                'Need an account? Register',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  decoration: TextDecoration.underline,
+                                ),
                               ),
                             ),
                           ),

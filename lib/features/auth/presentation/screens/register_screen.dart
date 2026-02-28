@@ -142,19 +142,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   color: const Color(0xFFBE185D), // rose-700
                                 ),
                           ),
-                          TextButton(
-                            onPressed: () => context.go('/login'),
-                            style: TextButton.styleFrom(
-                              foregroundColor: const Color(0xFFBE185D), // rose-700
-                              padding: EdgeInsets.zero,
-                              minimumSize: const Size(0, 0),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            child: const Text(
-                              'Already have an account? Login',
-                              style: TextStyle(
-                                fontSize: 12,
-                                decoration: TextDecoration.underline,
+                          Flexible(
+                            child: TextButton(
+                              onPressed: () => context.go('/login'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(0xFFBE185D), // rose-700
+                                padding: EdgeInsets.zero,
+                                minimumSize: const Size(0, 0),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: const Text(
+                                'Already have an account? Login',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  decoration: TextDecoration.underline,
+                                ),
                               ),
                             ),
                           ),

@@ -1,0 +1,46 @@
+# Coverage Configuration for DrawkcaB Flutter
+
+# Minimum coverage threshold (percent)
+minimum_coverage: 80
+
+# Files and patterns to exclude from coverage
+exclude_patterns:
+  # Generated files
+  - "*.g.dart"
+  - "*.config.dart"
+  - "*.freezed.dart"
+  
+  # Test files
+  - "**/test/**"
+  
+  # Entry points (covered by integration tests instead)
+  - "lib/main.dart"
+  - "lib/app.dart"
+  
+  # Auto-generated models
+  - "**/models/**"
+  - "**/domain/**"
+  
+  # Simple data holders
+  - "**/constants.dart"
+  - "**/enums.dart"
+
+# Coverage targets per module
+targets:
+  core:
+    minimum: 85
+    path: "lib/core/**"
+  
+  features:
+    minimum: 80
+    path: "lib/features/**"
+
+# Report formats to generate
+report_formats:
+  - lcov    # For lcov tools and CI/CD
+  - html    # For human review
+  - json    # For metrics tracking
+
+# Display settings
+show_summary: true
+fail_on_threshold: true

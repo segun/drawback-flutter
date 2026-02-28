@@ -1,0 +1,1 @@
+genhtml -o /Users/aardvocate/src/drawback/frontend/flutter/coverage/html /Users/aardvocate/src/drawback/frontend/flutter/coverage/lcov.info

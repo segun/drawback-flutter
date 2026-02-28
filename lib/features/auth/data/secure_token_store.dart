@@ -20,3 +20,5 @@ class SecureTokenStore implements TokenStore {
   @override
   Future<void> clearToken() => _storage.delete(key: _tokenKey);
 }
+
+
