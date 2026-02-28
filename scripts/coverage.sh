@@ -27,12 +27,15 @@ show_usage() {
 Usage: ./scripts/coverage.sh [OPTION]
 
 Options:
-  (no args)      Generate LCOV coverage report
+  (no args)      Generate LCOV coverage report (unit + integration tests)
   --view         Generate and open HTML coverage report in browser
   --check        Check coverage against minimum threshold (80%)
   --clean        Remove all coverage files
   --threshold N  Check against custom threshold (e.g., 75)
   --help         Show this help message
+
+Note: This script runs both unit tests and integration tests to generate
+      comprehensive coverage reports.
 
 Examples:
   ./scripts/coverage.sh                    # Generate report
@@ -45,14 +48,55 @@ generate_coverage() {
     echo -e "${YELLOW}Generating coverage report...${NC}"
     cd "$PROJECT_ROOT"
     
-    # Run tests with coverage
+    # Clean previous coverage data
+    rm -f "$COVERAGE_DIR/lcov.info"
+    rm -f "$COVERAGE_DIR/lcov_unit.info"
+    rm -f "$COVERAGE_DIR/lcov_integration.info"
+    
+    # Run unit tests with coverage
+    echo -e "${YELLOW}Running unit tests...${NC}"
     flutter test --coverage --no-test-assets 2>&1 | grep -E "(test|coverage|passed|failed)" || true
     
     if [ -f "$COVERAGE_DIR/lcov.info" ]; then
-        echo -e "${GREEN}✓ Coverage report generated at coverage/lcov.info${NC}"
+        mv "$COVERAGE_DIR/lcov.info" "$COVERAGE_DIR/lcov_unit.info"
+        echo -e "${GREEN}✓ Unit test coverage generated${NC}"
+    else
+        echo -e "${RED}✗ Failed to generate unit test coverage${NC}"
+        return 1
+    fi
+    
+    # Run integration tests with coverage
+    echo -e "${YELLOW}Running integration tests...${NC}"
+    if [ -d "$PROJECT_ROOT/integration_test" ] && [ "$(ls -A $PROJECT_ROOT/integration_test/*.dart 2>/dev/null)" ]; then
+        flutter test integration_test --coverage 2>&1 | grep -E "(test|coverage|passed|failed)" || true
+        
+        if [ -f "$COVERAGE_DIR/lcov.info" ]; then
+            mv "$COVERAGE_DIR/lcov.info" "$COVERAGE_DIR/lcov_integration.info"
+            echo -e "${GREEN}✓ Integration test coverage generated${NC}"
+        else
+            echo -e "${YELLOW}⚠ Integration test coverage not generated${NC}"
+        fi
+    else
+        echo -e "${YELLOW}⚠ No integration tests found, skipping...${NC}"
+    fi
+    
+    # Merge coverage files
+    echo -e "${YELLOW}Merging coverage reports...${NC}"
+    if [ -f "$COVERAGE_DIR/lcov_integration.info" ]; then
+        # Merge unit and integration coverage
+        cat "$COVERAGE_DIR/lcov_unit.info" "$COVERAGE_DIR/lcov_integration.info" > "$COVERAGE_DIR/lcov.info"
+        echo -e "${GREEN}✓ Coverage reports merged${NC}"
+    else
+        # Only unit test coverage available
+        cp "$COVERAGE_DIR/lcov_unit.info" "$COVERAGE_DIR/lcov.info"
+        echo -e "${YELLOW}⚠ Using unit test coverage only${NC}"
+    fi
+    
+    if [ -f "$COVERAGE_DIR/lcov.info" ]; then
+        echo -e "${GREEN}✓ Final coverage report generated at coverage/lcov.info${NC}"
         return 0
     else
-        echo -e "${RED}✗ Failed to generate coverage report${NC}"
+        echo -e "${RED}✗ Failed to generate final coverage report${NC}"
         return 1
     fi
 }

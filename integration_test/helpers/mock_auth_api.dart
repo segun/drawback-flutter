@@ -78,7 +78,6 @@ class MockAuthApi implements AuthApi {
 
     return AuthResult(
       accessToken: 'mock_token_$email',
-      message: 'Login successful',
     );
   }
 
@@ -98,12 +97,14 @@ class MockAuthApi implements AuthApi {
       throw ApiException(401, 'Invalid token');
     }
 
+    final now = DateTime.now();
     return AuthUser(
       id: 'user_id_$email',
       email: email,
       displayName: _displayNames[email] ?? '@unknown',
       mode: 'PUBLIC',
-      createdAt: DateTime.now().toString(),
+      createdAt: now,
+      updatedAt: now,
     );
   }
 
