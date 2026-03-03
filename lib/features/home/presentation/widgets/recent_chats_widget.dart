@@ -74,7 +74,7 @@ class RecentChatsWidget extends StatelessWidget {
                     IconButton(
                       icon: Icon(
                         Icons.delete_outline,
-                        size: 16,
+                        size: 20,
                         color: isActive ? Colors.white : const Color(0xFF9F1239),
                       ),
                       onPressed: () async {
@@ -85,10 +85,11 @@ class RecentChatsWidget extends StatelessWidget {
                       visualDensity: VisualDensity.compact,
                       tooltip: 'Remove chat',
                     ),
+                    const SizedBox(width: 8),
                     IconButton(
                       icon: Icon(
                         Icons.block,
-                        size: 16,
+                        size: 20,
                         color: isActive ? Colors.white : const Color(0xFF9F1239),
                       ),
                       onPressed: () async {

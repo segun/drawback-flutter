@@ -9,12 +9,14 @@ import '../../widgets/drawing_canvas.dart';
 class ChatRoomScreen extends StatefulWidget {
   const ChatRoomScreen({
     required this.chatRequestId,
+    required this.chatRequest,
     required this.profile,
     required this.onNotice,
     super.key,
   });
 
   final String chatRequestId;
+  final ChatRequest chatRequest;
   final UserProfile profile;
   final Function(String message, String type) onNotice;
 
@@ -34,10 +36,16 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   double _drawWidth = 2.0;
   bool _peerPresent = false;
   bool _roomJoined = false;
+  String _peerDisplayName = '';
 
   @override
   void initState() {
     super.initState();
+    // Set peer display name from chat request
+    _peerDisplayName = widget.profile.id == widget.chatRequest.fromUserId
+        ? widget.chatRequest.toUser.displayName
+        : widget.chatRequest.fromUser.displayName;
+    debugPrint('Initializing chat room for ${widget.chatRequest.id} with peer $_peerDisplayName');
     _setupSocketListeners();
     _joinChatRoom();
   }
@@ -270,7 +278,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           padding: const EdgeInsets.all(12),
           color: const Color(0xFFFCE7F3),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: <Widget>[
               Icon(
                 _peerPresent ? Icons.check_circle : Icons.pending,
@@ -279,7 +287,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               ),
               const SizedBox(width: 8),
               Text(
-                _peerPresent ? 'Connected - Draw together!' : 'Waiting for peer...',
+                _peerPresent
+                    ? 'Drawing with $_peerDisplayName'
+                    : 'Waiting for $_peerDisplayName',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -294,16 +304,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         Expanded(
           child: Padding(
             padding: const EdgeInsets.all(12),
-            child: Row(
+            child: Column(
               children: <Widget>[
-                // Local canvas (your drawing)
+                // Remote canvas (peer's drawing)
                 Expanded(
                   child: _buildCanvasCard(
-                    title: 'Your Canvas',
                     child: DrawingCanvas(
-                      strokes: _localStrokes,
-                      onStrokeDrawn: _handleLocalStrokeDrawn,
-                      isEnabled: _roomJoined && _peerPresent,
+                      strokes: _remoteStrokes,
+                      onStrokeDrawn: (_) {}, // Read-only
+                      isEnabled: false,
                       color: _drawColor,
                       width: _drawWidth,
                       style: _drawStyle,
@@ -311,16 +320,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                   ),
                 ),
 
-                const SizedBox(width: 12),
+                const SizedBox(height: 12),
 
-                // Remote canvas (peer's drawing)
+                // Local canvas (your drawing)
                 Expanded(
                   child: _buildCanvasCard(
-                    title: 'Peer Canvas',
                     child: DrawingCanvas(
-                      strokes: _remoteStrokes,
-                      onStrokeDrawn: (_) {}, // Read-only
-                      isEnabled: false,
+                      strokes: _localStrokes,
+                      onStrokeDrawn: _handleLocalStrokeDrawn,
+                      isEnabled: _roomJoined && _peerPresent,
                       color: _drawColor,
                       width: _drawWidth,
                       style: _drawStyle,
@@ -338,45 +346,16 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     );
   }
 
-  Widget _buildCanvasCard({required String title, required Widget child}) {
+  Widget _buildCanvasCard({required Widget child}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: const Color(0xFFFDA4AF)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(
-              color: Color(0xFFFDA4AF),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(7),
-                topRight: Radius.circular(7),
-              ),
-            ),
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF9F1239),
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          Expanded(
-            child: ClipRRect(
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(7),
-                bottomRight: Radius.circular(7),
-              ),
-              child: child,
-            ),
-          ),
-        ],
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: child,
       ),
     );
   }

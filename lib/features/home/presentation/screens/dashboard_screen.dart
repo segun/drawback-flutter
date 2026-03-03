@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/status_banner.dart';
 import '../../../drawing/presentation/screens/chat_room_screen.dart';
+import '../../domain/home_models.dart';
 import '../home_controller.dart';
 import '../widgets/blocked_users_widget.dart';
 import '../widgets/chat_requests_widget.dart';
@@ -291,8 +292,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
           );
         }
 
+        final ChatRequest selectedChat = widget.controller.recentChats
+            .firstWhere((ChatRequest chat) => chat.id == widget.controller.selectedChatRequestId);
+
         return ChatRoomScreen(
           chatRequestId: widget.controller.selectedChatRequestId!,
+          chatRequest: selectedChat,
           profile: widget.controller.profile!,
           onNotice: (String message, String type) {
             // Handle notices from chat room
