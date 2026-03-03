@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/widgets/custom_text_field.dart';
+import '../../../../core/widgets/status_banner.dart';
 import '../auth_controller.dart';
 import '../widgets/auth_page_scaffold.dart';
-import '../widgets/custom_text_field.dart';
-import '../widgets/status_banner.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   const ResetPasswordScreen({

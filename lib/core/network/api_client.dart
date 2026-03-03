@@ -12,6 +12,21 @@ class ApiClient {
   final String _baseUrl;
   final http.Client _httpClient;
 
+  Future<dynamic> get(
+    String path, {
+    Map<String, String>? headers,
+  }) async {
+    final response = await _httpClient.get(
+      Uri.parse('$_baseUrl$path'),
+      headers: <String, String>{
+        'Accept': 'application/json',
+        ...?headers,
+      },
+    );
+
+    return _decodeResponse(response);
+  }
+
   Future<Map<String, dynamic>> getJson(
     String path, {
     Map<String, String>? headers,
@@ -65,9 +80,71 @@ class ApiClient {
     }
   }
 
+  Future<Map<String, dynamic>> patchJson(
+    String path, {
+    Map<String, dynamic>? body,
+    Map<String, String>? headers,
+  }) async {
+    final response = await _httpClient.patch(
+      Uri.parse('$_baseUrl$path'),
+      headers: <String, String>{
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        ...?headers,
+      },
+      body: jsonEncode(body ?? <String, dynamic>{}),
+    );
+
+    return _decodeObjectResponse(response);
+  }
+
+  Future<dynamic> deleteJson(
+    String path, {
+    Map<String, String>? headers,
+  }) async {
+    final response = await _httpClient.delete(
+      Uri.parse('$_baseUrl$path'),
+      headers: <String, String>{
+        'Accept': 'application/json',
+        ...?headers,
+      },
+    );
+
+    if (!response.statusCode.toString().startsWith('2')) {
+      throw _toApiException(response);
+    }
+
+    // DELETE may return empty body or JSON response
+    if (response.body.isEmpty) {
+      return null;
+    }
+
+    try {
+      return jsonDecode(response.body);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  dynamic _decodeResponse(http.Response response) {
+    if (!response.statusCode.toString().startsWith('2')) {
+      throw _toApiException(response);
+    }
+
+    if (response.body.isEmpty) {
+      return null;
+    }
+
+    return jsonDecode(response.body);
+  }
+
   Map<String, dynamic> _decodeObjectResponse(http.Response response) {
     if (!response.statusCode.toString().startsWith('2')) {
       throw _toApiException(response);
+    }
+
+    if (response.body.isEmpty) {
+      throw const ApiException(500, 'Expected JSON response but got empty body.');
     }
 
     final dynamic decoded = jsonDecode(response.body);

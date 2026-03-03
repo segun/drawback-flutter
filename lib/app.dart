@@ -7,12 +7,14 @@ import 'features/auth/data/auth_api.dart';
 import 'features/auth/data/secure_token_store.dart';
 import 'features/auth/presentation/auth_controller.dart';
 import 'features/auth/presentation/screens/confirm_screen.dart';
-import 'features/auth/presentation/screens/home_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/main_screen.dart';
 import 'features/auth/presentation/screens/privacy_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
 import 'features/auth/presentation/screens/reset_password_screen.dart';
+import 'features/home/data/social_api.dart';
+import 'features/home/presentation/home_controller.dart';
+import 'features/home/presentation/screens/dashboard_screen.dart';
 
 class DrawbackApp extends StatefulWidget {
   const DrawbackApp({super.key});
@@ -23,6 +25,7 @@ class DrawbackApp extends StatefulWidget {
 
 class _DrawbackAppState extends State<DrawbackApp> {
   late final AuthController _authController;
+  late final HomeController _homeController;
   late final GoRouter _router;
 
   @override
@@ -31,9 +34,12 @@ class _DrawbackAppState extends State<DrawbackApp> {
     final tokenStore = SecureTokenStore();
     final client = ApiClient(baseUrl: AppConfig.backendUrl);
     final authApi = AuthApi(client: client, tokenStore: tokenStore);
+    final socialApi = SocialApi(client: client, tokenStore: tokenStore);
 
     _authController = AuthController(authApi: authApi, tokenStore: tokenStore)
       ..bootstrap();
+
+    _homeController = HomeController(socialApi: socialApi);
 
     _router = GoRouter(
       refreshListenable: _authController,
@@ -78,8 +84,12 @@ class _DrawbackAppState extends State<DrawbackApp> {
         ),
         GoRoute(
           path: '/home',
-          builder: (BuildContext context, GoRouterState state) => HomeScreen(
-            controller: _authController,
+          builder: (BuildContext context, GoRouterState state) => DashboardScreen(
+            controller: _homeController,
+            onLogout: () async {
+              await _authController.logout();
+              context.go('/login');
+            },
           ),
         ),
       ],
@@ -111,6 +121,7 @@ class _DrawbackAppState extends State<DrawbackApp> {
   @override
   void dispose() {
     _authController.dispose();
+    _homeController.dispose();
     _router.dispose();
     super.dispose();
   }

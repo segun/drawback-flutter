@@ -39,6 +39,31 @@ class FakeApiClient implements ApiClient {
   }) async {
     throw UnimplementedError();
   }
+
+  @override
+  Future<dynamic> get(
+    String path, {
+    Map<String, String>? headers,
+  }) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Map<String, dynamic>> patchJson(
+    String path, {
+    Map<String, dynamic>? body,
+    Map<String, String>? headers,
+  }) async {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<dynamic> deleteJson(
+    String path, {
+    Map<String, String>? headers,
+  }) async {
+    throw UnimplementedError();
+  }
 }
 
 class FakeTokenStore implements TokenStore {

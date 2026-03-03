@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/widgets/custom_text_field.dart';
+import '../../../../core/widgets/display_name_text_field.dart';
+import '../../../../core/widgets/status_banner.dart';
+import '../../validation_constants.dart';
 import '../auth_controller.dart';
 import '../widgets/auth_page_scaffold.dart';
 import '../widgets/auth_text_styles.dart';
-import '../widgets/custom_text_field.dart';
-import '../widgets/status_banner.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({required this.controller, super.key});
@@ -22,9 +24,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _displayNameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
+  
+  final FocusNode _emailFocus = FocusNode();
+  final FocusNode _displayNameFocus = FocusNode();
+  final FocusNode _passwordFocus = FocusNode();
+  final FocusNode _confirmPasswordFocus = FocusNode();
 
   bool _checkingAvailability = false;
   bool? _isDisplayNameAvailable;
+  final Set<String> _blurredFields = <String>{};
+
+  @override
+  void initState() {
+    super.initState();
+    _emailFocus.addListener(() {
+      if (!_emailFocus.hasFocus && !_blurredFields.contains('email')) {
+        setState(() => _blurredFields.add('email'));
+      }
+    });
+    _displayNameFocus.addListener(() {
+      if (!_displayNameFocus.hasFocus && !_blurredFields.contains('displayName')) {
+        setState(() => _blurredFields.add('displayName'));
+      }
+    });
+    _passwordFocus.addListener(() {
+      if (!_passwordFocus.hasFocus && !_blurredFields.contains('password')) {
+        setState(() => _blurredFields.add('password'));
+      }
+    });
+    _confirmPasswordFocus.addListener(() {
+      if (!_confirmPasswordFocus.hasFocus && !_blurredFields.contains('confirmPassword')) {
+        setState(() => _blurredFields.add('confirmPassword'));
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -32,6 +65,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _displayNameController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _emailFocus.dispose();
+    _displayNameFocus.dispose();
+    _passwordFocus.dispose();
+    _confirmPasswordFocus.dispose();
     super.dispose();
   }
 
@@ -64,6 +101,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+    
+    // Mark all fields as blurred for final validation
+    setState(() {
+      _blurredFields.addAll(<String>['email', 'password', 'confirmPassword', 'displayName']);
+    });
+    
+    // Validate email
+    if (_emailController.text.trim().isEmpty) {
+      return;
+    }
+    
+    // Validate password
+    if (_passwordController.text.isEmpty || _passwordController.text.length < 8) {
+      return;
+    }
+    
+    // Validate confirm password
+    if (_confirmPasswordController.text.isEmpty || _confirmPasswordController.text != _passwordController.text) {
+      return;
+    }
 
     final String displayName = _displayNameController.text.trim();
     if (_isDisplayNameAvailable != true) {
@@ -85,8 +142,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   bool _isValidDisplayName(String value) {
-    final RegExp pattern = RegExp(r'^@[A-Za-z0-9_]{2,29}$');
-    return pattern.hasMatch(value);
+    return ValidationPatterns.displayNamePattern.hasMatch(value);
+  }
+
+  int _getCharacterCount(String value) {
+    // Count characters after the @
+    if (!value.startsWith('@')) return 0;
+    return value.substring(1).length;
+  }
+
+  void _autoCheckAvailability(String value) {
+    // Auto-check when 3+ characters entered after @
+    if (_getCharacterCount(value) >= 3 && !_checkingAvailability) {
+      _checkDisplayName();
+    }
   }
 
   @override
@@ -150,68 +219,84 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             CustomTextField(
                               controller: _emailController,
                               labelText: 'Email',
+                              focusNode: _emailFocus,
                               keyboardType: TextInputType.emailAddress,
                               maxLength: 254,
                               validator: (String? value) {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Email is required.';
                                 }
+                                if (!ValidationPatterns.emailPattern.hasMatch(value.trim())) {
+                                  return 'Please enter a valid email address.';
+                                }
                                 return null;
                               },
                             ),
                             const SizedBox(height: 10),
-                            CustomTextField(
+                            DisplayNameTextField(
                               controller: _displayNameController,
-                              labelText: 'Display name',
                               hintText: '@alice',
-                              maxLength: 32,
-                              suffixIcon: IconButton(
-                                onPressed: _checkingAvailability ||
-                                        widget.controller.isBusy
-                                    ? null
-                                    : _checkDisplayName,
-                                icon: _checkingAvailability
-                                    ? const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Icon(Icons.search),
-                              ),
+                              focusNode: _displayNameFocus,
+                              enabled: !widget.controller.isBusy,
                               validator: (String? value) {
-                                if (value == null || value.trim().isEmpty) {
+                                if (value == null || value.trim().isEmpty || value.trim() == '@') {
                                   return 'Display name is required.';
                                 }
                                 if (!_isValidDisplayName(value.trim())) {
-                                  return 'Use @ plus 2-29 letters, numbers, or underscore.';
+                                  return 'Must start with @ followed by 3–29 letters, numbers or underscores';
                                 }
                                 return null;
                               },
-                              onChanged: (_) {
-                                if (_isDisplayNameAvailable != null) {
-                                  setState(() =>
-                                      _isDisplayNameAvailable = null);
+                              onChanged: (String value) {
+                                setState(() {
+                                  if (_isDisplayNameAvailable != null) {
+                                    _isDisplayNameAvailable = null;
+                                  }
+                                });
+                                if (_blurredFields.contains('displayName')) {
+                                  _autoCheckAvailability(value);
                                 }
                               },
+                              suffixIcon: _blurredFields.contains('displayName')
+                                  ? _isDisplayNameAvailable == true
+                                      ? Icon(Icons.check_circle_rounded, size: 20, color: Colors.green.shade600)
+                                      : _isDisplayNameAvailable == false
+                                          ? Icon(Icons.cancel_rounded, size: 20, color: Colors.red.shade600)
+                                          : _checkingAvailability
+                                              ? const SizedBox(
+                                                  width: 20,
+                                                  height: 20,
+                                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                                )
+                                              : null
+                                  : null,
                             ),
-                            if (_isDisplayNameAvailable != null)
+                            if (_blurredFields.contains('displayName') && _isDisplayNameAvailable == false)
                               ...<Widget>[
-                                const SizedBox(height: 8),
-                                StatusBanner(
-                                  text: _isDisplayNameAvailable!
-                                      ? 'Display name is available.'
-                                      : 'Display name is not available.',
-                                  kind: _isDisplayNameAvailable!
-                                      ? BannerKind.success
-                                      : BannerKind.error,
+                                const SizedBox(height: 4),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  child: Row(
+                                    children: <Widget>[
+                                      Icon(
+                                        Icons.close_rounded,
+                                        size: 14,
+                                        color: Colors.red.shade600,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Display name is not available',
+                                        style: TextStyle(fontSize: 12, color: Colors.red.shade700),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             const SizedBox(height: 12),
                             CustomTextField(
                               controller: _passwordController,
                               labelText: 'Password',
+                              focusNode: _passwordFocus,
                               obscureText: true,
                               maxLength: 72,
                               validator: (String? value) {
@@ -228,6 +313,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             CustomTextField(
                               controller: _confirmPasswordController,
                               labelText: 'Confirm password',
+                              focusNode: _confirmPasswordFocus,
                               obscureText: true,
                               maxLength: 72,
                               errorText: _passwordController.text.isNotEmpty &&
@@ -275,7 +361,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         strokeWidth: 2,
                                       ),
                                     )
-                                  : const Text('Create account', style: TextStyle(fontSize: 13)),
+                                  : const Text('Create Account', style: TextStyle(fontSize: 13)),
                             ),
                             const SizedBox(height: 6),
                             TextButton(

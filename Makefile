@@ -1,8 +1,14 @@
 run-dev:
-	flutter run --dart-define=BACKEND_URL=http://localhost:3000/api -d 00008130-001935290821401C
+	flutter run --dart-define=BACKEND_URL=https://6a57-143-105-174-218.ngrok-free.app/api -d 00008130-001935290821401C
 
 run-prod:	
 	flutter run --dart-define=BACKEND_URL=https://drawback.chat/api -d 00008130-001935290821401C
+
+run-web-prod:
+	flutter run -d chrome --dart-define=BACKEND_URL=https://drawback.chat/api
+
+run-web-dev:
+	flutter run -d chrome --dart-define=BACKEND_URL=http://localhost:3000/api	
 
 build-ios-prod:
 	flutter build ios --dart-define=BACKEND_URL=https://drawback.chat/api

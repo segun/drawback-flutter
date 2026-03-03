@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/widgets/status_banner.dart';
 import '../auth_controller.dart';
 import '../widgets/auth_page_scaffold.dart';
-import '../widgets/status_banner.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({required this.controller, super.key});

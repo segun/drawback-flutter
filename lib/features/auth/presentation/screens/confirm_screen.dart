@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/widgets/status_banner.dart';
 import '../widgets/auth_page_scaffold.dart';
-import '../widgets/status_banner.dart';
 
 class ConfirmScreen extends StatefulWidget {
   const ConfirmScreen({

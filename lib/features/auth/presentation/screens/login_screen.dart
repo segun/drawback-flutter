@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/widgets/custom_text_field.dart';
+import '../../../../core/widgets/status_banner.dart';
 import '../auth_controller.dart';
 import '../widgets/auth_page_scaffold.dart';
 import '../widgets/auth_text_styles.dart';
-import '../widgets/custom_text_field.dart';
-import '../widgets/status_banner.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({required this.controller, super.key});

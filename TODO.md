@@ -1,0 +1,2 @@
+- [ ] There's no way to dispose an error.
+- [ ] Sending request throws Unexepcted error: type 'Null' is not a subtype of type 'Map<String, dynamic>' in type cast
