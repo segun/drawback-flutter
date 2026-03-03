@@ -110,7 +110,7 @@ class DrawingCanvasPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant DrawingCanvasPainter oldDelegate) {
-    return strokes != oldDelegate.strokes;
+    return strokes.length != oldDelegate.strokes.length || strokes != oldDelegate.strokes;
   }
 }
 
@@ -138,17 +138,7 @@ class DrawingCanvas extends StatefulWidget {
 }
 
 class _DrawingCanvasState extends State<DrawingCanvas> {
-  final List<DrawSegmentStroke> _localStrokes = <DrawSegmentStroke>[];
   NormalizedPoint? _lastPoint;
-
-  @override
-  void didUpdateWidget(covariant DrawingCanvas oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // If external strokes changed, rebuild
-    if (widget.strokes != oldWidget.strokes) {
-      setState(() {});
-    }
-  }
 
   void _handlePanStart(DragStartDetails details, Size canvasSize) {
     if (!widget.isEnabled) {
@@ -174,10 +164,6 @@ class _DrawingCanvasState extends State<DrawingCanvas> {
       style: widget.style,
     );
 
-    setState(() {
-      _localStrokes.add(stroke);
-    });
-
     widget.onStrokeDrawn(stroke);
 
     _lastPoint = nextPoint;
@@ -185,13 +171,6 @@ class _DrawingCanvasState extends State<DrawingCanvas> {
 
   void _handlePanEnd(DragEndDetails details) {
     _lastPoint = null;
-  }
-
-  /// Clear local strokes (used when clearing canvas)
-  void clearLocal() {
-    setState(() {
-      _localStrokes.clear();
-    });
   }
 
   @override
@@ -206,9 +185,7 @@ class _DrawingCanvasState extends State<DrawingCanvas> {
           onPanEnd: _handlePanEnd,
           child: CustomPaint(
             size: canvasSize,
-            painter: DrawingCanvasPainter(
-              strokes: <DrawSegmentStroke>[...widget.strokes, ..._localStrokes],
-            ),
+            painter: DrawingCanvasPainter(strokes: widget.strokes),
           ),
         );
       },

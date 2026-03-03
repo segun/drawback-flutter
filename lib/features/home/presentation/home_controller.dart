@@ -344,8 +344,8 @@ class HomeController extends ChangeNotifier {
   Future<bool> saveChat(String chatRequestId) async {
     return _runGuarded<bool>(
       () async {
-        final SavedChat saved = await _socialApi.saveChat(chatRequestId: chatRequestId);
-        _savedChats.add(saved);
+        await _socialApi.saveChat(chatRequestId: chatRequestId);
+        _savedChats = await _socialApi.listSavedChats();
         _notice = 'Chat saved';
         return true;
       },

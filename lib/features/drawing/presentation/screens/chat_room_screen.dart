@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/realtime/socket_service.dart';
@@ -12,6 +14,8 @@ class ChatRoomScreen extends StatefulWidget {
     required this.chatRequest,
     required this.profile,
     required this.onNotice,
+    required this.onSaveChat,
+    required this.isChatSaved,
     super.key,
   });
 
@@ -19,6 +23,8 @@ class ChatRoomScreen extends StatefulWidget {
   final ChatRequest chatRequest;
   final UserProfile profile;
   final Function(String message, String type) onNotice;
+  final Future<void> Function() onSaveChat;
+  final bool isChatSaved;
 
   @override
   State<ChatRoomScreen> createState() => _ChatRoomScreenState();
@@ -26,10 +32,10 @@ class ChatRoomScreen extends StatefulWidget {
 
 class _ChatRoomScreenState extends State<ChatRoomScreen> {
   final SocketService _socketService = SocketService();
-  final List<DrawSegmentStroke> _localStrokes = <DrawSegmentStroke>[];
-  final List<DrawSegmentStroke> _remoteStrokes = <DrawSegmentStroke>[];
-  final List<AnimatedEmote> _localEmotes = <AnimatedEmote>[];
-  final List<AnimatedEmote> _remoteEmotes = <AnimatedEmote>[];
+  List<DrawSegmentStroke> _localStrokes = <DrawSegmentStroke>[];
+  List<DrawSegmentStroke> _remoteStrokes = <DrawSegmentStroke>[];
+  List<AnimatedEmote> _localEmotes = <AnimatedEmote>[];
+  List<AnimatedEmote> _remoteEmotes = <AnimatedEmote>[];
 
   String _drawColor = '#be123c';
   final DrawStrokeStyle _drawStyle = DrawStrokeStyle.normal;
@@ -37,6 +43,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   bool _peerPresent = false;
   bool _roomJoined = false;
   String _peerDisplayName = '';
+  bool _isSavingChat = false;
 
   @override
   void initState() {
@@ -152,7 +159,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       if (!_peerPresent) {
         _peerPresent = true;
       }
-      _remoteStrokes.clear();
+      _remoteStrokes = <DrawSegmentStroke>[];
     });
   }
 
@@ -235,10 +242,30 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     }
 
     setState(() {
-      _localStrokes.clear();
+      _localStrokes = <DrawSegmentStroke>[];
     });
 
     _socketService.emitDrawClear(widget.chatRequestId, widget.profile.id);
+  }
+
+  Future<void> _handleSaveChat() async {
+    if (_isSavingChat) {
+      return;
+    }
+
+    setState(() {
+      _isSavingChat = true;
+    });
+
+    try {
+      await widget.onSaveChat();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSavingChat = false;
+        });
+      }
+    }
   }
 
   void _handleSendEmote(String emoji) {
@@ -325,13 +352,20 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 // Local canvas (your drawing)
                 Expanded(
                   child: _buildCanvasCard(
-                    child: DrawingCanvas(
-                      strokes: _localStrokes,
-                      onStrokeDrawn: _handleLocalStrokeDrawn,
-                      isEnabled: _roomJoined && _peerPresent,
-                      color: _drawColor,
-                      width: _drawWidth,
-                      style: _drawStyle,
+                    child: Column(
+                      children: <Widget>[
+                        _buildLocalQuickActions(),
+                        Expanded(
+                          child: DrawingCanvas(
+                            strokes: _localStrokes,
+                            onStrokeDrawn: _handleLocalStrokeDrawn,
+                            isEnabled: _roomJoined && _peerPresent,
+                            color: _drawColor,
+                            width: _drawWidth,
+                            style: _drawStyle,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -356,6 +390,71 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: child,
+      ),
+    );
+  }
+
+  Widget _buildLocalQuickActions() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 6),
+      color: const Color(0xFFFFF1F2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: <Widget>[
+          _buildQuickActionButton(
+            icon: Icons.cleaning_services_outlined,
+            backgroundColor: const Color(0xFFFB7185),
+            onPressed: (_roomJoined && _peerPresent) ? _handleClearLocal : null,
+          ),
+          const SizedBox(width: 8),
+          if (!widget.isChatSaved)
+            _buildQuickActionButton(
+              icon: Icons.save_outlined,
+              backgroundColor: const Color(0xFFE11D48),
+              onPressed: _isSavingChat
+                  ? null
+                  : () {
+                      unawaited(_handleSaveChat());
+                    },
+            ),
+          if (!widget.isChatSaved) const SizedBox(width: 8),
+          _buildQuickActionButton(
+            icon: Icons.sync,
+            backgroundColor: const Color(0xFFF59E0B),
+            onPressed: _handleClearLocal,
+          ),
+          const SizedBox(width: 8),
+          _buildQuickActionButton(
+            icon: Icons.emoji_emotions_outlined,
+            backgroundColor: const Color(0xFFFBCFE8),
+            iconColor: const Color(0xFF9F1239),
+            onPressed: _showEmotePicker,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionButton({
+    required IconData icon,
+    required Color backgroundColor,
+    required VoidCallback? onPressed,
+    Color iconColor = Colors.white,
+  }) {
+    final Color resolvedBackgroundColor =
+        onPressed == null ? backgroundColor.withValues(alpha: 0.45) : backgroundColor;
+
+    return SizedBox(
+      width: 34,
+      height: 34,
+      child: Material(
+        color: resolvedBackgroundColor,
+        borderRadius: BorderRadius.circular(6),
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(6),
+          child: Icon(icon, size: 20, color: iconColor),
+        ),
       ),
     );
   }
@@ -404,7 +503,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               foregroundColor: _drawColor == 'eraser'
                   ? Colors.white
                   : const Color(0xFF9F1239),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             ),
           ),
 

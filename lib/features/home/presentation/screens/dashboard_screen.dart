@@ -295,10 +295,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final ChatRequest selectedChat = widget.controller.recentChats
             .firstWhere((ChatRequest chat) => chat.id == widget.controller.selectedChatRequestId);
 
+        // Check if chat is already saved
+        final bool isChatSaved = widget.controller.savedChats
+            .any((SavedChat saved) => saved.chatRequestId == selectedChat.id);
+
         return ChatRoomScreen(
           chatRequestId: widget.controller.selectedChatRequestId!,
           chatRequest: selectedChat,
           profile: widget.controller.profile!,
+          isChatSaved: isChatSaved,
           onNotice: (String message, String type) {
             // Handle notices from chat room
             if (mounted) {
@@ -313,6 +318,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       : type == 'success'
                           ? Colors.green
                           : Colors.blue,
+                ),
+              );
+            }
+          },
+          onSaveChat: () async {
+            final bool success =
+                await widget.controller.saveChat(widget.controller.selectedChatRequestId!);
+            if (success && mounted) {
+              widget.controller.loadDashboardData(showLoading: false);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Chat saved.'),
+                  backgroundColor: Colors.green,
                 ),
               );
             }

@@ -183,12 +183,11 @@ class SocialApi {
         .toList();
   }
 
-  Future<SavedChat> saveChat({required String chatRequestId}) async {
-    final Map<String, dynamic> response = await _client.postJson(
+  Future<void> saveChat({required String chatRequestId}) async {
+    await _client.postJson(
       '/chat/requests/$chatRequestId/save',
       headers: await _authHeaders(),
     );
-    return SavedChat.fromJson(response);
   }
 
   Future<void> deleteSavedChat({required String savedChatId}) async {
