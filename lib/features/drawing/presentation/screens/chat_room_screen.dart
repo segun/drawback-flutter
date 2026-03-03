@@ -30,9 +30,11 @@ class ChatRoomScreen extends StatefulWidget {
   State<ChatRoomScreen> createState() => _ChatRoomScreenState();
 }
 
-class _ChatRoomScreenState extends State<ChatRoomScreen> {
+class _ChatRoomScreenState extends State<ChatRoomScreen>
+    with SingleTickerProviderStateMixin {
   final SocketService _socketService = SocketService();
   List<DrawSegmentStroke> _localStrokes = <DrawSegmentStroke>[];
+  late AnimationController _syncAnimationController;
   List<DrawSegmentStroke> _remoteStrokes = <DrawSegmentStroke>[];
   List<AnimatedEmote> _localEmotes = <AnimatedEmote>[];
   List<AnimatedEmote> _remoteEmotes = <AnimatedEmote>[];
@@ -44,6 +46,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   bool _roomJoined = false;
   String _peerDisplayName = '';
   bool _isSavingChat = false;
+  bool _isReconnecting = false;
+  bool _showReconnectButton = false;
+  Timer? _reconnectButtonTimer;
 
   @override
   void initState() {
@@ -53,12 +58,21 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         ? widget.chatRequest.toUser.displayName
         : widget.chatRequest.fromUser.displayName;
     debugPrint('Initializing chat room for ${widget.chatRequest.id} with peer $_peerDisplayName');
+    
+    // Initialize sync animation controller
+    _syncAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    
     _setupSocketListeners();
     _joinChatRoom();
   }
 
   @override
   void dispose() {
+    _reconnectButtonTimer?.cancel();
+    _syncAnimationController.dispose();
     _removeSocketListeners();
     super.dispose();
   }
@@ -116,6 +130,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       widget.onNotice('Both peers joined. You can start drawing!', 'success');
     } else {
       widget.onNotice('Waiting for peer to join...', 'info');
+      _startReconnectButtonTimer();
     }
   }
 
@@ -200,7 +215,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   void _onDrawPeerJoined(dynamic data) {
     setState(() {
       _peerPresent = true;
+      _showReconnectButton = false;
     });
+    _reconnectButtonTimer?.cancel();
     widget.onNotice('Peer joined. Start drawing!', 'success');
   }
 
@@ -208,6 +225,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     setState(() {
       _peerPresent = false;
     });
+    _startReconnectButtonTimer();
     widget.onNotice('Peer left the room.', 'info');
   }
 
@@ -246,6 +264,45 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     });
 
     _socketService.emitDrawClear(widget.chatRequestId, widget.profile.id);
+  }
+
+  void _startReconnectButtonTimer() {
+    _reconnectButtonTimer?.cancel();
+    _reconnectButtonTimer = Timer(const Duration(seconds: 5), () {
+      if (mounted && !_peerPresent && _roomJoined) {
+        setState(() {
+          _showReconnectButton = true;
+        });
+      }
+    });
+  }
+
+  Future<void> _handleReconnectToRoom() async {
+    if (_isReconnecting) {
+      return;
+    }
+
+    setState(() {
+      _isReconnecting = true;
+      _showReconnectButton = false;
+    });
+
+    _reconnectButtonTimer?.cancel();
+    _syncAnimationController.repeat();
+
+    try {
+      _socketService.emitChatJoin(widget.chatRequestId);
+
+      // Stop spinning after 3 seconds like React
+      await Future<void>.delayed(const Duration(milliseconds: 3000));
+    } finally {
+      if (mounted) {
+        _syncAnimationController.stop();
+        setState(() {
+          _isReconnecting = false;
+        });
+      }
+    }
   }
 
   Future<void> _handleSaveChat() async {
@@ -418,12 +475,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                     },
             ),
           if (!widget.isChatSaved) const SizedBox(width: 8),
-          _buildQuickActionButton(
-            icon: Icons.sync,
-            backgroundColor: const Color(0xFFF59E0B),
-            onPressed: _handleClearLocal,
-          ),
-          const SizedBox(width: 8),
+          if (_showReconnectButton || _isReconnecting)
+            _buildQuickActionButton(
+              icon: Icons.sync,
+              backgroundColor: const Color(0xFFF59E0B),
+              onPressed: _isReconnecting ? null : () => unawaited(_handleReconnectToRoom()),
+              isLoading: _isReconnecting,
+            ),
+          if (_showReconnectButton || _isReconnecting) const SizedBox(width: 8),
           _buildQuickActionButton(
             icon: Icons.emoji_emotions_outlined,
             backgroundColor: const Color(0xFFFBCFE8),
@@ -440,6 +499,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     required Color backgroundColor,
     required VoidCallback? onPressed,
     Color iconColor = Colors.white,
+    bool isLoading = false,
   }) {
     final Color resolvedBackgroundColor =
         onPressed == null ? backgroundColor.withValues(alpha: 0.45) : backgroundColor;
@@ -453,9 +513,18 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         child: InkWell(
           onTap: onPressed,
           borderRadius: BorderRadius.circular(6),
-          child: Icon(icon, size: 20, color: iconColor),
+          child: isLoading
+              ? _buildSpinningIcon(icon, iconColor)
+              : Icon(icon, size: 20, color: iconColor),
         ),
       ),
+    );
+  }
+
+  Widget _buildSpinningIcon(IconData icon, Color color) {
+    return RotationTransition(
+      turns: _syncAnimationController,
+      child: Icon(icon, size: 20, color: color),
     );
   }
 

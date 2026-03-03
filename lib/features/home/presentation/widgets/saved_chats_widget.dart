@@ -60,7 +60,7 @@ class SavedChatsWidget extends StatelessWidget {
                   style: const TextStyle(fontSize: 13, color: Color(0xFF9F1239)),
                 ),
                 trailing: IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 16, color: Color(0xFF9F1239)),
+                  icon: const Icon(Icons.delete_outline, size: 20, color: Color(0xFF9F1239)),
                   onPressed: () async {
                     await controller.removeSavedChat(saved.id);
                   },
