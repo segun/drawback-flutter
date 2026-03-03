@@ -153,7 +153,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   void _autoCheckAvailability(String value) {
     // Auto-check when 3+ characters entered after @
-    if (_getCharacterCount(value) >= 3 && !_checkingAvailability) {
+    if (_getCharacterCount(value) >= 2 && !_checkingAvailability) {
       _checkDisplayName();
     }
   }
@@ -243,7 +243,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   return 'Display name is required.';
                                 }
                                 if (!_isValidDisplayName(value.trim())) {
-                                  return 'Must start with @ followed by 3–29 letters, numbers or underscores';
+                                  return 'Must start with @ followed by 2–29 letters, numbers or underscores';
                                 }
                                 return null;
                               },

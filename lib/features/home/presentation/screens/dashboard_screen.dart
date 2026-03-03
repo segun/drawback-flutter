@@ -107,33 +107,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                       ),
                     Expanded(
-                      child: Stack(
-                        children: <Widget>[
-                          // Main content
-                          Row(
-                            children: <Widget>[
-                              // Sidebar (visible on larger screens)
-                              if (MediaQuery.of(context).size.width >= 1024)
-                                Container(
-                                  width: 320,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFFFDA4AF),
-                                    border: Border(
-                                      right: BorderSide(color: Color(0xFFFDA4AF)),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Stack(
+                          children: <Widget>[
+                            // Main content
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: <Widget>[
+                                // Sidebar (visible on larger screens)
+                                if (MediaQuery.of(context).size.width >= 1024)
+                                  Container(
+                                    width: 320,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFFFDA4AF),
+                                      border: Border(
+                                        right: BorderSide(color: Color(0xFFFDA4AF)),
+                                      ),
                                     ),
+                                    child: _buildSidebar(),
                                   ),
-                                  child: _buildSidebar(),
-                                ),
 
-                              // Content area
-                              Expanded(
-                                child: Container(
-                                  color: const Color(0xFFFFF1F2),
-                                  child: _buildContent(),
+                                const SizedBox(width: 12),
+
+                                // Content area
+                                Expanded(
+                                  child: Container(
+                                    color: const Color(0xFFFDA4AF),
+                                    child: _buildContent(),
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            ),
 
                           // Mobile sidebar overlay
                           if (_isSidebarOpen && MediaQuery.of(context).size.width < 1024)
@@ -206,6 +211,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               ),
                             ),
                         ],
+                      ),
                       ),
                     ),
                   ],

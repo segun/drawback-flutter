@@ -73,13 +73,14 @@ class _DisplayNameTextFieldState extends State<DisplayNameTextField> {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return TextFormField(
       controller: widget.controller,
       focusNode: widget.focusNode,
       keyboardType: widget.keyboardType,
       maxLength: widget.maxLength,
       autofocus: widget.autofocus,
       enabled: widget.enabled,
+      validator: widget.validator,
       style: widget.textStyle ??
           const TextStyle(
             fontSize: 13,
@@ -102,7 +103,7 @@ class _DisplayNameTextFieldState extends State<DisplayNameTextField> {
             isDense: true,
           ),
       onChanged: _handleOnChanged,
-      onSubmitted: widget.onSubmitted,
+      onFieldSubmitted: widget.onSubmitted,
     );
   }
 }

@@ -7,7 +7,7 @@ class ValidationPatterns {
   );
 
   /// Display name validation pattern
-  /// Matches: @ followed by 2-29 letters, numbers, or underscores
+  /// Matches: @ followed by 3-29 letters, numbers, or underscores
   static final RegExp displayNamePattern = RegExp(
     r'^@[A-Za-z0-9_]{2,29}$',
   );
