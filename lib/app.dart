@@ -39,7 +39,13 @@ class _DrawbackAppState extends State<DrawbackApp> {
     _authController = AuthController(authApi: authApi, tokenStore: tokenStore)
       ..bootstrap();
 
-    _homeController = HomeController(socialApi: socialApi);
+    _homeController = HomeController(
+      socialApi: socialApi,
+      backendUrl: AppConfig.backendUrl,
+    );
+
+    // Listen to auth state changes to initialize socket
+    _authController.addListener(_handleAuthStateChange);
 
     _router = GoRouter(
       refreshListenable: _authController,
@@ -118,8 +124,19 @@ class _DrawbackAppState extends State<DrawbackApp> {
     );
   }
 
+  void _handleAuthStateChange() {
+    // Initialize socket when user becomes authenticated
+    if (_authController.isAuthenticated && _authController.accessToken != null) {
+      _homeController.initializeSocket(_authController.accessToken!);
+    } else {
+      // Disconnect socket when user logs out
+      _homeController.disconnectSocket();
+    }
+  }
+
   @override
   void dispose() {
+    _authController.removeListener(_handleAuthStateChange);
     _authController.dispose();
     _homeController.dispose();
     _router.dispose();

@@ -23,6 +23,7 @@ class AuthController extends ChangeNotifier {
   bool get isBootstrapping => _isBootstrapping;
   bool get isBusy => _isBusy;
   bool get isAuthenticated => _accessToken != null;
+  String? get accessToken => _accessToken;
   AuthUser? get currentUser => _currentUser;
   String? get notice => _notice;
   String? get error => _error;

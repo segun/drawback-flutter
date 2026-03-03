@@ -1,15 +1,24 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/network/api_exception.dart';
+import '../../../core/realtime/socket_service.dart';
 import '../data/social_api.dart';
 import '../domain/home_models.dart';
 
 /// State controller for home/dashboard functionality
 /// Maps to React app's AuthModule state management for post-login features
 class HomeController extends ChangeNotifier {
-  HomeController({required SocialApi socialApi}) : _socialApi = socialApi;
+  HomeController({
+    required SocialApi socialApi,
+    required String backendUrl,
+  })  : _socialApi = socialApi,
+        _backendUrl = backendUrl;
 
   final SocialApi _socialApi;
+  final String _backendUrl;
+  final SocketService _socketService = SocketService();
+
+  bool _socketInitialized = false;
 
   bool _isBusy = false;
   bool _isLoadingDashboard = false;
@@ -158,6 +167,81 @@ class HomeController extends ChangeNotifier {
             }
           : null,
     );
+  }
+
+  /// Initialize socket connection with access token
+  void initializeSocket(String accessToken) {
+    if (_socketInitialized) {
+      return;
+    }
+
+    try {
+      _socketService.getOrCreateSocket(_backendUrl, accessToken);
+      _setupSocketListeners();
+      _socketInitialized = true;
+    } catch (error) {
+      _error = 'Failed to initialize realtime connection: $error';
+      notifyListeners();
+    }
+  }
+
+  void _setupSocketListeners() {
+    final socket = _socketService.socket;
+    if (socket == null) {
+      return;
+    }
+
+    socket.on('chat.requested', (dynamic data) {
+      _onChatRequested(data);
+    });
+
+    socket.on('chat.response', (dynamic data) {
+      _onChatResponse(data);
+    });
+
+    socket.on('connect_error', (dynamic error) {
+      _error = 'Realtime connection failed';
+      notifyListeners();
+    });
+  }
+
+  void _onChatRequested(dynamic data) {
+    if (data is! Map<String, dynamic>) {
+      return;
+    }
+
+    final ChatRequestedPayload payload = ChatRequestedPayload.fromJson(data);
+    _notice = '${payload.fromUser.displayName} sent you a chat request';
+    notifyListeners();
+
+    // Reload dashboard data to get the new request
+    loadDashboardData(showLoading: false);
+  }
+
+  void _onChatResponse(dynamic data) {
+    if (data is! Map<String, dynamic>) {
+      return;
+    }
+
+    final ChatResponsePayload payload = ChatResponsePayload.fromJson(data);
+    if (payload.accepted) {
+      _socketService.emitChatJoin(payload.requestId);
+    }
+
+    // Reload dashboard data
+    loadDashboardData(showLoading: false);
+  }
+
+  /// Disconnect socket and clean up
+  void disconnectSocket() {
+    _socketService.disconnect();
+    _socketInitialized = false;
+  }
+
+  @override
+  void dispose() {
+    disconnectSocket();
+    super.dispose();
   }
 
   /// Search for public users

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/status_banner.dart';
+import '../../../drawing/presentation/screens/chat_room_screen.dart';
 import '../home_controller.dart';
 import '../widgets/blocked_users_widget.dart';
 import '../widgets/chat_requests_widget.dart';
@@ -282,31 +283,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           );
         }
-        // TODO: Implement ChatRoomScreen with drawing canvas
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              const Text(
-                'Chat Room (Canvas placeholder)',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF9F1239),
+        
+        // Show chat room with drawing canvas
+        if (widget.controller.profile == null) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        }
+
+        return ChatRoomScreen(
+          chatRequestId: widget.controller.selectedChatRequestId!,
+          profile: widget.controller.profile!,
+          onNotice: (String message, String type) {
+            // Handle notices from chat room
+            if (mounted) {
+              // You could show a snackbar or update controller error state
+              final String noticeType = type == 'error' ? 'Error: ' : '';
+              widget.controller.clearMessages();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('$noticeType$message'),
+                  backgroundColor: type == 'error'
+                      ? Colors.red
+                      : type == 'success'
+                          ? Colors.green
+                          : Colors.blue,
                 ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Selected: ${widget.controller.selectedChatRequestId}',
-                style: const TextStyle(color: Color(0xFF9F1239)),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Socket.IO and canvas drawing will be implemented next',
-                style: TextStyle(fontSize: 12, color: Color(0xFF9F1239)),
-              ),
-            ],
-          ),
+              );
+            }
+          },
         );
     }
   }

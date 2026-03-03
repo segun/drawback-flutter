@@ -68,19 +68,38 @@ class RecentChatsWidget extends StatelessWidget {
                     fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
                   ),
                 ),
-                trailing: IconButton(
-                  icon: Icon(
-                    Icons.delete_outline,
-                    size: 16,
-                    color: isActive ? Colors.white : const Color(0xFF9F1239),
-                  ),
-                  onPressed: () async {
-                    await controller.closeRecentChat(chat.id);
-                  },
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  visualDensity: VisualDensity.compact,
-                  tooltip: 'Remove chat',
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    IconButton(
+                      icon: Icon(
+                        Icons.delete_outline,
+                        size: 16,
+                        color: isActive ? Colors.white : const Color(0xFF9F1239),
+                      ),
+                      onPressed: () async {
+                        await controller.closeRecentChat(chat.id);
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      visualDensity: VisualDensity.compact,
+                      tooltip: 'Remove chat',
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.block,
+                        size: 16,
+                        color: isActive ? Colors.white : const Color(0xFF9F1239),
+                      ),
+                      onPressed: () async {
+                        await controller.blockUser(other.id);
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      visualDensity: VisualDensity.compact,
+                      tooltip: 'Block user',
+                    ),
+                  ],
                 ),
                 onTap: () => onChatOpen(chat.id),
               ),
