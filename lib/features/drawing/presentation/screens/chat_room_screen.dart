@@ -34,6 +34,7 @@ class ChatRoomScreen extends StatefulWidget {
 class _ChatRoomScreenState extends State<ChatRoomScreen>
     with SingleTickerProviderStateMixin {
   final SocketService _socketService = SocketService();
+  final ScrollController _emotePickerScrollController = ScrollController();
   List<DrawSegmentStroke> _localStrokes = <DrawSegmentStroke>[];
   late AnimationController _syncAnimationController;
   List<DrawSegmentStroke> _remoteStrokes = <DrawSegmentStroke>[];
@@ -75,6 +76,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
   void dispose() {
     _reconnectButtonTimer?.cancel();
     _emoteAnimationTimer?.cancel();
+    _emotePickerScrollController.dispose();
     _syncAnimationController.dispose();
     _removeSocketListeners();
     super.dispose();
@@ -740,42 +742,58 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
     showDialog<void>(
       context: context,
       builder: (BuildContext context) {
+        final double dialogWidth = math.min(MediaQuery.of(context).size.width * 0.86, 360);
         return AlertDialog(
-          title: const Text('Pick an Emote'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          contentPadding: const EdgeInsets.all(12),
           content: SizedBox(
-            width: 300,
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: PresetEmotes.emotes.map((String emoji) {
-                return GestureDetector(
-                  onTap: () {
-                    _handleSendEmote(emoji);
-                    Navigator.of(context).pop();
-                  },
-                  child: Container(
-                    width: 40,
-                    height: 40,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFCE7F3),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      emoji,
-                      style: const TextStyle(fontSize: 24),
-                    ),
+            width: dialogWidth,
+            height: 200,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(4, 6, 4, 2),
+              child: Scrollbar(
+                controller: _emotePickerScrollController,
+                thumbVisibility: true,
+                trackVisibility: true,
+                scrollbarOrientation: ScrollbarOrientation.bottom,
+                child: GridView.builder(
+                  controller: _emotePickerScrollController,
+                  primary: false,
+                  scrollDirection: Axis.horizontal,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 4,
+                    mainAxisSpacing: 8,
+                    crossAxisSpacing: 8,
+                    childAspectRatio: 1,
                   ),
-                );
-              }).toList(),
+                  itemCount: PresetEmotes.emotes.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final String emoji = PresetEmotes.emotes[index];
+                    return InkWell(
+                      borderRadius: BorderRadius.circular(8),
+                      onTap: () {
+                        _handleSendEmote(emoji);
+                        Navigator.of(context).pop();
+                      },
+                      child: Container(
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFCE7F3),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          emoji,
+                          style: const TextStyle(fontSize: 28, height: 1.0),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
             ),
           ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
-            ),
-          ],
         );
       },
     );
