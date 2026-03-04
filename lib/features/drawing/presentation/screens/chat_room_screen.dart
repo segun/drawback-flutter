@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
@@ -49,6 +50,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
   bool _isReconnecting = false;
   bool _showReconnectButton = false;
   Timer? _reconnectButtonTimer;
+  Timer? _emoteAnimationTimer;
 
   @override
   void initState() {
@@ -72,6 +74,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
   @override
   void dispose() {
     _reconnectButtonTimer?.cancel();
+    _emoteAnimationTimer?.cancel();
     _syncAnimationController.dispose();
     _removeSocketListeners();
     super.dispose();
@@ -188,27 +191,29 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
       return;
     }
 
+    final AnimatedEmote emote = AnimatedEmote(
+      id: '${DateTime.now().millisecondsSinceEpoch}-${payload.emoji}',
+      emoji: payload.emoji,
+      x: _randomEmoteXPercent(),
+      startTime: DateTime.now(),
+    );
+
     setState(() {
       if (!_peerPresent) {
         _peerPresent = true;
       }
-
-      final AnimatedEmote emote = AnimatedEmote(
-        id: '${DateTime.now().millisecondsSinceEpoch}-${payload.emoji}',
-        emoji: payload.emoji,
-        x: 10 + (0.75 * 100 * (DateTime.now().millisecondsSinceEpoch % 100) / 100),
-        startTime: DateTime.now(),
-      );
       _remoteEmotes.add(emote);
+    });
 
-      // Remove after animation completes
-      Future<void>.delayed(const Duration(milliseconds: 4200), () {
-        if (mounted) {
-          setState(() {
-            _remoteEmotes.removeWhere((AnimatedEmote e) => e.id == emote.id);
-          });
-        }
-      });
+    _startEmoteAnimationTimer();
+
+    // Remove after animation completes
+    Future<void>.delayed(const Duration(milliseconds: 4200), () {
+      if (mounted) {
+        setState(() {
+          _remoteEmotes.removeWhere((AnimatedEmote e) => e.id == emote.id);
+        });
+      }
     });
   }
 
@@ -336,13 +341,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
     final AnimatedEmote emote = AnimatedEmote(
       id: '${DateTime.now().millisecondsSinceEpoch}-$emoji',
       emoji: emoji,
-      x: 10 + (0.75 * 100 * (DateTime.now().millisecondsSinceEpoch % 100) / 100),
+      x: _randomEmoteXPercent(),
       startTime: DateTime.now(),
     );
 
     setState(() {
       _localEmotes.add(emote);
     });
+
+    _startEmoteAnimationTimer();
 
     Future<void>.delayed(const Duration(milliseconds: 4200), () {
       if (mounted) {
@@ -393,13 +400,18 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
                 // Remote canvas (peer's drawing)
                 Expanded(
                   child: _buildCanvasCard(
-                    child: DrawingCanvas(
-                      strokes: _remoteStrokes,
-                      onStrokeDrawn: (_) {}, // Read-only
-                      isEnabled: false,
-                      color: _drawColor,
-                      width: _drawWidth,
-                      style: _drawStyle,
+                    child: Stack(
+                      children: <Widget>[
+                        DrawingCanvas(
+                          strokes: _remoteStrokes,
+                          onStrokeDrawn: (_) {}, // Read-only
+                          isEnabled: false,
+                          color: _drawColor,
+                          width: _drawWidth,
+                          style: _drawStyle,
+                        ),
+                        ..._buildEmotesLayer(_remoteEmotes),
+                      ],
                     ),
                   ),
                 ),
@@ -413,13 +425,18 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
                       children: <Widget>[
                         _buildLocalQuickActions(),
                         Expanded(
-                          child: DrawingCanvas(
-                            strokes: _localStrokes,
-                            onStrokeDrawn: _handleLocalStrokeDrawn,
-                            isEnabled: _roomJoined && _peerPresent,
-                            color: _drawColor,
-                            width: _drawWidth,
-                            style: _drawStyle,
+                          child: Stack(
+                            children: <Widget>[
+                              DrawingCanvas(
+                                strokes: _localStrokes,
+                                onStrokeDrawn: _handleLocalStrokeDrawn,
+                                isEnabled: _roomJoined && _peerPresent,
+                                color: _drawColor,
+                                width: _drawWidth,
+                                style: _drawStyle,
+                              ),
+                              ..._buildEmotesLayer(_localEmotes),
+                            ],
                           ),
                         ),
                       ],
@@ -435,6 +452,72 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
         _buildControls(),
       ],
     );
+  }
+
+  void _startEmoteAnimationTimer() {
+    _emoteAnimationTimer?.cancel();
+    _emoteAnimationTimer = Timer.periodic(const Duration(milliseconds: 16), (_) {
+      if (_localEmotes.isEmpty && _remoteEmotes.isEmpty) {
+        _emoteAnimationTimer?.cancel();
+        _emoteAnimationTimer = null;
+        return;
+      }
+      if (mounted) {
+        setState(() {
+          // Trigger rebuild for animation
+        });
+      }
+    });
+  }
+
+  double _randomEmoteXPercent() {
+    return 10 + (math.Random().nextDouble() * 75);
+  }
+
+  List<Widget> _buildEmotesLayer(List<AnimatedEmote> emotes) {
+    if (emotes.isEmpty) {
+      return const <Widget>[];
+    }
+
+    return <Widget>[
+      Positioned.fill(
+        child: IgnorePointer(
+          child: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              final double canvasWidth = constraints.maxWidth;
+              final double maxLeft = math.max(10.0, canvasWidth - 40.0);
+
+              return Stack(
+                children: emotes.map((AnimatedEmote emote) {
+                  final Duration elapsed = DateTime.now().difference(emote.startTime);
+                  final double progress = (elapsed.inMilliseconds / 4200).clamp(0.0, 1.0);
+
+                  final double opacity = progress < 0.8 ? 1.0 : (1.0 - (progress - 0.8) / 0.2);
+                  final double offsetY = (1.0 - progress) * 80.0;
+                  final double left = ((emote.x.clamp(10.0, 85.0) / 100.0) * canvasWidth)
+                      .clamp(10.0, maxLeft);
+
+                  return Positioned(
+                    left: left,
+                    bottom: 20 + offsetY,
+                    child: Opacity(
+                      opacity: opacity,
+                      child: Text(
+                        emote.emoji,
+                        style: const TextStyle(
+                          fontSize: 32,
+                          height: 1.0,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              );
+            },
+          ),
+        ),
+      ),
+    ];
   }
 
   Widget _buildCanvasCard({required Widget child}) {
@@ -487,7 +570,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
             icon: Icons.emoji_emotions_outlined,
             backgroundColor: const Color(0xFFFBCFE8),
             iconColor: const Color(0xFF9F1239),
-            onPressed: _showEmotePicker,
+            onPressed: (_roomJoined && _peerPresent) ? _showEmotePicker : null,
           ),
         ],
       ),
@@ -616,7 +699,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
 
           // Emote picker (simplified)
           ElevatedButton.icon(
-            onPressed: () => _showEmotePicker(),
+            onPressed: (_roomJoined && _peerPresent) ? () => _showEmotePicker() : null,
             icon: const Icon(Icons.emoji_emotions, size: 16),
             label: const Text('Emote'),
             style: ElevatedButton.styleFrom(
