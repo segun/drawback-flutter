@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 
 import '../../../../core/realtime/socket_service.dart';
 import '../../../home/domain/home_models.dart';
@@ -47,14 +48,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
     '#f59e0b',
     '#10b981',
     '#0ea5e9',
-  ];
-
-  static const List<String> _customPaletteColors = <String>[
-    '#be123c', '#e11d48', '#f43f5e', '#fb7185', '#fda4af',
-    '#f59e0b', '#f97316', '#eab308', '#84cc16', '#22c55e',
-    '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6',
-    '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899',
-    '#ef4444', '#64748b', '#374151', '#111827', '#000000',
   ];
 
   String _drawColor = '#be123c';
@@ -407,7 +400,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
   }
 
   Future<String?> _showColorPaletteDialog() async {
-    final String selectedColor = _drawColor == 'eraser' ? '#be123c' : _drawColor;
+    final String currentColor = _drawColor == 'eraser' ? '#be123c' : _drawColor;
+    Color selectedColor = _parseHexColor(currentColor);
 
     return showDialog<String>(
       context: context,
@@ -416,34 +410,47 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
-          contentPadding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
-          content: SizedBox(
-            width: math.min(MediaQuery.of(context).size.width * 0.82, 320),
-            child: Wrap(
-              spacing: 10,
-              runSpacing: 10,
-              children: _customPaletteColors.map((String color) {
-                final bool isActive = color == selectedColor;
-                return InkWell(
-                  borderRadius: BorderRadius.circular(14),
-                  onTap: () => Navigator.of(context).pop(color),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 120),
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: _parseHexColor(color),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isActive ? const Color(0xFFBE123C) : const Color(0xFFFDA4AF),
-                        width: isActive ? 2.5 : 1.5,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
+          title: const Text(
+            'Pick a color',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFFBE123C),
             ),
           ),
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return SingleChildScrollView(
+                child: ColorPicker(
+                  pickerColor: selectedColor,
+                  onColorChanged: (Color color) {
+                    setState(() {
+                      selectedColor = color;
+                    });
+                  },
+                ),
+              );
+            },
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: Color(0xFFBE123C)),
+              ),
+            ),
+            FilledButton(
+              onPressed: () {
+                final String hex = '#${selectedColor.value.toRadixString(16).substring(2).toUpperCase().padLeft(6, '0')}';
+                Navigator.of(context).pop(hex.toLowerCase());
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFE11D48),
+              ),
+              child: const Text('Apply'),
+            ),
+          ],
         );
       },
     );
