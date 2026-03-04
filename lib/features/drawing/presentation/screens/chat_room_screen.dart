@@ -41,9 +41,30 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
   final List<AnimatedEmote> _localEmotes = <AnimatedEmote>[];
   final List<AnimatedEmote> _remoteEmotes = <AnimatedEmote>[];
 
+  static const List<String> _presetColors = <String>[
+    '#e11d48',
+    '#fb7185',
+    '#f59e0b',
+    '#10b981',
+    '#0ea5e9',
+  ];
+
+  static const List<String> _customPaletteColors = <String>[
+    '#be123c', '#e11d48', '#f43f5e', '#fb7185', '#fda4af',
+    '#f59e0b', '#f97316', '#eab308', '#84cc16', '#22c55e',
+    '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9', '#3b82f6',
+    '#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899',
+    '#ef4444', '#64748b', '#374151', '#111827', '#000000',
+  ];
+
   String _drawColor = '#be123c';
-  final DrawStrokeStyle _drawStyle = DrawStrokeStyle.normal;
+  DrawStrokeStyle _drawStyle = DrawStrokeStyle.normal;
   double _drawWidth = 2.0;
+  bool _brushAccordionOpen = false;
+  bool _strokeAccordionOpen = false;
+  bool _eraserAccordionOpen = false;
+  bool _colorAccordionOpen = false;
+  bool _customColorAccordionOpen = false;
   bool _peerPresent = false;
   bool _roomJoined = false;
   String _peerDisplayName = '';
@@ -362,6 +383,392 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
     });
   }
 
+  String? _normalizeHexColor(String value) {
+    final String normalized = value.trim().toLowerCase().replaceAll('#', '');
+    final RegExp hexColorPattern = RegExp(r'^[0-9a-f]{6}$');
+    if (!hexColorPattern.hasMatch(normalized)) {
+      return null;
+    }
+    return '#$normalized';
+  }
+
+  Color _parseHexColor(String value) {
+    if (value == 'eraser') {
+      return const Color(0xFF15803D);
+    }
+
+    final String? normalized = _normalizeHexColor(value);
+    if (normalized == null) {
+      return const Color(0xFFBE123C);
+    }
+
+    final String hex = normalized.substring(1);
+    return Color(int.parse('FF$hex', radix: 16));
+  }
+
+  Future<String?> _showColorPaletteDialog() async {
+    final String selectedColor = _drawColor == 'eraser' ? '#be123c' : _drawColor;
+
+    return showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          contentPadding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+          content: SizedBox(
+            width: math.min(MediaQuery.of(context).size.width * 0.82, 320),
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: _customPaletteColors.map((String color) {
+                final bool isActive = color == selectedColor;
+                return InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () => Navigator.of(context).pop(color),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 120),
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: _parseHexColor(color),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isActive ? const Color(0xFFBE123C) : const Color(0xFFFDA4AF),
+                        width: isActive ? 2.5 : 1.5,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildToolAccordionSection({
+    required String title,
+    required bool isOpen,
+    required VoidCallback onToggle,
+    required Widget child,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        InkWell(
+          onTap: onToggle,
+          borderRadius: BorderRadius.circular(6),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+            child: Row(
+              children: <Widget>[
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFBE123C),
+                  ),
+                ),
+                const Spacer(),
+                Icon(
+                  isOpen ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                  size: 20,
+                  color: const Color(0xFFBE123C),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (isOpen)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: child,
+          ),
+        const Divider(height: 1, color: Color(0xFFFDA4AF)),
+      ],
+    );
+  }
+
+  Future<void> _showToolsSheet() async {
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext sheetContext) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter modalSetState) {
+            void updateTools(VoidCallback update) {
+              setState(update);
+              modalSetState(() {});
+            }
+
+            return Dialog(
+              backgroundColor: Colors.white,
+              elevation: 8,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      _buildToolAccordionSection(
+                        title: 'Brush',
+                        isOpen: _brushAccordionOpen,
+                        onToggle: () {
+                          updateTools(() {
+                            _brushAccordionOpen = !_brushAccordionOpen;
+                          });
+                        },
+                        child: Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  updateTools(() {
+                                    _drawStyle = DrawStrokeStyle.normal;
+                                    if (_drawColor == 'eraser') {
+                                      _drawColor = '#be123c';
+                                    }
+                                  });
+                                },
+                                icon: const Icon(Icons.edit_outlined, size: 16),
+                                label: const Text('Pen'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF9F1239),
+                                  backgroundColor: _drawStyle == DrawStrokeStyle.normal
+                                      ? const Color(0xFFFBCFE8)
+                                      : const Color(0xFFFFF1F2),
+                                  side: BorderSide(
+                                    color: _drawStyle == DrawStrokeStyle.normal
+                                        ? const Color(0xFFE11D48)
+                                        : const Color(0xFFFDA4AF),
+                                  ),
+                                  minimumSize: const Size(0, 36),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  updateTools(() {
+                                    _drawStyle = DrawStrokeStyle.brush;
+                                    if (_drawColor == 'eraser') {
+                                      _drawColor = '#be123c';
+                                    }
+                                  });
+                                },
+                                icon: const Icon(Icons.brush_outlined, size: 16),
+                                label: const Text('Brush'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF9F1239),
+                                  backgroundColor: _drawStyle == DrawStrokeStyle.brush
+                                      ? const Color(0xFFFBCFE8)
+                                      : const Color(0xFFFFF1F2),
+                                  side: BorderSide(
+                                    color: _drawStyle == DrawStrokeStyle.brush
+                                        ? const Color(0xFFE11D48)
+                                        : const Color(0xFFFDA4AF),
+                                  ),
+                                  minimumSize: const Size(0, 36),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildToolAccordionSection(
+                        title: 'Stroke',
+                        isOpen: _strokeAccordionOpen,
+                        onToggle: () {
+                          updateTools(() {
+                            _strokeAccordionOpen = !_strokeAccordionOpen;
+                          });
+                        },
+                        child: Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: Slider(
+                                value: _drawWidth,
+                                min: 1,
+                                max: 10,
+                                divisions: 9,
+                                label: _drawWidth.round().toString(),
+                                activeColor: const Color(0xFFBE123C),
+                                onChanged: (double value) {
+                                  updateTools(() {
+                                    _drawWidth = value.roundToDouble();
+                                  });
+                                },
+                              ),
+                            ),
+                            Text(
+                              _drawWidth.round().toString(),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF9F1239),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildToolAccordionSection(
+                        title: 'Eraser',
+                        isOpen: _eraserAccordionOpen,
+                        onToggle: () {
+                          updateTools(() {
+                            _eraserAccordionOpen = !_eraserAccordionOpen;
+                          });
+                        },
+                        child: Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () {
+                                  updateTools(() {
+                                    _drawColor = 'eraser';
+                                  });
+                                },
+                                icon: const Icon(Icons.auto_fix_high_outlined, size: 16),
+                                label: const Text('Use eraser'),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF166534),
+                                  backgroundColor: _drawColor == 'eraser'
+                                      ? const Color(0xFFD1FAE5)
+                                      : const Color(0xFFF0FDF4),
+                                  side: BorderSide(
+                                    color: _drawColor == 'eraser'
+                                        ? const Color(0xFF22C55E)
+                                        : const Color(0xFF86EFAC),
+                                  ),
+                                  minimumSize: const Size(0, 36),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      _buildToolAccordionSection(
+                        title: 'Color',
+                        isOpen: _colorAccordionOpen,
+                        onToggle: () {
+                          updateTools(() {
+                            _colorAccordionOpen = !_colorAccordionOpen;
+                          });
+                        },
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: _presetColors.map((String color) {
+                            final bool isSelected = _drawColor == color;
+                            return InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () {
+                                updateTools(() {
+                                  _drawColor = color;
+                                });
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 120),
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: _parseHexColor(color),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? const Color(0xFFBE123C)
+                                        : const Color(0xFFFDA4AF),
+                                    width: isSelected ? 2.5 : 1.5,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                      _buildToolAccordionSection(
+                        title: 'Custom color',
+                        isOpen: _customColorAccordionOpen,
+                        onToggle: () {
+                          updateTools(() {
+                            _customColorAccordionOpen = !_customColorAccordionOpen;
+                          });
+                        },
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(8),
+                          onTap: () async {
+                            final String? selectedColor = await _showColorPaletteDialog();
+                            if (!mounted || selectedColor == null) {
+                              return;
+                            }
+                            updateTools(() {
+                              _drawColor = selectedColor;
+                            });
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFF1F2),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFFDA4AF)),
+                            ),
+                            child: Row(
+                              children: <Widget>[
+                                const Icon(
+                                  Icons.palette_outlined,
+                                  size: 16,
+                                  color: Color(0xFF9F1239),
+                                ),
+                                const SizedBox(width: 8),
+                                const Text(
+                                  'Open color palette',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF9F1239),
+                                  ),
+                                ),
+                                const Spacer(),
+                                Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: BoxDecoration(
+                                    color: _parseHexColor(_drawColor),
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: const Color(0xFFFDA4AF),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _handleToolsTap() {
+    unawaited(_showToolsSheet());
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -573,6 +980,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
             backgroundColor: const Color(0xFFFBCFE8),
             iconColor: const Color(0xFF9F1239),
             onPressed: (_roomJoined && _peerPresent) ? _showEmotePicker : null,
+          ),
+          const Spacer(),
+          _buildQuickActionButton(
+            icon: Icons.handyman_outlined,
+            backgroundColor: const Color(0xFFFBCFE8),
+            iconColor: const Color(0xFF9F1239),
+            onPressed: _handleToolsTap,
           ),
         ],
       ),
