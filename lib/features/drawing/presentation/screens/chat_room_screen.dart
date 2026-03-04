@@ -422,6 +422,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
             builder: (BuildContext context, StateSetter setState) {
               return SingleChildScrollView(
                 child: ColorPicker(
+                  paletteType: PaletteType.hueWheel,
                   pickerColor: selectedColor,
                   onColorChanged: (Color color) {
                     setState(() {
