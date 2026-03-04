@@ -175,13 +175,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                       ),
                       const SizedBox(height: 8),
-                      RadioListTile<UserMode>(
-                        title: const Text('Public', style: TextStyle(fontSize: 13)),
-                        subtitle: const Text(
-                          'Visible in public user lists',
-                          style: TextStyle(fontSize: 11),
-                        ),
-                        value: UserMode.public,
+                      RadioGroup<UserMode>(
                         groupValue: _selectedMode,
                         onChanged: (UserMode? value) {
                           if (value != null) {
@@ -190,26 +184,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             });
                           }
                         },
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      RadioListTile<UserMode>(
-                        title: const Text('Private', style: TextStyle(fontSize: 13)),
-                        subtitle: const Text(
-                          'Only findable by search',
-                          style: TextStyle(fontSize: 11),
+                        child: Column(
+                          children: <Widget>[
+                            RadioListTile<UserMode>(
+                              title: const Text('Public', style: TextStyle(fontSize: 13)),
+                              subtitle: const Text(
+                                'Visible in public user lists',
+                                style: TextStyle(fontSize: 11),
+                              ),
+                              value: UserMode.public,
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            RadioListTile<UserMode>(
+                              title: const Text('Private', style: TextStyle(fontSize: 13)),
+                              subtitle: const Text(
+                                'Only findable by search',
+                                style: TextStyle(fontSize: 11),
+                              ),
+                              value: UserMode.private,
+                              dense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ],
                         ),
-                        value: UserMode.private,
-                        groupValue: _selectedMode,
-                        onChanged: (UserMode? value) {
-                          if (value != null) {
-                            setState(() {
-                              _selectedMode = value;
-                            });
-                          }
-                        },
-                        dense: true,
-                        contentPadding: EdgeInsets.zero,
                       ),
                     ],
                   ),

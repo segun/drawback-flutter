@@ -5,7 +5,7 @@ class AuthPageScaffold extends StatelessWidget {
   const AuthPageScaffold({
     required this.child,
     this.maxWidth = 460,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.all(0),
     this.withScrollbar = false,
     this.scrollPhysics = const ClampingScrollPhysics(),
     super.key,

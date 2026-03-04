@@ -102,7 +102,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: <Widget>[
                     if (error != null || notice != null)
                       Padding(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(6),
                         child: StatusBanner(
                           text: error ?? notice!,
                           kind: error != null ? BannerKind.error : BannerKind.success,
@@ -110,7 +110,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.all(6),
                         child: Stack(
                           children: <Widget>[
                             // Main content
@@ -175,38 +175,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ),
                                 child: Column(
                                   children: <Widget>[
-                                    Container(
-                                      padding: const EdgeInsets.all(12),
-                                      decoration: const BoxDecoration(
-                                        border: Border(
-                                          bottom: BorderSide(color: Color(0xFFFDA4AF)),
-                                        ),
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: <Widget>[
-                                          const Text(
-                                            'Menu',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              color: Color(0xFF9F1239),
-                                            ),
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(
-                                              Icons.close,
-                                              color: Color(0xFF9F1239),
-                                            ),
-                                            onPressed: () {
-                                              setState(() {
-                                                _isSidebarOpen = false;
-                                              });
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ),
                                     Expanded(child: _buildSidebar()),
                                   ],
                                 ),

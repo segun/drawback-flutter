@@ -38,8 +38,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
   List<DrawSegmentStroke> _localStrokes = <DrawSegmentStroke>[];
   late AnimationController _syncAnimationController;
   List<DrawSegmentStroke> _remoteStrokes = <DrawSegmentStroke>[];
-  List<AnimatedEmote> _localEmotes = <AnimatedEmote>[];
-  List<AnimatedEmote> _remoteEmotes = <AnimatedEmote>[];
+  final List<AnimatedEmote> _localEmotes = <AnimatedEmote>[];
+  final List<AnimatedEmote> _remoteEmotes = <AnimatedEmote>[];
 
   String _drawColor = '#be123c';
   final DrawStrokeStyle _drawStyle = DrawStrokeStyle.normal;
@@ -368,7 +368,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
       children: <Widget>[
         // Status bar
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.fromLTRB(0, 0, 12, 4),
           color: const Color(0xFFFCE7F3),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
@@ -396,7 +396,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
         // Drawing area with dual canvases
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(4, 4, 4, 2),
             child: Column(
               children: <Widget>[
                 // Remote canvas (peer's drawing)
@@ -451,7 +451,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
         ),
 
         // Drawing controls
-        _buildControls(),
+        // _buildControls(),
       ],
     );
   }
@@ -613,131 +613,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
     );
   }
 
-  Widget _buildControls() {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: const BoxDecoration(
-        color: Color(0xFFFDA4AF),
-        border: Border(top: BorderSide(color: Color(0xFFFDA4AF))),
-      ),
-      child: Row(
-        children: <Widget>[
-          // Color picker
-          _buildColorButton('#be123c'),
-          const SizedBox(width: 4),
-          _buildColorButton('#dc2626'),
-          const SizedBox(width: 4),
-          _buildColorButton('#ea580c'),
-          const SizedBox(width: 4),
-          _buildColorButton('#ca8a04'),
-          const SizedBox(width: 4),
-          _buildColorButton('#16a34a'),
-          const SizedBox(width: 4),
-          _buildColorButton('#2563eb'),
-          const SizedBox(width: 4),
-          _buildColorButton('#9333ea'),
-          const SizedBox(width: 4),
-          _buildColorButton('#000000'),
-
-          const SizedBox(width: 16),
-
-          // Eraser
-          ElevatedButton.icon(
-            onPressed: () {
-              setState(() {
-                _drawColor = 'eraser';
-              });
-            },
-            icon: const Icon(Icons.auto_fix_high, size: 16),
-            label: const Text('Eraser'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _drawColor == 'eraser'
-                  ? const Color(0xFF9F1239)
-                  : const Color(0xFFFCE7F3),
-              foregroundColor: _drawColor == 'eraser'
-                  ? Colors.white
-                  : const Color(0xFF9F1239),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            ),
-          ),
-
-          const SizedBox(width: 16),
-
-          // Width selector
-          const Text(
-            'Width:',
-            style: TextStyle(fontSize: 12, color: Color(0xFF9F1239)),
-          ),
-          const SizedBox(width: 8),
-          Slider(
-            value: _drawWidth,
-            min: 1,
-            max: 10,
-            divisions: 9,
-            label: _drawWidth.toInt().toString(),
-            activeColor: const Color(0xFF9F1239),
-            onChanged: (double value) {
-              setState(() {
-                _drawWidth = value;
-              });
-            },
-          ),
-
-          const SizedBox(width: 16),
-
-          // Clear button
-          ElevatedButton.icon(
-            onPressed: _handleClearLocal,
-            icon: const Icon(Icons.clear_all, size: 16),
-            label: const Text('Clear'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFDC2626),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
-          ),
-
-          const Spacer(),
-
-          // Emote picker (simplified)
-          ElevatedButton.icon(
-            onPressed: (_roomJoined && _peerPresent) ? () => _showEmotePicker() : null,
-            icon: const Icon(Icons.emoji_emotions, size: 16),
-            label: const Text('Emote'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFCE7F3),
-              foregroundColor: const Color(0xFF9F1239),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildColorButton(String color) {
-    final bool isSelected = _drawColor == color;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _drawColor = color;
-        });
-      },
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          color: Color(int.parse('FF${color.substring(1)}', radix: 16)),
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: isSelected ? const Color(0xFF9F1239) : Colors.transparent,
-            width: 3,
-          ),
-        ),
-      ),
-    );
-  }
-
   void _showEmotePicker() {
     showDialog<void>(
       context: context,
@@ -747,7 +622,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),
           ),
-          contentPadding: const EdgeInsets.all(12),
+          contentPadding: const EdgeInsets.all(0),
           content: SizedBox(
             width: dialogWidth,
             height: 200,

@@ -1,5 +1,6 @@
 /// Domain models for home/social features
 /// Maps to the React app's socialApi types
+library;
 
 enum UserMode {
   public('PUBLIC'),

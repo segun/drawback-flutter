@@ -94,7 +94,9 @@ class _DrawbackAppState extends State<DrawbackApp> {
             controller: _homeController,
             onLogout: () async {
               await _authController.logout();
-              context.go('/login');
+              if (context.mounted) {
+                context.go('/login');
+              }
             },
           ),
         ),
