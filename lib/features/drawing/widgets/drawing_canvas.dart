@@ -13,9 +13,14 @@ class DrawingCanvasPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // Save layer to enable proper blending for eraser
+    canvas.saveLayer(Offset.zero & size, Paint());
+
     for (final DrawSegmentStroke stroke in strokes) {
       _drawStroke(canvas, size, stroke);
     }
+
+    canvas.restore();
   }
 
   void _drawStroke(Canvas canvas, Size size, DrawSegmentStroke stroke) {

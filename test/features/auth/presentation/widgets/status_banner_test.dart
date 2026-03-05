@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:drawback_flutter/features/auth/presentation/widgets/status_banner.dart';
+import 'package:drawback_flutter/core/widgets/status_banner.dart';
 
 void main() {
   group('StatusBanner', () {

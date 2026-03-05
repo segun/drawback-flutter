@@ -64,9 +64,14 @@ class _DisplayNameTextFieldState extends State<DisplayNameTextField> {
 
   void _handleOnChanged(String value) {
     final String normalized = _normalizeDisplayName(value);
+    final int cursorOffset = widget.controller.selection.baseOffset;
+    final int adjustment = normalized.length - value.length;
+    
     widget.controller.text = normalized;
     widget.controller.selection = TextSelection.fromPosition(
-      TextPosition(offset: normalized.length),
+      TextPosition(
+        offset: (cursorOffset + adjustment).clamp(1, normalized.length),
+      ),
     );
     widget.onChanged?.call(normalized);
   }

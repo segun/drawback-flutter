@@ -260,8 +260,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
           );
         }
 
-        final ChatRequest selectedChat = widget.controller.recentChats
-            .firstWhere((ChatRequest chat) => chat.id == widget.controller.selectedChatRequestId);
+        final ChatRequest? selectedChat = widget.controller.recentChats
+            .where((ChatRequest chat) => chat.id == widget.controller.selectedChatRequestId)
+            .firstOrNull;
+
+        if (selectedChat == null) {
+          return const Center(
+            child: Text(
+              'Chat not found. Please select another chat.',
+              style: TextStyle(color: Color(0xFF9F1239)),
+            ),
+          );
+        }
 
         // Check if chat is already saved
         final bool isChatSaved = widget.controller.savedChats

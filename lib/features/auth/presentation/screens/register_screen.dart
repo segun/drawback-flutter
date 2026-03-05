@@ -30,6 +30,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final FocusNode _passwordFocus = FocusNode();
   final FocusNode _confirmPasswordFocus = FocusNode();
 
+  late VoidCallback _emailFocusListener;
+  late VoidCallback _displayNameFocusListener;
+  late VoidCallback _passwordFocusListener;
+  late VoidCallback _confirmPasswordFocusListener;
+
   bool _checkingAvailability = false;
   bool? _isDisplayNameAvailable;
   final Set<String> _blurredFields = <String>{};
@@ -37,30 +42,42 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void initState() {
     super.initState();
-    _emailFocus.addListener(() {
+    _emailFocusListener = () {
       if (!_emailFocus.hasFocus && !_blurredFields.contains('email')) {
         setState(() => _blurredFields.add('email'));
       }
-    });
-    _displayNameFocus.addListener(() {
+    };
+    _emailFocus.addListener(_emailFocusListener);
+
+    _displayNameFocusListener = () {
       if (!_displayNameFocus.hasFocus && !_blurredFields.contains('displayName')) {
         setState(() => _blurredFields.add('displayName'));
       }
-    });
-    _passwordFocus.addListener(() {
+    };
+    _displayNameFocus.addListener(_displayNameFocusListener);
+
+    _passwordFocusListener = () {
       if (!_passwordFocus.hasFocus && !_blurredFields.contains('password')) {
         setState(() => _blurredFields.add('password'));
       }
-    });
-    _confirmPasswordFocus.addListener(() {
+    };
+    _passwordFocus.addListener(_passwordFocusListener);
+
+    _confirmPasswordFocusListener = () {
       if (!_confirmPasswordFocus.hasFocus && !_blurredFields.contains('confirmPassword')) {
         setState(() => _blurredFields.add('confirmPassword'));
       }
-    });
+    };
+    _confirmPasswordFocus.addListener(_confirmPasswordFocusListener);
   }
 
   @override
   void dispose() {
+    _emailFocus.removeListener(_emailFocusListener);
+    _displayNameFocus.removeListener(_displayNameFocusListener);
+    _passwordFocus.removeListener(_passwordFocusListener);
+    _confirmPasswordFocus.removeListener(_confirmPasswordFocusListener);
+
     _emailController.dispose();
     _displayNameController.dispose();
     _passwordController.dispose();

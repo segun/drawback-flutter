@@ -22,6 +22,7 @@ class HomeController extends ChangeNotifier {
 
   bool _isBusy = false;
   bool _isLoadingDashboard = false;
+  bool _isLoadingDashboardInProgress = false;
   bool _isSearching = false;
   String? _notice;
   String? _error;
@@ -49,7 +50,7 @@ class HomeController extends ChangeNotifier {
   // Selected chat for drawing
   String? _selectedChatRequestId;
   String? _joinedChatRequestId;
-  final bool _peerPresent = false;
+  bool _peerPresent = false;
 
   // Pending actions (for UI feedback)
   final Set<String> _pendingOutgoingUserIds = <String>{};
@@ -116,61 +117,70 @@ class HomeController extends ChangeNotifier {
 
   /// Load all dashboard data
   Future<bool> loadDashboardData({bool showLoading = true}) async {
-    return _runGuarded<bool>(
-      () async {
-        if (showLoading) {
-          _isLoadingDashboard = true;
-          notifyListeners();
-        }
+    if (_isLoadingDashboardInProgress) {
+      return false;
+    }
+    _isLoadingDashboardInProgress = true;
 
-        final List<dynamic> results = await Future.wait(<Future<dynamic>>[
-          _socialApi.getMyProfile(),
-          _socialApi.listReceivedChatRequests(),
-          _socialApi.listSentChatRequests(),
-          _socialApi.listSavedChats(),
-          _socialApi.listBlockedUsers(),
-        ]);
-
-        _profile = results[0] as UserProfile;
-        _profileDisplayName = _profile!.displayName;
-        _profileMode = _profile!.mode;
-        _appearInSearches = _profile!.appearInSearches;
-
-        final List<ChatRequest> received = results[1] as List<ChatRequest>;
-        final List<ChatRequest> sent = results[2] as List<ChatRequest>;
-        _chatRequests = <ChatRequest>[...received, ...sent];
-        _sentChatRequests = sent;
-
-        _savedChats = results[3] as List<SavedChat>;
-        _blockedUsers = results[4] as List<UserProfile>;
-
-        // Build connected user sets
-        _connectedUserIds.clear();
-        _acceptedChatByUserId.clear();
-        _pendingOutgoingUserIds.clear();
-
-        for (final ChatRequest req in _chatRequests) {
-          if (req.status == ChatRequestStatus.accepted) {
-            final String otherId =
-                req.fromUserId == _profile!.id ? req.toUserId : req.fromUserId;
-            _connectedUserIds.add(otherId);
-            _acceptedChatByUserId[otherId] = req.id;
-          } else if (req.status == ChatRequestStatus.pending &&
-              req.fromUserId == _profile!.id) {
-            _pendingOutgoingUserIds.add(req.toUserId);
+    try {
+      return await _runGuarded<bool>(
+        () async {
+          if (showLoading) {
+            _isLoadingDashboard = true;
+            notifyListeners();
           }
-        }
 
-        return true;
-      },
-      fallback: false,
-      customBusyFlag: showLoading
-          ? () {
-              _isLoadingDashboard = false;
-              notifyListeners();
+          final List<dynamic> results = await Future.wait(<Future<dynamic>>[
+            _socialApi.getMyProfile(),
+            _socialApi.listReceivedChatRequests(),
+            _socialApi.listSentChatRequests(),
+            _socialApi.listSavedChats(),
+            _socialApi.listBlockedUsers(),
+          ]);
+
+          _profile = results[0] as UserProfile;
+          _profileDisplayName = _profile!.displayName;
+          _profileMode = _profile!.mode;
+          _appearInSearches = _profile!.appearInSearches;
+
+          final List<ChatRequest> received = results[1] as List<ChatRequest>;
+          final List<ChatRequest> sent = results[2] as List<ChatRequest>;
+          _chatRequests = <ChatRequest>[...received, ...sent];
+          _sentChatRequests = sent;
+
+          _savedChats = results[3] as List<SavedChat>;
+          _blockedUsers = results[4] as List<UserProfile>;
+
+          // Build connected user sets
+          _connectedUserIds.clear();
+          _acceptedChatByUserId.clear();
+          _pendingOutgoingUserIds.clear();
+
+          for (final ChatRequest req in _chatRequests) {
+            if (req.status == ChatRequestStatus.accepted) {
+              final String otherId =
+                  req.fromUserId == _profile!.id ? req.toUserId : req.fromUserId;
+              _connectedUserIds.add(otherId);
+              _acceptedChatByUserId[otherId] = req.id;
+            } else if (req.status == ChatRequestStatus.pending &&
+                req.fromUserId == _profile!.id) {
+              _pendingOutgoingUserIds.add(req.toUserId);
             }
-          : null,
-    );
+          }
+
+          return true;
+        },
+        fallback: false,
+        customBusyFlag: showLoading
+            ? () {
+                _isLoadingDashboard = false;
+                notifyListeners();
+              }
+            : null,
+      );
+    } finally {
+      _isLoadingDashboardInProgress = false;
+    }
   }
 
   /// Initialize socket connection with access token
@@ -265,8 +275,21 @@ class HomeController extends ChangeNotifier {
     _socketInitialized = false;
   }
 
+  void _removeSocketListeners() {
+    final socket = _socketService.socket;
+    if (socket == null) {
+      return;
+    }
+
+    socket.off('chat.requested');
+    socket.off('chat.response');
+    socket.off('draw.peer.waiting');
+    socket.off('connect_error');
+  }
+
   @override
   void dispose() {
+    _removeSocketListeners();
     disconnectSocket();
     super.dispose();
   }

@@ -46,6 +46,7 @@ class AuthController extends ChangeNotifier {
       await _tokenStore.clearToken();
       _accessToken = null;
       _currentUser = null;
+      _notice = 'Your session has expired. Please log in again.';
     } finally {
       _isBootstrapping = false;
       notifyListeners();

@@ -35,6 +35,7 @@ class _PulsingIndicatorState extends State<PulsingIndicator>
 
   @override
   void dispose() {
+    _controller.stop();
     _controller.dispose();
     super.dispose();
   }

@@ -42,7 +42,7 @@ class UserProfile {
       email: json['email'] as String,
       displayName: json['displayName'] as String,
       mode: UserMode.fromString(json['mode'] as String),
-      appearInSearches: json['appearInSearches'] as bool,
+      appearInSearches: (json['appearInSearches'] as bool?) ?? false,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
