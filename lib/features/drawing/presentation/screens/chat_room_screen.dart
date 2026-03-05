@@ -448,6 +448,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
               },
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFFE11D48),
+                padding: const EdgeInsets.all(16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(1),
+                ),
               ),
               child: const Text('Apply'),
             ),
@@ -557,7 +561,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
                                         ? const Color(0xFFE11D48)
                                         : const Color(0xFFFDA4AF),
                                   ),
+                                  padding: const EdgeInsets.all(16),
                                   minimumSize: const Size(0, 36),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(1),
+                                  ),
                                 ),
                               ),
                             ),
@@ -584,7 +592,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
                                         ? const Color(0xFFE11D48)
                                         : const Color(0xFFFDA4AF),
                                   ),
+                                  padding: const EdgeInsets.all(16),
                                   minimumSize: const Size(0, 36),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(1),
+                                  ),
                                 ),
                               ),
                             ),
@@ -656,7 +668,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
                                         ? const Color(0xFF22C55E)
                                         : const Color(0xFF86EFAC),
                                   ),
+                                  padding: const EdgeInsets.all(16),
                                   minimumSize: const Size(0, 36),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(1),
+                                  ),
                                 ),
                               ),
                             ),

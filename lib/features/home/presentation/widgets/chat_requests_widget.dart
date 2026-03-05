@@ -228,7 +228,7 @@ class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
                                 ? const Color(0xFFBE123C)
                                 : const Color(0xFFBE123C).withValues(alpha: 0.6),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(6),
+                              borderRadius: BorderRadius.circular(1),
                             ),
                           ),
                           tooltip: 'Send chat request',

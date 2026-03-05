@@ -79,6 +79,10 @@ class SavedChatsWidget extends StatelessWidget {
                               onPressed: () => Navigator.of(context).pop(true),
                               style: FilledButton.styleFrom(
                                 backgroundColor: const Color(0xFFB91C1C),
+                                padding: const EdgeInsets.all(16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(1),
+                                ),
                               ),
                               child: const Text('Yes, delete'),
                             ),

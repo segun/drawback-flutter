@@ -126,14 +126,15 @@ class UserSearchWidget extends StatelessWidget {
                                     }
                                   }
                                 },
-                          style: FilledButton.styleFrom(                            
+                          style: FilledButton.styleFrom(
                             backgroundColor: const Color(0xFFBE123C),
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 16),
+                            padding: const EdgeInsets.all(16),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(1),
+                            ),
                           ),
                           child: Text(
                             isPending ? 'Sent' : 'Request',

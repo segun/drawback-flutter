@@ -71,6 +71,10 @@ class BlockedUsersWidget extends StatelessWidget {
                               onPressed: () => Navigator.of(context).pop(true),
                               style: FilledButton.styleFrom(
                                 backgroundColor: const Color(0xFF16A34A),
+                                padding: const EdgeInsets.all(16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(1),
+                                ),
                               ),
                               child: const Text('Yes, unblock'),
                             ),

@@ -56,12 +56,9 @@ class MainScreen extends StatelessWidget {
                                 const Color(0xFFBE185D), // rose-700
                             foregroundColor:
                                 const Color(0xFFFCE7F3), // rose-100
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 9,
-                            ),
+                            padding: const EdgeInsets.all(16),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                  6), // md radius
+                              borderRadius: BorderRadius.circular(1),
                             ),
                           ),
                           child: const Text(
@@ -83,12 +80,9 @@ class MainScreen extends StatelessWidget {
                             ),
                             foregroundColor:
                                 const Color(0xFF9F1239), // rose-800
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 9,
-                            ),
+                            padding: const EdgeInsets.all(16),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                  6), // md radius
+                              borderRadius: BorderRadius.circular(1),
                             ),
                           ),
                           child: const Text(

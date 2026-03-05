@@ -113,8 +113,9 @@ class _ConfirmScreenState extends State<ConfirmScreen> {
                         const Color(0xFFBE185D), // rose-700
                     foregroundColor:
                         const Color(0xFFFCE7F3), // rose-100
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 12,
+                    padding: const EdgeInsets.all(16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(1),
                     ),
                   ),
                   child: const Text('Go to login'),

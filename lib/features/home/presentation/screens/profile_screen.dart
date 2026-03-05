@@ -81,6 +81,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
               onPressed: () => Navigator.of(context).pop(true),
               style: FilledButton.styleFrom(
                 backgroundColor: Colors.red,
+                padding: const EdgeInsets.all(16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(1),
+                ),
               ),
               child: const Text('Delete'),
             ),
@@ -245,7 +249,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   onPressed: widget.controller.isBusy ? null : _updateProfile,
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFFBE123C),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.all(16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(1),
+                    ),
                   ),
                   child: widget.controller.isBusy
                       ? const SizedBox(
@@ -280,7 +287,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.red,
                     side: const BorderSide(color: Colors.red),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.all(16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(1),
+                    ),
                   ),
                   child: const Text('Delete My Account'),
                 ),
