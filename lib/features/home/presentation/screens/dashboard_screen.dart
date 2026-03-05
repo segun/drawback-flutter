@@ -104,8 +104,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       Padding(
                         padding: const EdgeInsets.all(6),
                         child: StatusBanner(
+                          key: ValueKey('${error ?? notice}'),
                           text: error ?? notice!,
                           kind: error != null ? BannerKind.error : BannerKind.success,
+                          onDismiss: () {
+                            widget.controller.clearMessages();
+                          },
                         ),
                       ),
                     Expanded(

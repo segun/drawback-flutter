@@ -286,7 +286,7 @@ class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
                         ),
                       ),
                       trailing: IconButton(
-                        icon: const Icon(Icons.delete_outline, size: 16, color: Color(0xFF9F1239)),
+                        icon: const Icon(Icons.delete_outline, size: 20, color: Color(0xFF9F1239)),
                         onPressed: () async {
                           await widget.controller.cancelChatRequest(request.id);
                           await widget.controller.loadDashboardData(showLoading: false);
@@ -323,7 +323,7 @@ class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
                         IconButton(
-                          icon: const Icon(Icons.check, size: 16, color: Color(0xFF15803D)),
+                          icon: const Icon(Icons.check, size: 20, color: Color(0xFF15803D)),
                           onPressed: () async {
                             await widget.controller.respondToChatRequest(
                               chatRequestId: request.id,
@@ -338,7 +338,7 @@ class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
                         ),
                         const SizedBox(width: 4),
                         IconButton(
-                          icon: const Icon(Icons.delete_outline, size: 16, color: Color(0xFFBE123C)),
+                          icon: const Icon(Icons.delete_outline, size: 20, color: Color(0xFFBE123C)),
                           onPressed: () async {
                             await widget.controller.respondToChatRequest(
                               chatRequestId: request.id,

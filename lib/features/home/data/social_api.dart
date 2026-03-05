@@ -215,7 +215,7 @@ class SocialApi {
   }
 
   Future<void> blockUser({required String blockedUserId}) async {
-    await _client.postJson(
+    await _client.postEmpty(
       '/users/$blockedUserId/block',
       headers: await _authHeaders(),
     );
