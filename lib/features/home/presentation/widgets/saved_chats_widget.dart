@@ -62,7 +62,34 @@ class SavedChatsWidget extends StatelessWidget {
                 trailing: IconButton(
                   icon: const Icon(Icons.delete_outline, size: 20, color: Color(0xFF9F1239)),
                   onPressed: () async {
-                    await controller.removeSavedChat(saved.id);
+                    final bool? confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('Delete Saved Chat'),
+                          content: Text(
+                            'Are you sure you want to delete your saved chat with ${other.displayName}?',
+                          ),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text('No'),
+                            ),
+                            FilledButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFFB91C1C),
+                              ),
+                              child: const Text('Yes, delete'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+
+                    if (confirmed == true) {
+                      await controller.removeSavedChat(saved.id);
+                    }
                   },
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),

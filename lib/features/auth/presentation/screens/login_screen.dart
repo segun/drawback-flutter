@@ -168,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 backgroundColor: const Color(0xFFBE185D), // rose-700
                                 foregroundColor: const Color(0xFFFCE7F3), // rose-100
                                 padding: const EdgeInsets.symmetric(
-                                  vertical: 9,
+                                  vertical: 16,
                                 ),
                               ),
                               child: widget.controller.isBusy

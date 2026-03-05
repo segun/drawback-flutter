@@ -92,7 +92,34 @@ class RecentChatsWidget extends StatelessWidget {
                         color: isActive ? Colors.white : const Color(0xFF9F1239),
                       ),
                       onPressed: () async {
-                        await controller.closeRecentChat(chat.id);
+                        final bool? confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('Delete Chat'),
+                              content: Text(
+                                'Are you sure you want to delete your chat with ${other.displayName}?',
+                              ),
+                              actions: <Widget>[
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(false),
+                                  child: const Text('No'),
+                                ),
+                                FilledButton(
+                                  onPressed: () => Navigator.of(context).pop(true),
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: const Color(0xFFB91C1C),
+                                  ),
+                                  child: const Text('Yes, delete'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+
+                        if (confirmed == true) {
+                          await controller.closeRecentChat(chat.id);
+                        }
                       },
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
@@ -107,7 +134,34 @@ class RecentChatsWidget extends StatelessWidget {
                         color: isActive ? Colors.white : const Color(0xFF9F1239),
                       ),
                       onPressed: () async {
-                        await controller.blockUser(other.id);
+                        final bool? confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('Block User'),
+                              content: Text(
+                                'Are you sure you want to block ${other.displayName}?',
+                              ),
+                              actions: <Widget>[
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(false),
+                                  child: const Text('No'),
+                                ),
+                                FilledButton(
+                                  onPressed: () => Navigator.of(context).pop(true),
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: const Color(0xFFB91C1C),
+                                  ),
+                                  child: const Text('Yes, block'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+
+                        if (confirmed == true) {
+                          await controller.blockUser(other.id);
+                        }
                       },
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),

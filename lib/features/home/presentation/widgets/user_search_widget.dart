@@ -25,7 +25,8 @@ class UserSearchWidget extends StatelessWidget {
           decoration: InputDecoration(
             hintText: 'Search users by display name',
             hintStyle: const TextStyle(fontSize: 13),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: Color(0xFFFDA4AF)),
@@ -75,8 +76,10 @@ class UserSearchWidget extends StatelessWidget {
             )
           else
             ...controller.searchResults.map((UserProfile user) {
-              final bool isConnected = controller.connectedUserIds.contains(user.id);
-              final bool isPending = controller.pendingOutgoingUserIds.contains(user.id);
+              final bool isConnected =
+                  controller.connectedUserIds.contains(user.id);
+              final bool isPending =
+                  controller.pendingOutgoingUserIds.contains(user.id);
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 8),
@@ -87,14 +90,17 @@ class UserSearchWidget extends StatelessWidget {
                 ),
                 child: ListTile(
                   dense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   title: Text(
                     user.displayName,
-                    style: const TextStyle(fontSize: 13, color: Color(0xFF9F1239)),
+                    style:
+                        const TextStyle(fontSize: 13, color: Color(0xFF9F1239)),
                   ),
                   trailing: isConnected
                       ? Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             color: const Color(0xFFFCE7F3),
                             border: Border.all(color: const Color(0xFFFDA4AF)),
@@ -102,29 +108,32 @@ class UserSearchWidget extends StatelessWidget {
                           ),
                           child: const Text(
                             'Connected',
-                            style: TextStyle(fontSize: 11, color: Color(0xFF9F1239)),
+                            style: TextStyle(
+                                fontSize: 11, color: Color(0xFF9F1239)),
                           ),
                         )
-                      : FilledButton(
+                      : FilledButton(                        
                           onPressed: isPending
                               ? null
                               : () async {
-                                  final bool success =
-                                      await controller.sendChatRequest(user.displayName);
+                                  final bool success = await controller
+                                      .sendChatRequest(user.displayName);
                                   if (success) {
-                                    final String? chatId =
-                                        controller.acceptedChatByUserId[user.id];
+                                    final String? chatId = controller
+                                        .acceptedChatByUserId[user.id];
                                     if (chatId != null) {
                                       onChatRequest(chatId);
                                     }
                                   }
                                 },
-                          style: FilledButton.styleFrom(
+                          style: FilledButton.styleFrom(                            
                             backgroundColor: const Color(0xFFBE123C),
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 16),
                             minimumSize: Size.zero,
                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            
                           ),
                           child: Text(
                             isPending ? 'Sent' : 'Request',
@@ -133,7 +142,8 @@ class UserSearchWidget extends StatelessWidget {
                         ),
                   onTap: isConnected
                       ? () {
-                          final String? chatId = controller.acceptedChatByUserId[user.id];
+                          final String? chatId =
+                              controller.acceptedChatByUserId[user.id];
                           if (chatId != null) {
                             onChatRequest(chatId);
                           }

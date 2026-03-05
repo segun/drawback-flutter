@@ -51,21 +51,42 @@ class BlockedUsersWidget extends StatelessWidget {
                   user.displayName,
                   style: const TextStyle(fontSize: 13, color: Color(0xFF9F1239)),
                 ),
-                subtitle: Text(
-                  user.email,
-                  style: const TextStyle(fontSize: 11, color: Color(0xFF9F1239)),
-                ),
-                trailing: TextButton(
+                trailing: IconButton(
+                  icon: const Icon(Icons.check_circle_outline, size: 20, color: Color(0xFF9F1239)),
                   onPressed: () async {
-                    await controller.unblockUser(user.id);
+                    final bool? confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text('Unblock User'),
+                          content: Text(
+                            'Are you sure you want to unblock ${user.displayName}?',
+                          ),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () => Navigator.of(context).pop(false),
+                              child: const Text('No'),
+                            ),
+                            FilledButton(
+                              onPressed: () => Navigator.of(context).pop(true),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFF16A34A),
+                              ),
+                              child: const Text('Yes, unblock'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+
+                    if (confirmed == true) {
+                      await controller.unblockUser(user.id);
+                    }
                   },
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFFBE123C),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    minimumSize: Size.zero,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  child: const Text('Unblock', style: TextStyle(fontSize: 11)),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  visualDensity: VisualDensity.compact,
+                  tooltip: 'Unblock user',
                 ),
               ),
             );

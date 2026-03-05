@@ -407,8 +407,22 @@ class HomeController extends ChangeNotifier {
   Future<bool> removeSavedChat(String savedChatId) async {
     return _runGuarded<bool>(
       () async {
+        // Find the saved chat to get its chatRequestId before removing
+        final SavedChat? savedChat = _savedChats
+            .cast<SavedChat?>()
+            .firstWhere(
+              (SavedChat? s) => s?.id == savedChatId,
+              orElse: () => null,
+            );
+
         await _socialApi.deleteSavedChat(savedChatId: savedChatId);
         _savedChats.removeWhere((SavedChat s) => s.id == savedChatId);
+
+        // Clear selected chat if it matches the deleted saved chat
+        if (savedChat != null && _selectedChatRequestId == savedChat.chatRequestId) {
+          _selectedChatRequestId = null;
+        }
+
         _notice = 'Saved chat removed';
         return true;
       },
@@ -420,6 +434,21 @@ class HomeController extends ChangeNotifier {
   Future<bool> blockUser(String blockedUserId) async {
     return _runGuarded<bool>(
       () async {
+        // Clear selected chat if it involves the blocked user (before removing from list)
+        if (_selectedChatRequestId != null) {
+          final ChatRequest? selectedChat = _chatRequests
+              .cast<ChatRequest?>()
+              .firstWhere(
+                (ChatRequest? r) => r?.id == _selectedChatRequestId,
+                orElse: () => null,
+              );
+          if (selectedChat != null &&
+              (selectedChat.fromUserId == blockedUserId ||
+                  selectedChat.toUserId == blockedUserId)) {
+            _selectedChatRequestId = null;
+          }
+        }
+
         await _socialApi.blockUser(blockedUserId: blockedUserId);
 
         // Reload blocked users list
