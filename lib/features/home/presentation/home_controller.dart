@@ -460,6 +460,11 @@ class HomeController extends ChangeNotifier {
         _sentChatRequests.removeWhere(
             (ChatRequest r) => r.fromUserId == blockedUserId || r.toUserId == blockedUserId);
 
+        // Rebuild connected user maps to remove blocked user
+        _connectedUserIds.remove(blockedUserId);
+        _acceptedChatByUserId.remove(blockedUserId);
+        _pendingOutgoingUserIds.remove(blockedUserId);
+
         _notice = 'User blocked';
         return true;
       },
@@ -472,7 +477,11 @@ class HomeController extends ChangeNotifier {
     return _runGuarded<bool>(
       () async {
         await _socialApi.unblockUser(blockedUserId: blockedUserId);
-        _blockedUsers.removeWhere((UserProfile u) => u.id == blockedUserId);
+        
+        // Reload dashboard to sync with backend state
+        // This rebuilds _connectedUserIds and _acceptedChatByUserId maps
+        await loadDashboardData(showLoading: false);
+        
         _notice = 'User unblocked';
         return true;
       },
