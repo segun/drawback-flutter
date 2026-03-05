@@ -214,22 +214,16 @@ class DrawPeerLeftPayload {
 
 class DrawPeerWaitingPayload {
   const DrawPeerWaitingPayload({
-    required this.roomId,
     required this.requestId,
-    required this.userId,
   });
 
   factory DrawPeerWaitingPayload.fromJson(Map<String, dynamic> json) {
     return DrawPeerWaitingPayload(
-      roomId: json['roomId'] as String,
-      requestId: json['requestId'] as String,
-      userId: json['userId'] as String,
+      requestId: json['requestId'] as String? ?? '',
     );
   }
 
-  final String roomId;
   final String requestId;
-  final String userId;
 }
 
 /// Socket service singleton for managing Socket.IO connection

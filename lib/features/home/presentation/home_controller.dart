@@ -56,6 +56,9 @@ class HomeController extends ChangeNotifier {
   final Set<String> _connectedUserIds = <String>{};
   final Map<String, String> _acceptedChatByUserId = <String, String>{};
 
+  // Waiting peers (chat request IDs where peer is waiting)
+  final Set<String> _waitingPeerRequestIds = <String>{};
+
   // Getters
   bool get isBusy => _isBusy;
   bool get isLoadingDashboard => _isLoadingDashboard;
@@ -83,6 +86,7 @@ class HomeController extends ChangeNotifier {
   Set<String> get pendingOutgoingUserIds => _pendingOutgoingUserIds;
   Set<String> get connectedUserIds => _connectedUserIds;
   Map<String, String> get acceptedChatByUserId => _acceptedChatByUserId;
+  Set<String> get waitingPeerRequestIds => _waitingPeerRequestIds;
 
   /// Get filtered recent chats (accepted chats)
   List<ChatRequest> get recentChats {
@@ -199,6 +203,10 @@ class HomeController extends ChangeNotifier {
       _onChatResponse(data);
     });
 
+    socket.on('draw.peer.waiting', (dynamic data) {
+      _onDrawPeerWaiting(data);
+    });
+
     socket.on('connect_error', (dynamic error) {
       _error = 'Realtime connection failed';
       notifyListeners();
@@ -230,6 +238,25 @@ class HomeController extends ChangeNotifier {
 
     // Reload dashboard data
     loadDashboardData(showLoading: false);
+  }
+
+  void _onDrawPeerWaiting(dynamic data) {
+    if (data is! Map<String, dynamic>) {
+      return;
+    }
+
+    try {
+      final DrawPeerWaitingPayload payload = DrawPeerWaitingPayload.fromJson(data);
+      if (payload.requestId.isNotEmpty) {
+        _waitingPeerRequestIds.add(payload.requestId);
+        notifyListeners();
+      }
+    } catch (e) {
+      // Log error but don't crash
+      if (kDebugMode) {
+        print('Error parsing draw.peer.waiting payload: $e');
+      }
+    }
   }
 
   /// Disconnect socket and clean up
@@ -460,6 +487,8 @@ class HomeController extends ChangeNotifier {
   /// Open a chat (for drawing)
   void openChat(String chatRequestId) {
     _selectedChatRequestId = chatRequestId;
+    // Clear waiting state when user opens the chat
+    _waitingPeerRequestIds.remove(chatRequestId);
     notifyListeners();
   }
 
@@ -471,6 +500,9 @@ class HomeController extends ChangeNotifier {
 
         // Remove from local state
         _chatRequests.removeWhere((ChatRequest req) => req.id == chatRequestId);
+        
+        // Clear waiting state
+        _waitingPeerRequestIds.remove(chatRequestId);
         
         if (_selectedChatRequestId == chatRequestId) {
           _selectedChatRequestId = null;

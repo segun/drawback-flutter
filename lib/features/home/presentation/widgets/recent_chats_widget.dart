@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/home_models.dart';
 import '../home_controller.dart';
+import 'pulsing_indicator.dart';
 
 /// Recent chats list widget for the sidebar
 class RecentChatsWidget extends StatelessWidget {
@@ -47,6 +48,7 @@ class RecentChatsWidget extends StatelessWidget {
             }
 
             final bool isActive = selectedChatId == chat.id;
+            final bool isPeerWaiting = controller.waitingPeerRequestIds.contains(chat.id);
 
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
@@ -60,13 +62,25 @@ class RecentChatsWidget extends StatelessWidget {
               child: ListTile(
                 dense: true,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                title: Text(
-                  other.displayName,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isActive ? Colors.white : const Color(0xFF9F1239),
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                  ),
+                title: Row(
+                  children: <Widget>[
+                    if (isPeerWaiting)
+                      const Padding(
+                        padding: EdgeInsets.only(right: 6),
+                        child: PulsingIndicator(size: 8),
+                      ),
+                    Expanded(
+                      child: Text(
+                        other.displayName,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: isActive ? Colors.white : const Color(0xFF9F1239),
+                          fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
