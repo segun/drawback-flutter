@@ -24,12 +24,15 @@ class HomeScreen extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              if (notice != null) ...<Widget>[
-                StatusBanner(text: notice, kind: BannerKind.success),
-                const SizedBox(height: 12),
-              ],
-              if (error != null) ...<Widget>[
-                StatusBanner(text: error, kind: BannerKind.error),
+              if (error != null || notice != null) ...<Widget>[
+                StatusBanner(
+                  text: error ?? notice ?? '',
+                  kind: error != null ? BannerKind.error : BannerKind.success,
+                  key: ValueKey('${error ?? notice}'),
+                  onDismiss: () {
+                    controller.clearMessages();
+                  },
+                ),
                 const SizedBox(height: 12),
               ],
               Text(

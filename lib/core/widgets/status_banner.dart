@@ -61,7 +61,7 @@ class _StatusBannerState extends State<StatusBanner> {
         color: bg,
         borderRadius: BorderRadius.circular(8),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: EdgeInsets.fromLTRB(8, 0, 4, 0),
       child: Row(
         children: <Widget>[
           Expanded(

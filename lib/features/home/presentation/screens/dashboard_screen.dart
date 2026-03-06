@@ -70,13 +70,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 });
               },
             ),
-            title: Text(
-              'DrawkcaB',
-              style: TextStyle(
-                color: const Color(0xFF9F1239),
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-              ),
+            title: Image.asset(
+              'assets/images/logo_main.png',
+              height: 40,
+              fit: BoxFit.contain,
             ),
             actions: <Widget>[
               IconButton(

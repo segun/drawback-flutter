@@ -28,6 +28,11 @@ class AuthController extends ChangeNotifier {
   String? get notice => _notice;
   String? get error => _error;
 
+  void clearMessages() {
+    _clearMessages();
+    notifyListeners();
+  }
+
   Future<void> bootstrap() async {
     _isBootstrapping = true;
     notifyListeners();

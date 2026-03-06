@@ -97,13 +97,6 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                if (error != null || notice != null) ...<Widget>[
-                  StatusBanner(
-                    text: error ?? notice ?? '',
-                    kind: error != null ? BannerKind.error : BannerKind.success,
-                  ),
-                  const SizedBox(height: 12),
-                ],
                 Container(
                   decoration: BoxDecoration(
                     color: const Color(0xFFFCE7F3), // rose-100
@@ -137,6 +130,19 @@ class _LoginScreenState extends State<LoginScreen> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
+                      if (error != null || notice != null) ...<Widget>[
+                        const SizedBox(height: 12),
+                        StatusBanner(
+                          text: error ?? notice ?? '',
+                          kind: error != null
+                              ? BannerKind.error
+                              : BannerKind.success,
+                          key: ValueKey('${error ?? notice}'),
+                          onDismiss: () {
+                            widget.controller.clearMessages();
+                          },
+                        ),
+                      ],
                       Form(
                         key: _formKey,
                         child: Column(
@@ -170,10 +176,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 16),
                             FilledButton(
-                              onPressed: widget.controller.isBusy ? null : _submit,
+                              onPressed:
+                                  widget.controller.isBusy ? null : _submit,
                               style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFFBE185D), // rose-700
-                                foregroundColor: const Color(0xFFFCE7F3), // rose-100
+                                backgroundColor:
+                                    const Color(0xFFBE185D), // rose-700
+                                foregroundColor:
+                                    const Color(0xFFFCE7F3), // rose-100
                                 padding: const EdgeInsets.all(16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(1),
@@ -187,7 +196,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                         strokeWidth: 2,
                                       ),
                                     )
-                                  : const Text('Login', style: TextStyle(fontSize: 13)),
+                                  : const Text('Login',
+                                      style: TextStyle(fontSize: 13)),
                             ),
                             const SizedBox(height: 12),
                             TextButton(
@@ -206,7 +216,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               child: Divider(
                                 height: 8,
                                 thickness: 1,
-                                color: Color.fromARGB(255, 234, 12, 57), // rose-300
+                                color: Color.fromARGB(
+                                    255, 234, 12, 57), // rose-300
                               ),
                             ),
                             const SizedBox(height: 12),
@@ -232,4 +243,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-

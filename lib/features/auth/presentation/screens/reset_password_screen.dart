@@ -85,6 +85,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 StatusBanner(
                   text: success ? 'Success' : 'Error',
                   kind: success ? BannerKind.success : BannerKind.error,
+                    key: ValueKey(success ? 'Success' : 'Error'),                    
+                    onDismiss: () {
+                      widget.controller.clearMessages();
+                    },                  
                 ),
                 const SizedBox(height: 12),
                 Text(_resultMessage ?? 'No message provided.'),
@@ -108,12 +112,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                if (error != null) ...<Widget>[
-                  StatusBanner(text: error, kind: BannerKind.error),
-                  const SizedBox(height: 12),
-                ],
-                if (notice != null) ...<Widget>[
-                  StatusBanner(text: notice, kind: BannerKind.success),
+                if (error != null || notice != null) ...<Widget>[
+                  StatusBanner(
+                    text: error ?? notice ?? '',
+                    kind: error != null ? BannerKind.error : BannerKind.success,
+                    key: ValueKey('${error ?? notice}'),                    
+                    onDismiss: () {
+                      widget.controller.clearMessages();
+                    },                    
+                  ),
                   const SizedBox(height: 12),
                 ],
                 CustomTextField(

@@ -23,8 +23,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _displayNameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
-  
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+
   final FocusNode _emailFocus = FocusNode();
   final FocusNode _displayNameFocus = FocusNode();
   final FocusNode _passwordFocus = FocusNode();
@@ -50,7 +51,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailFocus.addListener(_emailFocusListener);
 
     _displayNameFocusListener = () {
-      if (!_displayNameFocus.hasFocus && !_blurredFields.contains('displayName')) {
+      if (!_displayNameFocus.hasFocus &&
+          !_blurredFields.contains('displayName')) {
         setState(() => _blurredFields.add('displayName'));
       }
     };
@@ -64,7 +66,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _passwordFocus.addListener(_passwordFocusListener);
 
     _confirmPasswordFocusListener = () {
-      if (!_confirmPasswordFocus.hasFocus && !_blurredFields.contains('confirmPassword')) {
+      if (!_confirmPasswordFocus.hasFocus &&
+          !_blurredFields.contains('confirmPassword')) {
         setState(() => _blurredFields.add('confirmPassword'));
       }
     };
@@ -101,8 +104,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _isDisplayNameAvailable = null;
     });
 
-    final bool available = await widget.controller
-        .checkDisplayNameAvailability(candidate);
+    final bool available =
+        await widget.controller.checkDisplayNameAvailability(candidate);
 
     if (!mounted) {
       return;
@@ -118,24 +121,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
-    
+
     // Mark all fields as blurred for final validation
     setState(() {
-      _blurredFields.addAll(<String>['email', 'password', 'confirmPassword', 'displayName']);
+      _blurredFields.addAll(
+          <String>['email', 'password', 'confirmPassword', 'displayName']);
     });
-    
+
     // Validate email
     if (_emailController.text.trim().isEmpty) {
       return;
     }
-    
+
     // Validate password
-    if (_passwordController.text.isEmpty || _passwordController.text.length < 8) {
+    if (_passwordController.text.isEmpty ||
+        _passwordController.text.length < 8) {
       return;
     }
-    
+
     // Validate confirm password
-    if (_confirmPasswordController.text.isEmpty || _confirmPasswordController.text != _passwordController.text) {
+    if (_confirmPasswordController.text.isEmpty ||
+        _confirmPasswordController.text != _passwordController.text) {
       return;
     }
 
@@ -189,13 +195,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                if (error != null || notice != null) ...<Widget>[
-                  StatusBanner(
-                    text: error ?? notice ?? '',
-                    kind: error != null ? BannerKind.error : BannerKind.success,
-                  ),
-                  const SizedBox(height: 12),
-                ],
                 Container(
                   decoration: BoxDecoration(
                     color: const Color(0xFFFCE7F3), // rose-100
@@ -251,7 +250,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Email is required.';
                                 }
-                                if (!ValidationPatterns.emailPattern.hasMatch(value.trim())) {
+                                if (!ValidationPatterns.emailPattern
+                                    .hasMatch(value.trim())) {
                                   return 'Please enter a valid email address.';
                                 }
                                 return null;
@@ -264,7 +264,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               focusNode: _displayNameFocus,
                               enabled: !widget.controller.isBusy,
                               validator: (String? value) {
-                                if (value == null || value.trim().isEmpty || value.trim() == '@') {
+                                if (value == null ||
+                                    value.trim().isEmpty ||
+                                    value.trim() == '@') {
                                   return 'Display name is required.';
                                 }
                                 if (!_isValidDisplayName(value.trim())) {
@@ -284,39 +286,48 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               },
                               suffixIcon: _blurredFields.contains('displayName')
                                   ? _isDisplayNameAvailable == true
-                                      ? Icon(Icons.check_circle_rounded, size: 20, color: Colors.green.shade600)
+                                      ? Icon(Icons.check_circle_rounded,
+                                          size: 20,
+                                          color: Colors.green.shade600)
                                       : _isDisplayNameAvailable == false
-                                          ? Icon(Icons.cancel_rounded, size: 20, color: Colors.red.shade600)
+                                          ? Icon(Icons.cancel_rounded,
+                                              size: 20,
+                                              color: Colors.red.shade600)
                                           : _checkingAvailability
                                               ? const SizedBox(
                                                   width: 20,
                                                   height: 20,
-                                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                          strokeWidth: 2),
                                                 )
                                               : null
                                   : null,
                             ),
-                            if (_blurredFields.contains('displayName') && _isDisplayNameAvailable == false)
-                              ...<Widget>[
-                                const SizedBox(height: 4),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                                  child: Row(
-                                    children: <Widget>[
-                                      Icon(
-                                        Icons.close_rounded,
-                                        size: 14,
-                                        color: Colors.red.shade600,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        'Display name is not available',
-                                        style: TextStyle(fontSize: 12, color: Colors.red.shade700),
-                                      ),
-                                    ],
-                                  ),
+                            if (_blurredFields.contains('displayName') &&
+                                _isDisplayNameAvailable == false) ...<Widget>[
+                              const SizedBox(height: 4),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                child: Row(
+                                  children: <Widget>[
+                                    Icon(
+                                      Icons.close_rounded,
+                                      size: 14,
+                                      color: Colors.red.shade600,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      'Display name is not available',
+                                      style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.red.shade700),
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
+                            ],
                             const SizedBox(height: 12),
                             CustomTextField(
                               controller: _passwordController,
@@ -372,8 +383,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   ? null
                                   : _submit,
                               style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFFBE185D), // rose-700
-                                foregroundColor: const Color(0xFFFCE7F3), // rose-100
+                                backgroundColor:
+                                    const Color(0xFFBE185D), // rose-700
+                                foregroundColor:
+                                    const Color(0xFFFCE7F3), // rose-100
                                 padding: const EdgeInsets.all(16),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(1),
@@ -387,7 +400,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                         strokeWidth: 2,
                                       ),
                                     )
-                                  : const Text('Create Account', style: TextStyle(fontSize: 13)),
+                                  : const Text('Create Account',
+                                      style: TextStyle(fontSize: 13)),
                             ),
                             const SizedBox(height: 12),
                             TextButton(
@@ -404,6 +418,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ],
                   ),
                 ),
+                if (error != null || notice != null) ...<Widget>[
+                  const SizedBox(height: 12),
+                  StatusBanner(
+                    text: error ?? notice ?? '',
+                    kind: error != null ? BannerKind.error : BannerKind.success,
+                    key: ValueKey('${error ?? notice}'),
+                    onDismiss: () {
+                      widget.controller.clearMessages();
+                    },
+                  ),
+                ],
               ],
             ),
           ),
@@ -412,4 +437,3 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 }
-
