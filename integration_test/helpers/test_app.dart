@@ -54,7 +54,9 @@ class _TestAppState extends State<TestApp> {
         GoRoute(
           path: '/',
           builder: (BuildContext context, GoRouterState state) =>
-              const MainScreen(),
+              MainScreen(
+                controller: _authController,
+              ),
         ),
         GoRoute(
           path: '/login',

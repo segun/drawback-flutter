@@ -13,6 +13,9 @@ run-web-dev:
 build-ios-prod:
 	flutter build ios --dart-define=BACKEND_URL=https://drawback.chat/api
 
+archive-ios:
+	./scripts/deploy-ios.sh
+
 build-android-prod:
 	flutter build apk --dart-define=BACKEND_URL=https://drawback.chat/api
 
