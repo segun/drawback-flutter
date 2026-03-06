@@ -1,19 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../auth_controller.dart';
 import '../widgets/auth_page_scaffold.dart';
 import '../widgets/auth_text_styles.dart';
 
 class MainScreen extends StatelessWidget {
-  const MainScreen({super.key});
+  const MainScreen({required this.controller, super.key});
+
+  final AuthController controller;
 
   @override
   Widget build(BuildContext context) {
-    return AuthPageScaffold(
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (BuildContext context, Widget? child) {
+        // Show loading screen while checking for existing token
+        if (controller.isBootstrapping) {
+          return Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Image.asset(
+                    'assets/images/logo_main.png',
+                    width: 160,
+                    height: 160,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(height: 24),
+                  const CircularProgressIndicator(
+                    color: Color(0xFFE11D48), // rose-600
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        // Show main screen with Get Started/Login only if not authenticated
+        return AuthPageScaffold(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
             Container(
               decoration: BoxDecoration(
                 color: const Color(0xFFFCE7F3), // rose-100
@@ -127,6 +157,8 @@ class MainScreen extends StatelessWidget {
           ],
         ),
       ),
+        );
+      },
     );
   }
 }

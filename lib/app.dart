@@ -52,8 +52,9 @@ class _DrawbackAppState extends State<DrawbackApp> {
       routes: <GoRoute>[
         GoRoute(
           path: '/',
-          builder: (BuildContext context, GoRouterState state) =>
-              const MainScreen(),
+          builder: (BuildContext context, GoRouterState state) => MainScreen(
+            controller: _authController,
+          ),
         ),
         GoRoute(
           path: '/login',
