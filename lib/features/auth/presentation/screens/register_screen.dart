@@ -54,6 +54,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!_displayNameFocus.hasFocus &&
           !_blurredFields.contains('displayName')) {
         setState(() => _blurredFields.add('displayName'));
+        _checkDisplayName();
       }
     };
     _displayNameFocus.addListener(_displayNameFocusListener);
