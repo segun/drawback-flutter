@@ -124,7 +124,7 @@ void main() {
       final container = tester.widget<Container>(find.byType(Container).first);
       expect(
         container.padding,
-        const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        const EdgeInsets.fromLTRB(8, 0, 4, 0),
       );
     });
 

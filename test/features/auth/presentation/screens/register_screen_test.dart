@@ -123,7 +123,7 @@ void main() {
           ),
         ),
       );
-      expect(find.widgetWithText(FilledButton, 'Create account'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Create Account'), findsOneWidget);
     });
 
     testWidgets('should have proper form structure', (WidgetTester tester) async {
