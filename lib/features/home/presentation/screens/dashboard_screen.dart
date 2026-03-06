@@ -279,6 +279,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             .any((SavedChat saved) => saved.chatRequestId == selectedChat.id);
 
         return ChatRoomScreen(
+          key: ValueKey(widget.controller.selectedChatRequestId!),
           chatRequestId: widget.controller.selectedChatRequestId!,
           chatRequest: selectedChat,
           profile: widget.controller.profile!,

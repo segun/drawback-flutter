@@ -243,8 +243,27 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
   }
 
   void _onDrawPeerLeft(dynamic data) {
+    if (data is! Map<String, dynamic>) {
+      return;
+    }
+
+    final DrawPeerLeftPayload payload = DrawPeerLeftPayload.fromJson(data);
+    
+    // Determine who the peer is
+    final String peerId = widget.profile.id == widget.chatRequest.fromUserId
+        ? widget.chatRequest.toUserId
+        : widget.chatRequest.fromUserId;
+    
+    // Only process if the user who left is our peer
+    if (payload.userId != peerId) {
+      return;
+    }
+
     setState(() {
       _peerPresent = false;
+      // Clear both canvases when peer leaves
+      _localStrokes = <DrawSegmentStroke>[];
+      _remoteStrokes = <DrawSegmentStroke>[];
     });
     _startReconnectButtonTimer();
     widget.onNotice('Peer left the room.', 'info');
