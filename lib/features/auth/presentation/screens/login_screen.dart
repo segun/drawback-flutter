@@ -123,11 +123,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   padding: const EdgeInsets.all(12),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: <Widget>[
+                      Image.asset(
+                        'assets/images/logo_main.png',
+                        width: 160,
+                        height: 160,
+                        fit: BoxFit.contain,
+                      ),
                       Text(
                         'Login',
                         style: AuthTextStyles.header(context),
+                        textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
                       Form(
@@ -161,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 16),
                             FilledButton(
                               onPressed: widget.controller.isBusy ? null : _submit,
                               style: FilledButton.styleFrom(
@@ -182,7 +189,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     )
                                   : const Text('Login', style: TextStyle(fontSize: 13)),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 12),
                             TextButton(
                               onPressed: widget.controller.isBusy
                                   ? null
@@ -193,6 +200,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 style: AuthTextStyles.link(),
                               ),
                             ),
+                            const SizedBox(height: 12),
                             const Padding(
                               padding: EdgeInsets.symmetric(vertical: 4),
                               child: Divider(
@@ -201,6 +209,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 color: Color.fromARGB(255, 234, 12, 57), // rose-300
                               ),
                             ),
+                            const SizedBox(height: 12),
                             TextButton(
                               onPressed: () => context.go('/register'),
                               style: AuthTextStyles.linkButtonStyle(),

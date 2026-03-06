@@ -34,18 +34,26 @@ class MainScreen extends StatelessWidget {
               ),
               padding: const EdgeInsets.all(12),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
+                  Image.asset(
+                    'assets/images/logo_main.png',
+                    width: 160,
+                    height: 160,
+                    fit: BoxFit.contain,
+                  ),
                   Text(
                     'Welcome to DrawkcaB',
                     style: AuthTextStyles.welcome(context),
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
                   Text(
                     'A real-time collaborative drawing chat app. Register, confirm your email, and start drawing with friends!',
                     style: AuthTextStyles.bodyText(context),
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
                   Row(
                     children: <Widget>[
                       Expanded(

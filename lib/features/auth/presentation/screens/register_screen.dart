@@ -215,16 +215,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   padding: const EdgeInsets.all(12),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: <Widget>[
+                      Image.asset(
+                        'assets/images/logo_main.png',
+                        width: 160,
+                        height: 160,
+                        fit: BoxFit.contain,
+                      ),
                       Text(
                         'Create Account',
                         style: AuthTextStyles.header(context),
+                        textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 10),
                       Text(
                         'Register with email, password, and display name. Login is allowed only after email confirmation.',
                         style: AuthTextStyles.bodyText(context),
+                        textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 12),
                       Form(
@@ -381,7 +389,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                     )
                                   : const Text('Create Account', style: TextStyle(fontSize: 13)),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 12),
                             TextButton(
                               onPressed: () => context.go('/login'),
                               style: AuthTextStyles.linkButtonStyle(),
