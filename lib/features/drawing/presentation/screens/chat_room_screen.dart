@@ -17,6 +17,7 @@ class ChatRoomScreen extends StatefulWidget {
     required this.profile,
     required this.onNotice,
     required this.onSaveChat,
+    required this.onCloseChat,
     required this.isChatSaved,
     super.key,
   });
@@ -26,6 +27,7 @@ class ChatRoomScreen extends StatefulWidget {
   final UserProfile profile;
   final Function(String message, String type) onNotice;
   final Future<void> Function() onSaveChat;
+  final VoidCallback onCloseChat;
   final bool isChatSaved;
 
   @override
@@ -275,6 +277,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
     }
 
     final SocketErrorPayload payload = SocketErrorPayload.fromJson(data);
+    
+    // If we get "Not in a room" error, close the chat
+    if (payload.status == 403 && 
+        payload.message.toLowerCase().contains('not in a room')) {
+      widget.onCloseChat();
+      widget.onNotice('The other user has left the room.', 'error');
+      return;
+    }
+    
     widget.onNotice(payload.message, 'error');
   }
 

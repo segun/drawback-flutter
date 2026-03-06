@@ -416,12 +416,14 @@ class HomeController extends ChangeNotifier {
             );
 
         await _socialApi.deleteSavedChat(savedChatId: savedChatId);
-        _savedChats.removeWhere((SavedChat s) => s.id == savedChatId);
 
         // Clear selected chat if it matches the deleted saved chat
         if (savedChat != null && _selectedChatRequestId == savedChat.chatRequestId) {
           _selectedChatRequestId = null;
         }
+
+        // Reload dashboard to sync with backend state
+        await loadDashboardData(showLoading: false);
 
         _notice = 'Saved chat removed';
         return true;
@@ -434,7 +436,7 @@ class HomeController extends ChangeNotifier {
   Future<bool> blockUser(String blockedUserId) async {
     return _runGuarded<bool>(
       () async {
-        // Clear selected chat if it involves the blocked user (before removing from list)
+        // Clear selected chat if it involves the blocked user
         if (_selectedChatRequestId != null) {
           final ChatRequest? selectedChat = _chatRequests
               .cast<ChatRequest?>()
@@ -451,19 +453,8 @@ class HomeController extends ChangeNotifier {
 
         await _socialApi.blockUser(blockedUserId: blockedUserId);
 
-        // Reload blocked users list
-        _blockedUsers = await _socialApi.listBlockedUsers();
-
-        // Remove any chat requests with this user
-        _chatRequests.removeWhere(
-            (ChatRequest r) => r.fromUserId == blockedUserId || r.toUserId == blockedUserId);
-        _sentChatRequests.removeWhere(
-            (ChatRequest r) => r.fromUserId == blockedUserId || r.toUserId == blockedUserId);
-
-        // Rebuild connected user maps to remove blocked user
-        _connectedUserIds.remove(blockedUserId);
-        _acceptedChatByUserId.remove(blockedUserId);
-        _pendingOutgoingUserIds.remove(blockedUserId);
+        // Reload dashboard to sync with backend state
+        await loadDashboardData(showLoading: false);
 
         _notice = 'User blocked';
         return true;
@@ -553,21 +544,27 @@ class HomeController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Close the currently selected chat (just clears selection)
+  void closeChat() {
+    _selectedChatRequestId = null;
+    notifyListeners();
+  }
+
   /// Close a recent chat (permanently remove from recent list)
   Future<bool> closeRecentChat(String chatRequestId) async {
     return _runGuarded<bool>(
       () async {
         await _socialApi.removeRecentChat(chatRequestId: chatRequestId);
 
-        // Remove from local state
-        _chatRequests.removeWhere((ChatRequest req) => req.id == chatRequestId);
-        
         // Clear waiting state
         _waitingPeerRequestIds.remove(chatRequestId);
         
         if (_selectedChatRequestId == chatRequestId) {
           _selectedChatRequestId = null;
         }
+
+        // Reload dashboard to sync with backend state
+        await loadDashboardData(showLoading: false);
         
         return true;
       },

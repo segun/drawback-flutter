@@ -302,6 +302,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               );
             }
           },
+          onCloseChat: () {
+            // Close the chat when socket error "Not in a room" occurs
+            widget.controller.closeChat();
+          },
           onSaveChat: () async {
             final bool success =
                 await widget.controller.saveChat(widget.controller.selectedChatRequestId!);
