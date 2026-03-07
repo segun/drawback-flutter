@@ -1,12 +1,14 @@
 # App Store Assets Guide
 
-This guide covers creating all required visual assets for App Store submission.
+This guide covers creating all required visual assets for iOS App Store and Google Play Store submission.
 
 ## Current Status
 
 - ❌ **App Icons**: Currently using Flutter default placeholders
-- ❌ **App Store Icon**: Need 1024x1024 PNG for App Store Connect  
-- ❌ **Screenshots**: Need to create for multiple device sizes
+- ❌ **iOS App Store Icon**: Need 1024x1024 PNG for App Store Connect
+- ❌ **Android Adaptive Icon**: Need 432x432 foreground + background layers
+- ❌ **Play Store Feature Graphic**: Need 1024x500 PNG/JPEG
+- ❌ **Screenshots**: Need to create for multiple device sizes (iOS & Android)
 - ✅ **Source Logo**: Available at `public/images/logo/logo_main.png` (1536x672)
 
 ---
@@ -326,11 +328,250 @@ mv ~/Desktop/Simulator\ Screen\ Shot*.png flutter/screenshots/6.9-inch/
 
 ---
 
+## 🤖 Part 4: Android-Specific Assets
+
+### Android Adaptive Icons
+
+Android uses **adaptive icons** with separate foreground and background layers that the system combines. This allows for different shape masks (circle, squircle, rounded square) across different Android devices.
+
+#### Icon Requirements
+
+**Adaptive Icon Layers:**
+- **Foreground layer:** 432 x 432 px PNG with transparency
+- **Background layer:** 432 x 432 px PNG (solid color or pattern, no transparency)
+- **Safe zone:** Keep important content within 66dp (264px) center circle
+- **Full bleed:** Outer 36dp can be masked off on some devices
+
+**Icon Sizes (Generated from adaptive icon):**
+| Density | Size | Notes |
+|---------|------|-------|
+| mdpi | 48 x 48 px | Baseline density |
+| hdpi | 72 x 72 px | ~1.5x |
+| xhdpi | 96 x 96 px | ~2x |
+| xxhdpi | 144 x 144 px | ~3x |
+| xxxhdpi | 192 x 192 px | ~4x |
+
+**Play Store Icon:**
+- 512 x 512 px PNG with transparency
+- 32-bit color with alpha channel
+- Displayed in Play Store listing
+
+#### Creating Adaptive Icons
+
+**Option 1: Use Automated Script (Recommended)**
+
+```bash
+cd flutter
+./scripts/generate-android-icons.sh assets/images/app_icon_1024.png
+```
+
+This generates all required Android icon sizes and formats.
+
+**Option 2: Manual Creation**
+
+1. **Create foreground layer:**
+   - Open your logo in design tool
+   - Create 432x432 canvas
+   - Place logo centered within 264px safe zone circle
+   - Export as PNG with transparency
+   - Save as `android_icon_foreground.png`
+
+2. **Create background layer:**
+   - Create 432x432 canvas
+   - Fill with brand color (e.g., rose-600: #E11D48)
+   - Or use subtle pattern/gradient
+   - Export as PNG
+   - Save as `android_icon_background.png`
+
+3. **Generate density variants:**
+   - Use Android Studio's Asset Studio (File → New → Image Asset)
+   - Or use online tool: [Android Asset Studio](https://romannurik.github.io/AndroidAssetStudio/)
+   - Or use our script (recommended)
+
+#### Installing Android Icons
+
+Replace files in `flutter/android/app/src/main/res/`:
+
+```
+mipmap-mdpi/ic_launcher.png          (48x48)
+mipmap-hdpi/ic_launcher.png          (72x72)
+mipmap-xhdpi/ic_launcher.png         (96x96)
+mipmap-xxhdpi/ic_launcher.png        (144x144)
+mipmap-xxxhdpi/ic_launcher.png       (192x192)
+```
+
+### Play Store Feature Graphic
+
+**REQUIRED** for Google Play Store listing. Displayed prominently at top of store page.
+
+#### Requirements
+
+- **Size:** 1024 x 500 px
+- **Format:** PNG or JPEG
+- **No transparency:** Must be fully opaque
+- **File size:** Under 1MB
+- **Aspect ratio:** Exactly 2.048:1
+
+#### Design Guidelines
+
+✅ **Do:**
+- Include app name/logo
+- Use brand colors (rose palette)
+- Keep design clean and simple
+- Make it eye-catching
+- Test how it looks at different sizes
+- Use high-quality graphics
+
+❌ **Don't:**
+- Include device frames
+- Use too much text
+- Make it look cluttered
+- Use low-resolution images
+- Include promotional text like "Download now"
+- Use generic stock photos
+
+#### Creating Feature Graphic
+
+**Option 1: Design Tool (Figma/Photoshop)**
+
+1. Create 1024 x 500 px canvas
+2. Add branded background gradient or solid color
+3. Place logo/app icon prominently
+4. Add text: "DrawkcaB" or tagline
+5. Keep it minimal and professional
+6. Export as PNG or JPEG
+
+**Template idea:**
+```
+- Background: Rose gradient (rose-400 to rose-600)
+- Left side: App icon (200x200)
+- Center: "DrawkcaB" text + "Draw Together" tagline
+- Right side: Simple illustration or collaborative drawing preview
+```
+
+**Option 2: Simple Branded Version**
+
+Minimum viable feature graphic:
+1. Solid rose-600 background (#E11D48)
+2. App icon centered
+3. "DrawkcaB" text below in white
+4. "Real-time collaborative drawing" subtitle
+
+Save as: `flutter/assets/playstore/feature_graphic.png`
+
+### Android Screenshots
+
+Google Play requires screenshots for phones. Tablet screenshots are optional.
+
+#### Phone Screenshots (Required)
+
+**Resolution:** 1080 x 1920 px (recommended)  
+**Aspect ratio:** 16:9 or 9:16  
+**Format:** PNG or JPEG  
+**Count:** Minimum 2, maximum 8  
+**File size:** Max 8MB each
+
+**Alternative resolutions:**
+- 1080 x 1920 (Full HD, recommended)
+- 720 x 1280 (HD)
+- 1440 x 2560 (Quad HD)
+
+#### 7-inch Tablet Screenshots (Optional)
+
+**Resolution:** 1024 x 1600 px  
+**Aspect ratio:** 16:10  
+**Count:** Minimum 2, maximum 8
+
+#### 10-inch Tablet Screenshots (Optional)
+
+**Resolution:** 1920 x 1200 px (landscape) or 1200 x 1920 px (portrait)  
+**Aspect ratio:** 16:10  
+**Count:** Minimum 2, maximum 8
+
+#### Taking Android Screenshots
+
+**Method 1: Android Emulator**
+
+```bash
+# List available emulators
+flutter emulators
+
+# Launch Pixel-series emulator (or create one in Android Studio)
+flutter emulators --launch <emulator-id>
+
+# Run app
+flutter run -d <emulator-id> --dart-define=BACKEND_URL=https://drawback.chat/api
+
+# Take screenshot
+# In emulator window: Click camera icon in toolbar
+# Or: Cmd + S (macOS) / Ctrl + S (Windows/Linux)
+```
+
+Screenshots save to: `~/Desktop` or configurable location
+
+**Method 2: Physical Android Device**
+
+1. Enable USB debugging on device
+2. Connect to computer
+3. Run app: `flutter run -d <device-id> --dart-define=BACKEND_URL=https://drawback.chat/api`
+4. Take screenshots: Power + Volume Down buttons
+5. Transfer to computer via USB or cloud storage
+
+**Recommended Screenshot Sizes:**
+
+For Play Store, create 1080x1920 screenshots showing same content as iOS:
+1. Login/Welcome screen
+2. Registration flow
+3. User search interface
+4. Chat request screen
+5. Drawing canvas (or preview)
+
+### Organizing Android Assets
+
+Recommended folder structure:
+
+```
+flutter/assets/playstore/
+├── feature_graphic.png           # 1024 x 500
+├── icon_foreground.png           # 432 x 432 (with transparency)
+├── icon_background.png           # 432 x 432 (solid color)
+└── icon_512.png                  # 512 x 512 (Play Store)
+
+flutter/screenshots/android/
+├── phone/                        # 1080 x 1920
+│   ├── 01-welcome.png
+│   ├── 02-register.png
+│   ├── 03-search.png
+│   ├── 04-chat-request.png
+│   └── 05-features.png
+├── 7-inch-tablet/                # 1024 x 1600 (optional)
+│   └── ...
+└── 10-inch-tablet/               # 1920 x 1200 (optional)
+    └── ...
+```
+
+### Android Asset Checklist
+
+Before Play Store submission:
+
+- [ ] Adaptive icon foreground layer created (432x432 with transparency)
+- [ ] Adaptive icon background layer created (432x432 solid)
+- [ ] All density icon variants generated (mdpi through xxxhdpi)
+- [ ] 512x512 Play Store icon exported
+- [ ] Feature graphic created (1024x500)
+- [ ] Phone screenshots created (2-8 at 1080x1920)
+- [ ] Screenshots show actual app content (no placeholders)
+- [ ] Assets organized in proper folders
+- [ ] Icons tested on Android device/emulator
+- [ ] Feature graphic previewed in Play Console
+
+---
+
 ## ✅ Final Checklist
 
-Before submitting to App Store:
+Before submitting to app stores:
 
-### App Icons
+### iOS App Icons
 - [ ] Square source icon created (1024x1024 minimum)
 - [ ] All iOS icon sizes generated
 - [ ] Icons installed in Xcode project
@@ -339,7 +580,15 @@ Before submitting to App Store:
 - [ ] Icon has no transparency
 - [ ] Icon looks good at small sizes (test on device)
 
-### Screenshots
+### Android App Icons
+- [ ] Adaptive icon foreground layer created (432x432 with transparency)
+- [ ] Adaptive icon background layer created (432x432 solid)
+- [ ] All density icon variants generated (mdpi through xxxhdpi)
+- [ ] 512x512 Play Store icon exported
+- [ ] Icons tested on Android device/emulator
+- [ ] Icon safe zone respected (264px center circle)
+
+### iOS Screenshots
 - [ ] 6.9" iPhone: 3-10 screenshots at 1320 x 2868
 - [ ] 6.7" iPhone: 3-10 screenshots at 1290 x 2796
 - [ ] 6.5" iPhone: 3-10 screenshots at 1242 x 2688
@@ -351,7 +600,16 @@ Before submitting to App Store:
 - [ ] First screenshot is most compelling
 - [ ] Screenshots uploaded to App Store Connect
 
-### Quality Check
+### Android Screenshots & Assets
+- [ ] Feature graphic created (1024x500)
+- [ ] Phone screenshots: 2-8 at 1080x1920
+- [ ] Screenshots show actual app content (no placeholders)
+- [ ] No personal information visible
+- [ ] Features clearly demonstrated
+- [ ] First screenshot is most compelling
+- [ ] Assets uploaded to Play Console
+
+### Quality Check (Both Platforms)
 - [ ] Icons look sharp (not blurry) on device
 - [ ] Screenshots match actual app UI
 - [ ] All images meet Apple's requirements
@@ -380,10 +638,13 @@ Before submitting to App Store:
 ---
 
 **Need Help?**
-- See the automated script: [scripts/generate-app-icons.sh](../scripts/generate-app-icons.sh)
-- Check Apple's guidelines: [App Store Screenshots](https://developer.apple.com/design/human-interface-guidelines/app-icons)
-- Review deployment guide: [IOS_APPSTORE_DEPLOYMENT.md](IOS_APPSTORE_DEPLOYMENT.md)
+- iOS script: [scripts/generate-app-icons.sh](../scripts/generate-app-icons.sh)
+- Android script: [scripts/generate-android-icons.sh](../scripts/generate-android-icons.sh)
+- Apple's guidelines: [App Store Screenshots](https://developer.apple.com/design/human-interface-guidelines/app-icons)
+- Google's guidelines: [Adaptive Icons](https://developer.android.com/develop/ui/views/launch/icon_design_adaptive)
+- iOS deployment guide: [IOS_DEPLOYMENT.md](IOS_DEPLOYMENT.md)
+- Android deployment guide: [ANDROID_DEPLOYMENT.md](ANDROID_DEPLOYMENT.md)
 
 ---
 
-**Last Updated:** March 6, 2026
+**Last Updated:** March 7, 2026

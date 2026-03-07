@@ -16,8 +16,17 @@ build-ios-prod:
 archive-ios:
 	./scripts/deploy-ios.sh
 
+# Android builds
 build-android-prod:
+	# Build App Bundle for Play Store (AAB is required for new apps)
+	flutter build appbundle --dart-define=BACKEND_URL=https://drawback.chat/api
+
+build-android-apk-prod:
+	# Build APK for testing only (NOT for Play Store)
 	flutter build apk --dart-define=BACKEND_URL=https://drawback.chat/api
+
+archive-android:
+	./scripts/deploy-android.sh
 
 build-web-prod:
 	flutter build web --dart-define=BACKEND_URL=https://drawback.chat/api
