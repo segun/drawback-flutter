@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/realtime/socket_service.dart';
 import '../../../../core/widgets/status_banner.dart';
 import '../../../discovery/presentation/discovery_controller.dart';
 import '../../../discovery/presentation/screens/discovery_game_screen.dart';
@@ -55,6 +56,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<void> _handleDiscoveryGameClick() async {
+    SocketService().emitDrawLeave();
     if (widget.controller.isInDiscoveryGame) {
       // Navigate to discovery swipe screen
       setState(() {
@@ -144,6 +146,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               IconButton(
                 icon: const Icon(Icons.person, color: Color(0xFF9F1239)),
                 onPressed: () {
+                  SocketService().emitDrawLeave();
                   setState(() {
                     _currentView = DashboardView.profile;
                     _isSidebarOpen = false;
@@ -433,11 +436,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             .firstOrNull;
 
         if (selectedChat == null) {
+          // Inconsistent state - reload dashboard to sync
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            widget.controller.closeChat();
+            widget.controller.loadDashboardData(showLoading: false);
+          });
           return const Center(
-            child: Text(
-              'Chat not found. Please select another chat.',
-              style: TextStyle(color: Color(0xFF9F1239)),
-            ),
+            child: CircularProgressIndicator(),
           );
         }
 

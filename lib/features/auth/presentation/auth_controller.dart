@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../../core/network/api_exception.dart';
+import '../../../core/realtime/socket_service.dart';
 import '../data/auth_api.dart';
 import '../data/token_store.dart';
 import '../domain/auth_models.dart';
@@ -115,6 +116,7 @@ class AuthController extends ChangeNotifier {
   }
 
   Future<void> logout() async {
+    SocketService().emitDrawLeave();
     await _tokenStore.clearToken();
     _accessToken = null;
     _currentUser = null;

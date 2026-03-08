@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/realtime/socket_service.dart';
 import '../../../../core/widgets/cross_origin_image.dart';
 import '../../../home/domain/home_models.dart';
 import '../discovery_controller.dart';
@@ -47,6 +48,7 @@ class _DiscoverySwipeScreenState extends State<DiscoverySwipeScreen> {
   }
 
   Future<void> _loadRandomUser() async {
+    SocketService().emitDrawLeave();
     setState(() {
       _isLoading = true;
       _error = null;
