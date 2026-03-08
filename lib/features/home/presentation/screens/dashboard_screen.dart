@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/status_banner.dart';
+import '../../../discovery/presentation/discovery_controller.dart';
+import '../../../discovery/presentation/screens/discovery_game_screen.dart';
+import '../../../discovery/presentation/screens/discovery_swipe_screen.dart';
 import '../../../drawing/presentation/screens/chat_room_screen.dart';
 import '../../domain/home_models.dart';
 import '../home_controller.dart';
@@ -11,17 +14,19 @@ import '../widgets/saved_chats_widget.dart';
 import '../widgets/user_search_widget.dart';
 import 'profile_screen.dart';
 
-enum DashboardView { chat, profile }
+enum DashboardView { chat, profile, discoveryGame, discoverySwipe }
 
 /// Main dashboard screen with sidebar and content area
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({
     required this.controller,
+    required this.discoveryController,
     required this.onLogout,
     super.key,
   });
 
   final HomeController controller;
+  final DiscoveryController discoveryController;
   final VoidCallback onLogout;
 
   @override
@@ -47,6 +52,66 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _currentView = DashboardView.chat;
       _isSidebarOpen = false;
     });
+  }
+
+  Future<void> _handleDiscoveryGameClick() async {
+    if (widget.controller.isInDiscoveryGame) {
+      // Navigate to discovery swipe screen
+      setState(() {
+        _currentView = DashboardView.discoverySwipe;
+        _isSidebarOpen = false;
+      });
+    } else {
+      // Navigate to discovery game view
+      setState(() {
+        _currentView = DashboardView.discoveryGame;
+        _isSidebarOpen = false;
+      });
+    }
+  }
+
+  Future<void> _handleExitDiscoveryGame() async {
+    // Show exit confirmation dialog
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('End Discovery Game'),
+          content: const Text(
+            'Are you sure you want to end the discovery game? Your drawing will be removed.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('No'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFE11D48),
+                padding: const EdgeInsets.all(16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
+              child: const Text('Yes, end game'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true && mounted) {
+      await widget.discoveryController.exitDiscoveryGame();
+      if (mounted) {
+        // Reload dashboard to update status
+        await widget.controller.loadDashboardData(showLoading: false);
+        // Navigate back to chat view
+        setState(() {
+          _currentView = DashboardView.chat;
+        });
+      }
+    }
   }
 
   @override
@@ -208,6 +273,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
           const Divider(height: 24, color: Color(0xFFFDA4AF)),
 
+          // Discovery Game Button
+          GestureDetector(
+            onTap: _handleDiscoveryGameClick,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: <Color>[
+                    Color(0xFFE11D48),
+                    Color(0xFFBE123C),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: const <BoxShadow>[
+                  BoxShadow(
+                    color: Color(0x40E11D48),
+                    blurRadius: 8,
+                    offset: Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  const Icon(
+                    Icons.explore,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      widget.controller.isInDiscoveryGame
+                          ? "You're in the Discovery Game"
+                          : 'Play the Discovery Game',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
           UserSearchWidget(
             controller: widget.controller,
             onChatRequest: _handleChatOpen,
@@ -244,6 +361,38 @@ class _DashboardScreenState extends State<DashboardScreen> {
     switch (_currentView) {
       case DashboardView.profile:
         return ProfileScreen(controller: widget.controller);
+      case DashboardView.discoveryGame:
+        return DiscoveryGameScreen(
+          controller: widget.discoveryController,
+          onBackToChat: () {
+            setState(() {
+              _currentView = DashboardView.chat;
+            });
+            // Reload dashboard to update discovery game status
+            widget.controller.loadDashboardData(showLoading: false);
+          },
+          onNavigateToSwipe: () {
+            setState(() {
+              _currentView = DashboardView.discoverySwipe;
+            });
+          },
+          onExitGame: _handleExitDiscoveryGame,
+        );
+      case DashboardView.discoverySwipe:
+        return DiscoverySwipeScreen(
+          controller: widget.discoveryController,
+          onBackToDashboard: () {
+            setState(() {
+              _currentView = DashboardView.chat;
+            });
+            // Reload dashboard to update discovery game status
+            widget.controller.loadDashboardData(showLoading: false);
+          },
+          onExitGame: _handleExitDiscoveryGame,
+          onSendChatRequest: (String displayName) async {
+            await widget.controller.sendChatRequest(displayName);
+          },
+        );
       case DashboardView.chat:
         if (widget.controller.selectedChatRequestId == null) {
           return const Center(

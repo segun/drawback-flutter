@@ -24,6 +24,7 @@ class UserProfile {
     required this.displayName,
     required this.mode,
     required this.appearInSearches,
+    required this.appearInDiscoveryGame,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -33,6 +34,7 @@ class UserProfile {
   final String displayName;
   final UserMode mode;
   final bool appearInSearches;
+  final bool appearInDiscoveryGame;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -43,6 +45,7 @@ class UserProfile {
       displayName: json['displayName'] as String,
       mode: UserMode.fromString(json['mode'] as String),
       appearInSearches: (json['appearInSearches'] as bool?) ?? false,
+      appearInDiscoveryGame: (json['appearInDiscoveryGame'] as bool?) ?? false,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
@@ -55,6 +58,7 @@ class UserProfile {
       'displayName': displayName,
       'mode': mode.value,
       'appearInSearches': appearInSearches,
+      'appearInDiscoveryGame': appearInDiscoveryGame,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -66,6 +70,7 @@ class UserProfile {
     String? displayName,
     UserMode? mode,
     bool? appearInSearches,
+    bool? appearInDiscoveryGame,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -75,6 +80,7 @@ class UserProfile {
       displayName: displayName ?? this.displayName,
       mode: mode ?? this.mode,
       appearInSearches: appearInSearches ?? this.appearInSearches,
+      appearInDiscoveryGame: appearInDiscoveryGame ?? this.appearInDiscoveryGame,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -221,6 +227,37 @@ class RespondToChatRequestResponse {
     return <String, dynamic>{
       'request': request.toJson(),
       'roomId': roomId,
+    };
+  }
+}
+
+class DiscoveryUser {
+  const DiscoveryUser({
+    required this.id,
+    required this.displayName,
+    this.discoveryImageUrl,
+  });
+
+  final String id;
+  final String displayName;
+  final String? discoveryImageUrl;
+
+  factory DiscoveryUser.fromJson(Map<String, dynamic> json) {
+    // Handle both wrapped {"user": {...}} and unwrapped {...} responses
+    final Map<String, dynamic> userData =
+        json.containsKey('user') ? json['user'] as Map<String, dynamic> : json;
+    return DiscoveryUser(
+      id: userData['id'] as String,
+      displayName: userData['displayName'] as String,
+      discoveryImageUrl: userData['discoveryImageUrl'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'id': id,
+      'displayName': displayName,
+      'discoveryImageUrl': discoveryImageUrl,
     };
   }
 }

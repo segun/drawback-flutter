@@ -71,6 +71,7 @@ class HomeController extends ChangeNotifier {
   String get profileDisplayName => _profileDisplayName;
   UserMode get profileMode => _profileMode;
   bool get appearInSearches => _appearInSearches;
+  bool get isInDiscoveryGame => _profile?.appearInDiscoveryGame ?? false;
 
   String get searchQuery => _searchQuery;
   List<UserProfile> get searchResults => _searchResults;
@@ -599,6 +600,15 @@ class HomeController extends ChangeNotifier {
       return;
     }
     _notice = null;
+    notifyListeners();
+  }
+
+  /// Set user profile (called from discovery controller)
+  void setProfile(UserProfile profile) {
+    _profile = profile;
+    _profileDisplayName = profile.displayName;
+    _profileMode = profile.mode;
+    _appearInSearches = profile.appearInSearches;
     notifyListeners();
   }
 

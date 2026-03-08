@@ -12,6 +12,7 @@ import 'features/auth/presentation/screens/main_screen.dart';
 import 'features/auth/presentation/screens/privacy_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
 import 'features/auth/presentation/screens/reset_password_screen.dart';
+import 'features/discovery/presentation/discovery_controller.dart';
 import 'features/home/data/social_api.dart';
 import 'features/home/presentation/home_controller.dart';
 import 'features/home/presentation/screens/dashboard_screen.dart';
@@ -26,6 +27,7 @@ class DrawbackApp extends StatefulWidget {
 class _DrawbackAppState extends State<DrawbackApp> {
   late final AuthController _authController;
   late final HomeController _homeController;
+  late final DiscoveryController _discoveryController;
   late final GoRouter _router;
 
   @override
@@ -44,8 +46,18 @@ class _DrawbackAppState extends State<DrawbackApp> {
       backendUrl: AppConfig.backendUrl,
     );
 
+    _discoveryController = DiscoveryController(
+      socialApi: socialApi,
+      onProfileUpdate: (profile) {
+        _homeController.setProfile(profile);
+      },
+    );
+
     // Listen to auth state changes to initialize socket
     _authController.addListener(_handleAuthStateChange);
+
+    // Listen to home controller changes to sync discovery game status
+    _homeController.addListener(_handleHomeControllerChange);
 
     _router = GoRouter(
       refreshListenable: _authController,
@@ -93,6 +105,7 @@ class _DrawbackAppState extends State<DrawbackApp> {
           path: '/home',
           builder: (BuildContext context, GoRouterState state) => DashboardScreen(
             controller: _homeController,
+            discoveryController: _discoveryController,
             onLogout: () async {
               await _authController.logout();
               if (context.mounted) {
@@ -137,11 +150,18 @@ class _DrawbackAppState extends State<DrawbackApp> {
     }
   }
 
+  void _handleHomeControllerChange() {
+    // Sync discovery game status from profile to discovery controller
+    _discoveryController.setInitialStatus(_homeController.isInDiscoveryGame);
+  }
+
   @override
   void dispose() {
     _authController.removeListener(_handleAuthStateChange);
+    _homeController.removeListener(_handleHomeControllerChange);
     _authController.dispose();
     _homeController.dispose();
+    _discoveryController.dispose();
     _router.dispose();
     super.dispose();
   }

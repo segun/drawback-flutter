@@ -5,10 +5,10 @@ run-prod:
 	flutter run --dart-define=BACKEND_URL=https://drawback.chat/api -d 00008130-001935290821401C
 
 run-web-prod:
-	flutter run -d chrome --dart-define=BACKEND_URL=https://drawback.chat/api
+	flutter run -d chrome --web-port=28080 --dart-define=BACKEND_URL=https://drawback.chat/api
 
 run-web-dev:
-	flutter run -d chrome --dart-define=BACKEND_URL=http://localhost:3000/api	
+	flutter run -d chrome --web-port=28080 --dart-define=BACKEND_URL=http://localhost:3000/api	
 
 build-ios-prod:
 	flutter build ios --dart-define=BACKEND_URL=https://drawback.chat/api

@@ -227,4 +227,36 @@ class SocialApi {
       headers: await _authHeaders(),
     );
   }
+
+  // Discovery Game Management
+
+  Future<UserProfile> updateDiscoveryGameStatus({
+    required bool appearInDiscoveryGame,
+    String? base64Image,
+  }) async {
+    final Map<String, dynamic> body = <String, dynamic>{
+      'appearInDiscoveryGame': appearInDiscoveryGame,
+    };
+    
+    if (base64Image != null) {
+      body['base64Image'] = 'data:image/png;base64,$base64Image';
+    }
+    
+    final Map<String, dynamic> response = await _client.patchJson(
+      '/users/me/discovery-game',
+      body: body,
+      headers: await _authHeaders(),
+    );
+    
+    return UserProfile.fromJson(response);
+  }
+
+  Future<DiscoveryUser> getRandomDiscoveryUser() async {
+    final dynamic response = await _client.getJson(
+      '/users/discovery/random',
+      headers: await _authHeaders(),
+    );
+
+    return DiscoveryUser.fromJson(response as Map<String, dynamic>);
+  }
 }
