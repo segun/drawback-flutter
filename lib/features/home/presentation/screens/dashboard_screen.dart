@@ -308,14 +308,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Expanded(
                     child: Text(
                       widget.controller.isInDiscoveryGame
-                          ? "You're in the Discovery Game"
-                          : 'Play the Discovery Game',
+                          ? 'In Discovery'
+                          : 'Play Discovery',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
-                      textAlign: TextAlign.center,
+                      textAlign: TextAlign.left,
                     ),
                   ),
                 ],
@@ -392,6 +392,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
           onSendChatRequest: (String displayName) async {
             await widget.controller.sendChatRequest(displayName);
           },
+          onAcceptChatRequest: (String chatRequestId) async {
+            final bool success = await widget.controller.respondToChatRequest(
+              chatRequestId: chatRequestId,
+              accept: true,
+            );
+            if (success) {
+              // Reload dashboard to refresh chat state before opening
+              await widget.controller.loadDashboardData(showLoading: false);
+            }
+            return success;
+          },
+          onOpenChat: (String chatRequestId) {
+            _handleChatOpen(chatRequestId);
+          },
+          connectedUserIds: widget.controller.connectedUserIds,
+          pendingOutgoingUserIds: widget.controller.pendingOutgoingUserIds,
+          acceptedChatByUserId: widget.controller.acceptedChatByUserId,
+          incomingChatRequests: widget.controller.incomingChatRequests,
         );
       case DashboardView.chat:
         if (widget.controller.selectedChatRequestId == null) {

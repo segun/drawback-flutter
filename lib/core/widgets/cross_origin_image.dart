@@ -14,6 +14,7 @@ class CrossOriginImage extends StatelessWidget {
     this.width,
     this.height,
     this.errorBuilder,
+    this.disableCache = false,
     super.key,
   });
 
@@ -22,12 +23,21 @@ class CrossOriginImage extends StatelessWidget {
   final double? width;
   final double? height;
   final Widget Function(BuildContext, Object, StackTrace?)? errorBuilder;
+  
+  /// When true, appends a timestamp to the URL to bypass browser cache
+  final bool disableCache;
+
+  String get _effectiveUrl {
+    if (!disableCache) return imageUrl;
+    final String separator = imageUrl.contains('?') ? '&' : '?';
+    return '$imageUrl${separator}_t=${DateTime.now().millisecondsSinceEpoch}';
+  }
 
   @override
   Widget build(BuildContext context) {
     if (kIsWeb) {
       return platform.buildWebImage(
-        imageUrl: imageUrl,
+        imageUrl: _effectiveUrl,
         fit: fit,
         width: width,
         height: height,
@@ -37,7 +47,7 @@ class CrossOriginImage extends StatelessWidget {
 
     // For mobile/desktop, use standard Image.network
     return Image.network(
-      imageUrl,
+      _effectiveUrl,
       fit: fit,
       width: width,
       height: height,

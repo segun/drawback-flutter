@@ -10,14 +10,26 @@ class DiscoverySwipeScreen extends StatefulWidget {
     required this.controller,
     required this.onBackToDashboard,
     required this.onSendChatRequest,
+    required this.onAcceptChatRequest,
+    required this.onOpenChat,
     required this.onExitGame,
+    required this.connectedUserIds,
+    required this.pendingOutgoingUserIds,
+    required this.acceptedChatByUserId,
+    required this.incomingChatRequests,
     super.key,
   });
 
   final DiscoveryController controller;
   final VoidCallback onBackToDashboard;
   final Future<void> Function(String displayName) onSendChatRequest;
+  final Future<bool> Function(String chatRequestId) onAcceptChatRequest;
+  final void Function(String chatRequestId) onOpenChat;
   final Future<void> Function() onExitGame;
+  final Set<String> connectedUserIds;
+  final Set<String> pendingOutgoingUserIds;
+  final Map<String, String> acceptedChatByUserId;
+  final List<ChatRequest> incomingChatRequests;
 
   @override
   State<DiscoverySwipeScreen> createState() => _DiscoverySwipeScreenState();
@@ -60,6 +72,81 @@ class _DiscoverySwipeScreenState extends State<DiscoverySwipeScreen> {
       return;
     }
 
+    final String targetUserId = _currentUser!.id;
+    final String targetDisplayName = _currentUser!.displayName;
+
+    // Case 1: Check if there's an existing accepted chat with this user
+    if (widget.connectedUserIds.contains(targetUserId)) {
+      final String? chatRequestId = widget.acceptedChatByUserId[targetUserId];
+      if (chatRequestId != null) {
+        widget.onOpenChat(chatRequestId);
+        return;
+      }
+    }
+
+    // Case 2: Check if there's an incoming pending request from this user
+    // (They sent us a request - accept it and open chat)
+    final ChatRequest? incomingRequest = widget.incomingChatRequests
+        .where((ChatRequest req) => req.fromUserId == targetUserId)
+        .firstOrNull;
+    if (incomingRequest != null) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final bool accepted = await widget.onAcceptChatRequest(incomingRequest.id);
+      
+      if (!mounted) {
+        return;
+      }
+
+      if (accepted) {
+        widget.onOpenChat(incomingRequest.id);
+      } else {
+        setState(() {
+          _isLoading = false;
+          _error = 'Failed to accept chat request';
+        });
+      }
+      return;
+    }
+
+    // Case 3: Check if there's already a pending request sent to this user
+    if (widget.pendingOutgoingUserIds.contains(targetUserId)) {
+      await showDialog<void>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Request Already Sent'),
+            content: Text(
+              'You already have a pending chat request to $targetDisplayName.',
+            ),
+            actions: <Widget>[
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFE11D48),
+                  padding: const EdgeInsets.all(16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(1),
+                  ),
+                ),
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+
+      // Load next user
+      if (mounted) {
+        await _loadRandomUser();
+      }
+      return;
+    }
+
+    // Case 4: No existing chat or pending request - send new request
     try {
       setState(() {
         _isLoading = true;
@@ -67,7 +154,7 @@ class _DiscoverySwipeScreenState extends State<DiscoverySwipeScreen> {
       });
 
       // Send chat request
-      await widget.onSendChatRequest(_currentUser!.displayName);
+      await widget.onSendChatRequest(targetDisplayName);
 
       if (!mounted) {
         return;
@@ -80,7 +167,7 @@ class _DiscoverySwipeScreenState extends State<DiscoverySwipeScreen> {
           return AlertDialog(
             title: const Text('Chat Request Sent!'),
             content: Text(
-              'Your chat request has been sent to ${_currentUser!.displayName}.',
+              'Your chat request has been sent to $targetDisplayName.',
             ),
             actions: <Widget>[
               FilledButton(
@@ -230,6 +317,7 @@ class _DiscoverySwipeScreenState extends State<DiscoverySwipeScreen> {
                       imageUrl: user.discoveryImageUrl!,
                       fit: BoxFit.contain,
                       height: 400,
+                      disableCache: true,
                       errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
                         return Container(
                           height: 400,
