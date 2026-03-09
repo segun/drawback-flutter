@@ -50,7 +50,7 @@ class HomeController extends ChangeNotifier {
   // Selected chat for drawing
   String? _selectedChatRequestId;
   String? _joinedChatRequestId;
-  bool _peerPresent = false;
+  final bool _peerPresent = false;
 
   // Pending actions (for UI feedback)
   final Set<String> _pendingOutgoingUserIds = <String>{};

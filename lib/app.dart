@@ -3,6 +3,9 @@ import 'package:go_router/go_router.dart';
 
 import 'core/config/app_config.dart';
 import 'core/network/api_client.dart';
+import 'core/services/ad_service.dart';
+import 'core/services/discovery_access_manager.dart';
+import 'core/services/purchase_service.dart';
 import 'features/auth/data/auth_api.dart';
 import 'features/auth/data/secure_token_store.dart';
 import 'features/auth/presentation/auth_controller.dart';
@@ -28,6 +31,7 @@ class _DrawbackAppState extends State<DrawbackApp> {
   late final AuthController _authController;
   late final HomeController _homeController;
   late final DiscoveryController _discoveryController;
+  late final DiscoveryAccessManager _discoveryAccessManager;
   late final GoRouter _router;
 
   @override
@@ -37,6 +41,19 @@ class _DrawbackAppState extends State<DrawbackApp> {
     final client = ApiClient(baseUrl: AppConfig.backendUrl);
     final authApi = AuthApi(client: client, tokenStore: tokenStore);
     final socialApi = SocialApi(client: client, tokenStore: tokenStore);
+
+    // Create purchase and ad services
+    final purchaseService = PurchaseService(
+      client: client,
+      tokenStore: tokenStore,
+    );
+    final adService = AdService();
+
+    // Create discovery access manager
+    _discoveryAccessManager = DiscoveryAccessManager(
+      purchaseService: purchaseService,
+      adService: adService,
+    );
 
     _authController = AuthController(authApi: authApi, tokenStore: tokenStore)
       ..bootstrap();
@@ -106,6 +123,7 @@ class _DrawbackAppState extends State<DrawbackApp> {
           builder: (BuildContext context, GoRouterState state) => DashboardScreen(
             controller: _homeController,
             discoveryController: _discoveryController,
+            discoveryAccessManager: _discoveryAccessManager,
             onLogout: () async {
               await _authController.logout();
               if (context.mounted) {
@@ -162,6 +180,7 @@ class _DrawbackAppState extends State<DrawbackApp> {
     _authController.dispose();
     _homeController.dispose();
     _discoveryController.dispose();
+    _discoveryAccessManager.dispose();
     _router.dispose();
     super.dispose();
   }

@@ -25,6 +25,7 @@ class UserProfile {
     required this.mode,
     required this.appearInSearches,
     required this.appearInDiscoveryGame,
+    required this.hasDiscoveryAccess,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -35,6 +36,7 @@ class UserProfile {
   final UserMode mode;
   final bool appearInSearches;
   final bool appearInDiscoveryGame;
+  final bool hasDiscoveryAccess;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -46,6 +48,7 @@ class UserProfile {
       mode: UserMode.fromString(json['mode'] as String),
       appearInSearches: (json['appearInSearches'] as bool?) ?? false,
       appearInDiscoveryGame: (json['appearInDiscoveryGame'] as bool?) ?? false,
+      hasDiscoveryAccess: (json['hasDiscoveryAccess'] as bool?) ?? false,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
     );
@@ -59,6 +62,7 @@ class UserProfile {
       'mode': mode.value,
       'appearInSearches': appearInSearches,
       'appearInDiscoveryGame': appearInDiscoveryGame,
+      'hasDiscoveryAccess': hasDiscoveryAccess,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
@@ -71,6 +75,7 @@ class UserProfile {
     UserMode? mode,
     bool? appearInSearches,
     bool? appearInDiscoveryGame,
+    bool? hasDiscoveryAccess,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -81,6 +86,7 @@ class UserProfile {
       mode: mode ?? this.mode,
       appearInSearches: appearInSearches ?? this.appearInSearches,
       appearInDiscoveryGame: appearInDiscoveryGame ?? this.appearInDiscoveryGame,
+      hasDiscoveryAccess: hasDiscoveryAccess ?? this.hasDiscoveryAccess,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

@@ -30,9 +30,9 @@ class _DiscoveryGameScreenState extends State<DiscoveryGameScreen> {
   _DiscoveryGameState _currentState = _DiscoveryGameState.instructions;
   
   // Drawing state
-  List<DrawSegmentStroke> _strokes = <DrawSegmentStroke>[];
+  final List<DrawSegmentStroke> _strokes = <DrawSegmentStroke>[];
   String _drawColor = '#be123c';
-  DrawStrokeStyle _drawStyle = DrawStrokeStyle.normal;
+  final DrawStrokeStyle _drawStyle = DrawStrokeStyle.normal;
   double _drawWidth = 2.0;
   
   // Tool sheet accordion states
@@ -122,7 +122,7 @@ class _DiscoveryGameScreenState extends State<DiscoveryGameScreen> {
             ),
             FilledButton(
               onPressed: () {
-                final String hex = '#${selectedColor.value.toRadixString(16).substring(2).toUpperCase().padLeft(6, '0')}';
+                final String hex = '#${selectedColor.toARGB32().toRadixString(16).substring(2).toUpperCase().padLeft(6, '0')}';
                 Navigator.of(context).pop(hex.toLowerCase());
               },
               style: FilledButton.styleFrom(

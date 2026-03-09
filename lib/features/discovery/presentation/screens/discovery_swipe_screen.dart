@@ -1,36 +1,44 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/realtime/socket_service.dart';
+import '../../../../core/services/discovery_access_manager.dart';
 import '../../../../core/widgets/cross_origin_image.dart';
 import '../../../home/domain/home_models.dart';
 import '../discovery_controller.dart';
+import '../widgets/access_timer_widget.dart';
 
 /// Discovery swipe screen showing random users
 class DiscoverySwipeScreen extends StatefulWidget {
   const DiscoverySwipeScreen({
     required this.controller,
+    required this.accessManager,
     required this.onBackToDashboard,
     required this.onSendChatRequest,
     required this.onAcceptChatRequest,
     required this.onOpenChat,
     required this.onExitGame,
+    required this.onAccessExpired,
     required this.connectedUserIds,
     required this.pendingOutgoingUserIds,
     required this.acceptedChatByUserId,
     required this.incomingChatRequests,
+    required this.hasPermanentAccess,
     super.key,
   });
 
   final DiscoveryController controller;
+  final DiscoveryAccessManager accessManager;
   final VoidCallback onBackToDashboard;
   final Future<void> Function(String displayName) onSendChatRequest;
   final Future<bool> Function(String chatRequestId) onAcceptChatRequest;
   final void Function(String chatRequestId) onOpenChat;
   final Future<void> Function() onExitGame;
+  final VoidCallback onAccessExpired;
   final Set<String> connectedUserIds;
   final Set<String> pendingOutgoingUserIds;
   final Map<String, String> acceptedChatByUserId;
   final List<ChatRequest> incomingChatRequests;
+  final bool hasPermanentAccess;
 
   @override
   State<DiscoverySwipeScreen> createState() => _DiscoverySwipeScreenState();
@@ -206,6 +214,10 @@ class _DiscoverySwipeScreenState extends State<DiscoverySwipeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Show timer if using temporary access (not permanent)
+    final bool showTimer = !widget.hasPermanentAccess && 
+        widget.accessManager.hasTemporaryAccess;
+
     return Container(
       color: const Color(0xFFFDA4AF),
       child: SafeArea(
@@ -226,6 +238,15 @@ class _DiscoverySwipeScreenState extends State<DiscoverySwipeScreen> {
                       ),
                     ),
                   ),
+                  // Timer widget for temporary access
+                  if (showTimer)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: AccessTimerWidget(
+                        accessManager: widget.accessManager,
+                        onExpired: widget.onAccessExpired,
+                      ),
+                    ),
                   IconButton(
                     icon: const Icon(Icons.exit_to_app, color: Color(0xFF9F1239)),
                     onPressed: widget.onExitGame,

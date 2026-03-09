@@ -473,7 +473,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
             ),
             FilledButton(
               onPressed: () {
-                final String hex = '#${selectedColor.value.toRadixString(16).substring(2).toUpperCase().padLeft(6, '0')}';
+                final String hex = '#${selectedColor.toARGB32().toRadixString(16).substring(2).toUpperCase().padLeft(6, '0')}';
                 Navigator.of(context).pop(hex.toLowerCase());
               },
               style: FilledButton.styleFrom(

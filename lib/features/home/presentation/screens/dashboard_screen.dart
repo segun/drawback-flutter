@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/realtime/socket_service.dart';
+import '../../../../core/services/discovery_access_manager.dart';
 import '../../../../core/widgets/status_banner.dart';
 import '../../../discovery/presentation/discovery_controller.dart';
 import '../../../discovery/presentation/screens/discovery_game_screen.dart';
+import '../../../discovery/presentation/screens/discovery_paywall_screen.dart';
 import '../../../discovery/presentation/screens/discovery_swipe_screen.dart';
 import '../../../drawing/presentation/screens/chat_room_screen.dart';
 import '../../domain/home_models.dart';
@@ -15,19 +17,21 @@ import '../widgets/saved_chats_widget.dart';
 import '../widgets/user_search_widget.dart';
 import 'profile_screen.dart';
 
-enum DashboardView { chat, profile, discoveryGame, discoverySwipe }
+enum DashboardView { chat, profile, discoveryPaywall, discoveryGame, discoverySwipe }
 
 /// Main dashboard screen with sidebar and content area
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({
     required this.controller,
     required this.discoveryController,
+    required this.discoveryAccessManager,
     required this.onLogout,
     super.key,
   });
 
   final HomeController controller;
   final DiscoveryController discoveryController;
+  final DiscoveryAccessManager discoveryAccessManager;
   final VoidCallback onLogout;
 
   @override
@@ -57,6 +61,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _handleDiscoveryGameClick() async {
     SocketService().emitDrawLeave();
+    
+    // Check if user has access (permanent purchase or temporary ad access)
+    final bool hasPermanentAccess = widget.controller.profile?.hasDiscoveryAccess ?? false;
+    final bool hasAccess = widget.discoveryAccessManager.hasAccess(hasPermanentAccess);
+    
+    if (!hasAccess) {
+      // Show paywall
+      setState(() {
+        _currentView = DashboardView.discoveryPaywall;
+        _isSidebarOpen = false;
+      });
+      return;
+    }
+    
     if (widget.controller.isInDiscoveryGame) {
       // Navigate to discovery swipe screen
       setState(() {
@@ -364,6 +382,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
     switch (_currentView) {
       case DashboardView.profile:
         return ProfileScreen(controller: widget.controller);
+      case DashboardView.discoveryPaywall:
+        return DiscoveryPaywallScreen(
+          accessManager: widget.discoveryAccessManager,
+          onAccessGranted: () {
+            // After access is granted, proceed to discovery game or swipe
+            if (widget.controller.isInDiscoveryGame) {
+              setState(() {
+                _currentView = DashboardView.discoverySwipe;
+              });
+            } else {
+              setState(() {
+                _currentView = DashboardView.discoveryGame;
+              });
+            }
+          },
+          onBack: () {
+            setState(() {
+              _currentView = DashboardView.chat;
+            });
+          },
+          onProfileRefresh: () async {
+            await widget.controller.loadDashboardData(showLoading: false);
+          },
+        );
       case DashboardView.discoveryGame:
         return DiscoveryGameScreen(
           controller: widget.discoveryController,
@@ -384,6 +426,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case DashboardView.discoverySwipe:
         return DiscoverySwipeScreen(
           controller: widget.discoveryController,
+          accessManager: widget.discoveryAccessManager,
+          hasPermanentAccess: widget.controller.profile?.hasDiscoveryAccess ?? false,
           onBackToDashboard: () {
             setState(() {
               _currentView = DashboardView.chat;
@@ -392,6 +436,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             widget.controller.loadDashboardData(showLoading: false);
           },
           onExitGame: _handleExitDiscoveryGame,
+          onAccessExpired: () {
+            // Show paywall when temporary access expires
+            setState(() {
+              _currentView = DashboardView.discoveryPaywall;
+            });
+          },
           onSendChatRequest: (String displayName) async {
             await widget.controller.sendChatRequest(displayName);
           },
