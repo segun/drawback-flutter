@@ -530,7 +530,7 @@ class HomeController extends ChangeNotifier {
     return _runGuarded<bool>(
       () async {
         await _socialApi.deleteMyAccount();
-        _notice = 'Account deleted successfully';
+        _notice = 'Please check your email to confirm account deletion. If you do not receive an email, please contact support.';
         return true;
       },
       fallback: false,
