@@ -57,6 +57,14 @@ class AuthApi {
     return response['message'] as String;
   }
 
+  Future<String> resendConfirmation(String email) async {
+    final Map<String, dynamic> response = await _client.postJson(
+      '/auth/resend-confirmation',
+      body: <String, dynamic>{'email': email.trim()},
+    );
+    return response['message'] as String;
+  }
+
   Future<ResetPasswordResult> resetPassword({
     required String token,
     required String password,

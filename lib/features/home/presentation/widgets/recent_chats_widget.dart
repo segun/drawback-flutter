@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../domain/home_models.dart';
 import '../home_controller.dart';
 import 'pulsing_indicator.dart';
+import 'refresh_icon_button.dart';
 
 /// Recent chats list widget for the sidebar
 class RecentChatsWidget extends StatelessWidget {
@@ -24,12 +25,23 @@ class RecentChatsWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Text(
-          'Recent Chats',
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: const Color(0xFF9F1239),
-                fontWeight: FontWeight.w600,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                'Recent Chats',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: const Color(0xFF9F1239),
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
+            ),
+            RefreshIconButton(
+              onRefresh: () => controller.loadDashboardData(showLoading: false),
+              tooltip: 'Refresh recent chats',
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         if (recentChats.isEmpty)

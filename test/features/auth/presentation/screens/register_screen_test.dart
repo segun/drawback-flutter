@@ -51,6 +51,11 @@ class FakeAuthApi implements AuthApi {
   }
 
   @override
+  Future<String> resendConfirmation(String email) async {
+    return 'Confirmation email sent';
+  }
+
+  @override
   Future<ResetPasswordResult> resetPassword({
     required String token,
     required String password,

@@ -145,6 +145,23 @@ class _LoginScreenState extends State<LoginScreen> {
                             widget.controller.clearMessages();
                           },
                         ),
+                        if (error != null && widget.controller.canResendActivationEmail) ...<Widget>[
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: widget.controller.isBusy
+                                ? null
+                                : () async {
+                                    await widget.controller.resendActivationEmail(
+                                      _emailController.text,
+                                    );
+                                  },
+                            style: AuthTextStyles.linkButtonStyle(),
+                            child: Text(
+                              'Resend activation email',
+                              style: AuthTextStyles.link(),
+                            ),
+                          ),
+                        ],
                       ],
                       Form(
                         key: _formKey,

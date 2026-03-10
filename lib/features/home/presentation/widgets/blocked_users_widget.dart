@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/home_models.dart';
 import '../home_controller.dart';
+import 'refresh_icon_button.dart';
 
 /// Blocked users widget for the sidebar
 class BlockedUsersWidget extends StatelessWidget {
@@ -19,12 +20,23 @@ class BlockedUsersWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Text(
-          'Blocked Users',
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: const Color(0xFF9F1239),
-                fontWeight: FontWeight.w600,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                'Blocked Users',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: const Color(0xFF9F1239),
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
+            ),
+            RefreshIconButton(
+              onRefresh: () => controller.loadDashboardData(showLoading: false),
+              tooltip: 'Refresh blocked users',
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         if (blockedUsers.isEmpty)

@@ -11,6 +11,7 @@ class FakeAuthApi implements AuthApi {
   Exception? loginException;
   Exception? meException;
   Exception? forgotPasswordException;
+  Exception? resendConfirmationException;
   Exception? resetPasswordException;
   Exception? checkDisplayNameException;
 
@@ -18,6 +19,7 @@ class FakeAuthApi implements AuthApi {
   AuthResult? loginResult;
   AuthUser? meResult;
   String? forgotPasswordResult;
+  String? resendConfirmationResult;
   ResetPasswordResult? resetPasswordResult;
   bool? checkDisplayNameResult;
 
@@ -47,6 +49,14 @@ class FakeAuthApi implements AuthApi {
   Future<String> forgotPassword(String email) async {
     if (forgotPasswordException != null) throw forgotPasswordException!;
     return forgotPasswordResult ?? 'Email sent';
+  }
+
+  @override
+  Future<String> resendConfirmation(String email) async {
+    if (resendConfirmationException != null) {
+      throw resendConfirmationException!;
+    }
+    return resendConfirmationResult ?? 'Confirmation email sent';
   }
 
   @override
@@ -204,7 +214,24 @@ void main() {
       expect(result, false);
       expect(authController.isAuthenticated, false);
       expect(authController.error, 'Invalid credentials');
+      expect(authController.canResendActivationEmail, false);
       expect(authController.isBusy, false);
+    });
+
+    test('should expose resend activation option for account not activated login errors', () async {
+      fakeAuthApi.loginException = ApiException(
+        401,
+        'Account not activated. Please check your email.',
+      );
+
+      final result = await authController.login(
+        email: 'test@example.com',
+        password: 'wrongpassword',
+      );
+
+      expect(result, false);
+      expect(authController.error, 'Account not activated. Please check your email.');
+      expect(authController.canResendActivationEmail, true);
     });
 
     test('should include empty displayName in welcome notice', () async {
@@ -365,6 +392,39 @@ void main() {
     });
   });
 
+  group('AuthController.resendActivationEmail', () {
+    test('should return true and set notice on successful resend', () async {
+      fakeAuthApi.resendConfirmationResult =
+          'If that email exists and is unactivated, a new confirmation link has been sent.';
+
+      final result = await authController.resendActivationEmail('test@example.com');
+
+      expect(result, true);
+      expect(
+        authController.notice,
+        'If that email exists and is unactivated, a new confirmation link has been sent.',
+      );
+      expect(authController.error, null);
+    });
+
+    test('should return false when resend is requested without email', () async {
+      final result = await authController.resendActivationEmail('   ');
+
+      expect(result, false);
+      expect(authController.error, 'Email is required to resend activation.');
+      expect(authController.isBusy, false);
+    });
+
+    test('should return false and set error on resend failure', () async {
+      fakeAuthApi.resendConfirmationException = ApiException(500, 'Server error');
+
+      final result = await authController.resendActivationEmail('test@example.com');
+
+      expect(result, false);
+      expect(authController.error, 'Server error');
+    });
+  });
+
   group('AuthController.checkDisplayNameAvailability', () {
     test('should return true if displayName is available', () async {
       const displayName = '@newuser';
@@ -421,7 +481,7 @@ void main() {
 
       expect(authController.isAuthenticated, false);
       expect(authController.currentUser, null);
-      expect(authController.notice, 'You have been logged out.');
+      expect(authController.notice, null);
       expect(authController.error, null);
       expect(await fakeTokenStore.readToken(), null);
     });

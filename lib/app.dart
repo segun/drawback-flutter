@@ -172,6 +172,10 @@ class _DrawbackAppState extends State<DrawbackApp> {
   }
 
   Future<void> _handleUnauthorizedSession() async {
+    if (!_authController.isAuthenticated) {
+      return;
+    }
+
     if (_isHandlingUnauthorized) {
       return;
     }

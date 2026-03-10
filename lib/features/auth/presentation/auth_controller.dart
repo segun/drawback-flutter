@@ -16,6 +16,7 @@ class AuthController extends ChangeNotifier {
 
   bool _isBootstrapping = true;
   bool _isBusy = false;
+  bool _canResendActivationEmail = false;
   String? _notice;
   String? _error;
   String? _accessToken;
@@ -23,6 +24,7 @@ class AuthController extends ChangeNotifier {
 
   bool get isBootstrapping => _isBootstrapping;
   bool get isBusy => _isBusy;
+  bool get canResendActivationEmail => _canResendActivationEmail;
   bool get isAuthenticated => _accessToken != null;
   String? get accessToken => _accessToken;
   AuthUser? get currentUser => _currentUser;
@@ -60,14 +62,27 @@ class AuthController extends ChangeNotifier {
   }
 
   Future<bool> login({required String email, required String password}) async {
-    return _runGuarded<bool>(() async {
-      _clearMessages();
+    _clearMessages();
+    _isBusy = true;
+    notifyListeners();
+
+    try {
       final AuthResult result = await _authApi.login(email: email, password: password);
       _accessToken = result.accessToken;
       _currentUser = await _authApi.me(result.accessToken);
       _notice = 'Welcome back, ${_currentUser?.displayName ?? 'friend'}.';
       return true;
-    }, fallback: false);
+    } on ApiException catch (error) {
+      _error = error.message;
+      _canResendActivationEmail = _isAccountNotActivatedError(error);
+      return false;
+    } catch (_) {
+      _error = 'Unexpected error. Please try again.';
+      return false;
+    } finally {
+      _isBusy = false;
+      notifyListeners();
+    }
   }
 
   Future<bool> register({
@@ -96,6 +111,36 @@ class AuthController extends ChangeNotifier {
     }, fallback: false);
   }
 
+  Future<bool> resendActivationEmail(String email) async {
+    final String trimmedEmail = email.trim();
+    _clearMessages();
+    _canResendActivationEmail = true;
+
+    if (trimmedEmail.isEmpty) {
+      _error = 'Email is required to resend activation.';
+      notifyListeners();
+      return false;
+    }
+
+    _isBusy = true;
+    notifyListeners();
+
+    try {
+      final String message = await _authApi.resendConfirmation(trimmedEmail);
+      _notice = message;
+      return true;
+    } on ApiException catch (error) {
+      _error = error.message;
+      return false;
+    } catch (_) {
+      _error = 'Unexpected error. Please try again.';
+      return false;
+    } finally {
+      _isBusy = false;
+      notifyListeners();
+    }
+  }
+
   Future<bool> resetPassword({required String token, required String password}) async {
     return _runGuarded<bool>(() async {
       _clearMessages();
@@ -120,8 +165,7 @@ class AuthController extends ChangeNotifier {
     await _tokenStore.clearToken();
     _accessToken = null;
     _currentUser = null;
-    _notice = 'You have been logged out.';
-    _error = null;
+    _clearMessages();
     notifyListeners();
   }
 
@@ -174,5 +218,15 @@ class AuthController extends ChangeNotifier {
   void _clearMessages() {
     _notice = null;
     _error = null;
+    _canResendActivationEmail = false;
+  }
+
+  bool _isAccountNotActivatedError(ApiException error) {
+    if (error.statusCode != 401) {
+      return false;
+    }
+
+    final String normalized = error.message.toLowerCase();
+    return normalized.contains('account not activated') || normalized.contains('not activated');
   }
 }

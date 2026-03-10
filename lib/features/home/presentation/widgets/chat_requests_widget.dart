@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/widgets/display_name_text_field.dart';
 import '../../domain/home_models.dart';
 import '../home_controller.dart';
+import 'refresh_icon_button.dart';
 
 /// Incoming chat requests widget for the sidebar
 class ChatRequestsWidget extends StatefulWidget {
@@ -128,33 +129,45 @@ class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
-                Text(
-                  'Chat Requests',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: const Color(0xFF9F1239),
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add, size: 18),
-                  onPressed: () {
-                    setState(() {
-                      _showNewRequestForm = !_showNewRequestForm;
-                      _displayNameController.text = '@';
-                    });
-                  },
-                  padding: const EdgeInsets.all(4),
-                  constraints: const BoxConstraints(),
-                  visualDensity: VisualDensity.compact,
-                  color: const Color(0xFF9F1239),
-                  style: IconButton.styleFrom(
-                    backgroundColor: const Color(0xFFFDA4AF),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(6),
-                      side: const BorderSide(color: Color(0xFFFDA4AF)),
-                    ),
+                Expanded(
+                  child: Text(
+                    'Chat Requests',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: const Color(0xFF9F1239),
+                          fontWeight: FontWeight.w600,
+                        ),
                   ),
-                  tooltip: 'Send a new chat request',
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    RefreshIconButton(
+                      onRefresh: () => widget.controller.loadDashboardData(showLoading: false),
+                      tooltip: 'Refresh chat requests',
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.add, size: 18),
+                      onPressed: () {
+                        setState(() {
+                          _showNewRequestForm = !_showNewRequestForm;
+                          _displayNameController.text = '@';
+                        });
+                      },
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(),
+                      visualDensity: VisualDensity.compact,
+                      color: const Color(0xFF9F1239),
+                      style: IconButton.styleFrom(
+                        backgroundColor: const Color(0xFFFDA4AF),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          side: const BorderSide(color: Color(0xFFFDA4AF)),
+                        ),
+                      ),
+                      tooltip: 'Send a new chat request',
+                    ),
+                  ],
                 ),
               ],
             ),

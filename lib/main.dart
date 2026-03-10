@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 import 'app.dart';
@@ -6,10 +7,12 @@ import 'app.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Enable edge-to-edge display on iOS
-  SystemChrome.setEnabledSystemUIMode(
-    SystemUiMode.edgeToEdge,
-  );
+  // Use immersive mode on Android so system bars auto-hide after interaction.
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  } else {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
 
   // Set status bar style
   SystemChrome.setSystemUIOverlayStyle(

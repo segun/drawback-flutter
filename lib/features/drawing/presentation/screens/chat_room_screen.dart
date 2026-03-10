@@ -111,6 +111,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
     socket.on('draw.peer.joined', _onDrawPeerJoined);
     socket.on('draw.peer.left', _onDrawPeerLeft);
     socket.on('error', _onSocketError);
+    socket.on('connect_error', _onSocketError);
   }
 
   void _removeSocketListeners() {
@@ -126,6 +127,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
     socket.off('draw.peer.joined', _onDrawPeerJoined);
     socket.off('draw.peer.left', _onDrawPeerLeft);
     socket.off('error', _onSocketError);
+    socket.off('connect_error', _onSocketError);
   }
 
   void _joinChatRoom() {

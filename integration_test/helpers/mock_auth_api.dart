@@ -125,6 +125,19 @@ class MockAuthApi implements AuthApi {
   }
 
   @override
+  Future<String> resendConfirmation(String email) async {
+    if (shouldFailNextRequest) {
+      shouldFailNextRequest = false;
+      throw ApiException(
+        nextFailureStatusCode ?? 400,
+        nextFailureMessage ?? 'Resend confirmation failed',
+      );
+    }
+
+    return 'If that email exists and is unactivated, a new confirmation link has been sent.';
+  }
+
+  @override
   Future<ResetPasswordResult> resetPassword({
     required String token,
     required String password,

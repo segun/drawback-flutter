@@ -578,6 +578,7 @@ class _DiscoveryGameScreenState extends State<DiscoveryGameScreen> {
 
   Widget _buildDrawingView() {
     final bool canStartGame = _strokes.isNotEmpty && !widget.controller.isBusy;
+    final double bottomInset = MediaQuery.of(context).viewPadding.bottom;
 
     return Container(
       color: const Color(0xFFFDA4AF),
@@ -648,7 +649,7 @@ class _DiscoveryGameScreenState extends State<DiscoveryGameScreen> {
 
           // Action buttons
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottomInset),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[

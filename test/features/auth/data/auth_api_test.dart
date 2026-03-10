@@ -311,6 +311,44 @@ void main() {
     });
   });
 
+  group('AuthApi.resendConfirmation', () {
+    test('should call resend confirmation endpoint and return message', () async {
+      const email = 'alice@example.com';
+      const expectedMessage =
+          'If that email exists and is unactivated, a new confirmation link has been sent.';
+
+      fakeApiClient.postJsonFn = (path, {body, headers}) async {
+        expect(path, '/auth/resend-confirmation');
+        expect(body?['email'], email);
+        return <String, dynamic>{'message': expectedMessage};
+      };
+
+      final message = await authApi.resendConfirmation(email);
+
+      expect(message, expectedMessage);
+    });
+
+    test('should trim email before sending resend confirmation', () async {
+      fakeApiClient.postJsonFn = (path, {body, headers}) async {
+        expect(body?['email'], 'alice@example.com');
+        return <String, dynamic>{'message': 'ok'};
+      };
+
+      await authApi.resendConfirmation('  alice@example.com  ');
+    });
+
+    test('should throw ApiException when resend confirmation fails', () async {
+      fakeApiClient.postJsonFn = (path, {body, headers}) async {
+        throw ApiException(500, 'Server error');
+      };
+
+      expect(
+        () => authApi.resendConfirmation('alice@example.com'),
+        throwsA(isA<ApiException>()),
+      );
+    });
+  });
+
   group('AuthApi.resetPassword', () {
     test('should return ResetPasswordResult on successful password reset', () async {
       // Arrange

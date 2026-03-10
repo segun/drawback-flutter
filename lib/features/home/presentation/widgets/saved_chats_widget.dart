@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/home_models.dart';
 import '../home_controller.dart';
+import 'refresh_icon_button.dart';
 
 /// Saved chats widget for the sidebar
 class SavedChatsWidget extends StatelessWidget {
@@ -21,12 +22,23 @@ class SavedChatsWidget extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Text(
-          'Saved Chats',
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: const Color(0xFF9F1239),
-                fontWeight: FontWeight.w600,
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+            Expanded(
+              child: Text(
+                'Saved Chats',
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                      color: const Color(0xFF9F1239),
+                      fontWeight: FontWeight.w600,
+                    ),
               ),
+            ),
+            RefreshIconButton(
+              onRefresh: () => controller.loadDashboardData(showLoading: false),
+              tooltip: 'Refresh saved chats',
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         if (savedChats.isEmpty)
