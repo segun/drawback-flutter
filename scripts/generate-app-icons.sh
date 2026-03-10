@@ -139,6 +139,7 @@ ICON_LIST=(
     "Icon-App-76x76@1x.png:76"
     "Icon-App-76x76@2x.png:152"
     "Icon-App-83.5x83.5@2x.png:167"
+    "Icon-App-512x512@1x.png:512"
     "Icon-App-1024x1024@1x.png:1024"
 )
 

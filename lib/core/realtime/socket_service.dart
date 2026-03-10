@@ -238,13 +238,21 @@ class SocketService {
 
   io.Socket? _socket;
   String? _currentToken;
+  void Function()? _onUnauthorized;
+  bool _hasTriggeredUnauthorized = false;
 
   io.Socket? get socket => _socket;
 
   bool get isConnected => _socket?.connected ?? false;
 
   /// Get or create a Socket.IO connection to the /drawback namespace
-  io.Socket getOrCreateSocket(String baseUrl, String token) {
+  io.Socket getOrCreateSocket(
+    String baseUrl,
+    String token, {
+    void Function()? onUnauthorized,
+  }) {
+    _onUnauthorized = onUnauthorized ?? _onUnauthorized;
+
     if (token.trim().isEmpty) {
       throw Exception('Missing access token. Cannot initialize WebSocket connection.');
     }
@@ -262,6 +270,7 @@ class SocketService {
     }
 
     _currentToken = token;
+    _hasTriggeredUnauthorized = false;
 
     final String namespaceUrl = _buildNamespaceUrl(baseUrl);
 
@@ -278,7 +287,96 @@ class SocketService {
           .build(),
     );
 
+    _attachAuthFailureListeners(_socket!);
+
     return _socket!;
+  }
+
+  void _attachAuthFailureListeners(io.Socket socket) {
+    socket.on('connect_error', (dynamic error) {
+      if (_isUnauthorizedPayload(error)) {
+        _triggerUnauthorizedHandler();
+      }
+    });
+
+    socket.on('error', (dynamic error) {
+      if (_isUnauthorizedPayload(error)) {
+        _triggerUnauthorizedHandler();
+      }
+    });
+  }
+
+  bool _isUnauthorizedPayload(dynamic payload) {
+    if (payload is SocketErrorPayload) {
+      if (payload.status == 401) {
+        return true;
+      }
+      final String message = payload.message.toLowerCase();
+      return message.contains('401') || message.contains('unauthorized');
+    }
+
+    if (payload is Map<String, dynamic>) {
+      return _mapIndicatesUnauthorized(payload);
+    }
+
+    if (payload is Map) {
+      try {
+        return _mapIndicatesUnauthorized(Map<String, dynamic>.from(payload));
+      } catch (_) {
+        // no-op
+      }
+    }
+
+    final String text = payload?.toString().toLowerCase() ?? '';
+    return text.contains('401') || text.contains('unauthorized');
+  }
+
+  bool _mapIndicatesUnauthorized(Map<String, dynamic> data) {
+    final dynamic status = data['status'] ?? data['statusCode'] ?? data['code'];
+    if (_statusCodeIsUnauthorized(status)) {
+      return true;
+    }
+
+    final dynamic message = data['message'] ?? data['error'];
+    if (message is String) {
+      final String normalized = message.toLowerCase();
+      return normalized.contains('401') || normalized.contains('unauthorized');
+    }
+
+    if (message is List) {
+      for (final dynamic item in message) {
+        if (item is String) {
+          final String normalized = item.toLowerCase();
+          if (normalized.contains('401') || normalized.contains('unauthorized')) {
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
+  }
+
+  bool _statusCodeIsUnauthorized(dynamic status) {
+    if (status is int) {
+      return status == 401;
+    }
+
+    if (status is String) {
+      final String normalized = status.trim().toLowerCase();
+      return normalized == '401' || normalized == 'unauthorized';
+    }
+
+    return false;
+  }
+
+  void _triggerUnauthorizedHandler() {
+    if (_hasTriggeredUnauthorized) {
+      return;
+    }
+
+    _hasTriggeredUnauthorized = true;
+    _onUnauthorized?.call();
   }
 
   String _buildNamespaceUrl(String baseUrl) {
@@ -354,5 +452,7 @@ class SocketService {
     _socket!.disconnect();
     _socket = null;
     _currentToken = null;
+    _onUnauthorized = null;
+    _hasTriggeredUnauthorized = false;
   }
 }

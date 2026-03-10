@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -33,12 +35,19 @@ class _DrawbackAppState extends State<DrawbackApp> {
   late final DiscoveryController _discoveryController;
   late final DiscoveryAccessManager _discoveryAccessManager;
   late final GoRouter _router;
+  bool _isHandlingUnauthorized = false;
+  bool _isRouterReady = false;
 
   @override
   void initState() {
     super.initState();
     final tokenStore = SecureTokenStore();
-    final client = ApiClient(baseUrl: AppConfig.backendUrl);
+    final client = ApiClient(
+      baseUrl: AppConfig.backendUrl,
+      onUnauthorized: () {
+        unawaited(_handleUnauthorizedSession());
+      },
+    );
     final authApi = AuthApi(client: client, tokenStore: tokenStore);
     final socialApi = SocialApi(client: client, tokenStore: tokenStore);
 
@@ -61,6 +70,9 @@ class _DrawbackAppState extends State<DrawbackApp> {
     _homeController = HomeController(
       socialApi: socialApi,
       backendUrl: AppConfig.backendUrl,
+      onUnauthorized: () {
+        unawaited(_handleUnauthorizedSession());
+      },
     );
 
     _discoveryController = DiscoveryController(
@@ -156,6 +168,23 @@ class _DrawbackAppState extends State<DrawbackApp> {
         return null;
       },
     );
+    _isRouterReady = true;
+  }
+
+  Future<void> _handleUnauthorizedSession() async {
+    if (_isHandlingUnauthorized) {
+      return;
+    }
+
+    _isHandlingUnauthorized = true;
+    try {
+      await _authController.logout();
+      if (mounted && _isRouterReady) {
+        _router.go('/login');
+      }
+    } finally {
+      _isHandlingUnauthorized = false;
+    }
   }
 
   void _handleAuthStateChange() {

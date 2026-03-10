@@ -5,12 +5,18 @@ import 'package:http/http.dart' as http;
 import 'api_exception.dart';
 
 class ApiClient {
-  ApiClient({required String baseUrl, http.Client? httpClient})
+  ApiClient({
+    required String baseUrl,
+    http.Client? httpClient,
+    void Function()? onUnauthorized,
+  })
       : _baseUrl = baseUrl.replaceAll(RegExp(r'/+$'), ''),
-        _httpClient = httpClient ?? http.Client();
+        _httpClient = httpClient ?? http.Client(),
+        _onUnauthorized = onUnauthorized;
 
   final String _baseUrl;
   final http.Client _httpClient;
+  final void Function()? _onUnauthorized;
 
   Future<dynamic> get(
     String path, {
@@ -156,6 +162,10 @@ class ApiClient {
   }
 
   ApiException _toApiException(http.Response response) {
+    if (response.statusCode == 401) {
+      _onUnauthorized?.call();
+    }
+
     try {
       final dynamic decoded = jsonDecode(response.body);
       if (decoded is Map<String, dynamic>) {

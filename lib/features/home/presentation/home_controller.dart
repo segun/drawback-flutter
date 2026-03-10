@@ -11,11 +11,14 @@ class HomeController extends ChangeNotifier {
   HomeController({
     required SocialApi socialApi,
     required String backendUrl,
+    void Function()? onUnauthorized,
   })  : _socialApi = socialApi,
-        _backendUrl = backendUrl;
+        _backendUrl = backendUrl,
+        _onUnauthorized = onUnauthorized;
 
   final SocialApi _socialApi;
   final String _backendUrl;
+  final void Function()? _onUnauthorized;
   final SocketService _socketService = SocketService();
 
   bool _socketInitialized = false;
@@ -191,7 +194,11 @@ class HomeController extends ChangeNotifier {
     }
 
     try {
-      _socketService.getOrCreateSocket(_backendUrl, accessToken);
+      _socketService.getOrCreateSocket(
+        _backendUrl,
+        accessToken,
+        onUnauthorized: _onUnauthorized,
+      );
       _setupSocketListeners();
       _socketInitialized = true;
     } catch (error) {
