@@ -210,7 +210,7 @@ Google Play requires App Signing for new apps:
 - [ ] Content rating completed
 - [ ] `key.properties` file configured with valid keystore path
 - [ ] Keystore file backed up to secure location
-- [ ] App version updated in `pubspec.yaml` (if releasing new version)
+- [ ] App version bumped using `make bump-*` command (see [Versioning Strategy](#versioning-strategy))
 
 ### Build the App Bundle
 
@@ -321,39 +321,163 @@ Only after successful internal testing:
 
 ---
 
-## Subsequent Releases
+## Versioning Strategy
 
-### Update Version
+### Version Format
 
-Edit `pubspec.yaml`:
+DrawkcaB uses semantic versioning with build numbers:
 
-```yaml
-version: 0.2.0+2  # version_name+build_number
+```
+major.minor.patch+buildNumber
 ```
 
-- Increment **version name** for user-facing updates: `0.1.0` → `0.2.0`
-- Increment **build number** for every upload: `1` → `2`
+**Examples:**
+- `0.1.0+1` — Initial release (build 1)
+- `0.1.1+2` — Bug fix release (build 2)
+- `0.2.0+3` — Minor feature release (build 3)
+- `1.0.0+4` — Major release (build 4)
 
-### Build & Upload
+### When to Bump Versions
+
+| Version | When to Bump | Example |
+|---------|------------|----------|
+| **Major** | Breaking changes, significant feature releases | `0.1.0` → `1.0.0` |
+| **Minor** | New features, non-breaking improvements | `0.1.0` → `0.2.0` |
+| **Patch** | Bug fixes, small improvements | `0.1.0` → `0.1.1` |
+| **Build** | Every app upload (auto-incremented by bump scripts) | `0.1.0+1` → `0.1.0+2` |
+
+### Rules
+
+1. **Build number always increments** — Every upload to Play Console/App Store must have a higher build number
+2. **Build number resets on version bump** — When bumping major/minor/patch, build number increments once
+3. **Cannot reuse build numbers** — Version `0.1.0+5` can never be used again
+4. **Test with build-only bumps** — Use `bump-build` to increment version for internal testing without releasing
+
+### Automated Version Bumping
+
+Use the `bump-version.sh` script to automatically update versions:
+
+#### Commands (via Makefile)
 
 ```bash
-# Automated
+# Bump without committing (review changes first)
+make bump-major              # 0.1.0+1 → 1.0.0+2
+make bump-minor              # 0.1.0+1 → 0.2.0+2
+make bump-patch              # 0.1.0+1 → 0.1.1+2
+make bump-build              # 0.1.0+1 → 0.1.0+2
+
+# Bump and commit to git
+make bump-and-commit-major   # Same as above + auto-commit
+make bump-and-commit-minor
+make bump-and-commit-patch
+```
+
+#### Direct Script Usage
+
+```bash
+# From flutter/ directory
+./scripts/bump-version.sh major
+./scripts/bump-version.sh minor
+./scripts/bump-version.sh patch
+./scripts/bump-version.sh build
+
+# With auto-commit
+./scripts/bump-version.sh major --commit
+./scripts/bump-version.sh minor --commit
+```
+
+#### Script Behavior
+
+1. **Reads** current version from `pubspec.yaml`
+2. **Calculates** new version based on bump type
+3. **Updates** `pubspec.yaml` with new version
+4. **Displays** old → new version in colored output
+5. **Optionally commits** changes with message: `Bump version to X.Y.Z+N`
+
+#### Example Workflow
+
+```bash
+# 1. Make changes, commit them
+git add .
+git commit -m "Add new drawing tools"
+
+# 2. Bump version for release
+make bump-minor              # 0.1.0+1 → 0.2.0+2
+
+# 3. Review the change
+git diff pubspec.yaml
+
+# 4. Commit or discard
+git add pubspec.yaml
+git commit -m "Release version 0.2.0"
+
+# 5. Build and deploy
+make archive-android
+```
+
+or more simply:
+
+```bash
+# Do both in one command
+make bump-and-commit-minor
+make archive-android
+```
+
+---
+
+## Subsequent Releases
+
+### 1. Bump Version
+
+Use the automated script (recommended):
+
+```bash
+# For minor feature release
+make bump-and-commit-minor
+
+# For bug fix release
+make bump-and-commit-patch
+
+# For major release
+make bump-and-commit-major
+```
+
+Or manually edit `pubspec.yaml`:
+
+```yaml
+version: 0.2.0+2  # Updates pubspec.yaml with new version
+```
+
+### 2. Build & Upload
+
+```bash
+# Build App Bundle for production
 make archive-android
 
 # Upload new AAB to Play Console
 # Go to Production → Create new release → Upload AAB
 ```
 
-### Release Notes
+### 3. Add Release Notes
 
 See [PLAYSTORE_METADATA.md](PLAYSTORE_METADATA.md) for "What's New" template.
 
-Keep release notes concise:
+Keep release notes concise (max 500 characters per language):
 - **What's new:** New features
-- **Improvements:** Performance, UI tweaks
+- **Improvements:** Performance, UI tweaks  
 - **Bug fixes:** Issues resolved
 
-Max 500 characters per language.
+### 4. Stage the Rollout
+
+For production releases, use staged rollouts to reduce risk:
+
+1. Upload new release to **Production** track
+2. Set rollout to **5%** of users initially
+3. Monitor for 24-48 hours:
+   - Play Console → **Quality** → **Android vitals**
+   - Check crash rates and reviews
+4. If stable, increase to **25%** → **50%** → **100%**
+5. If issues found, upload fixed version immediately
 
 ---
 

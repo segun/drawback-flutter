@@ -59,3 +59,41 @@ install:
 	cd ios && pod install
 
 re-install: clean-all install
+
+# Version management
+bump-major:
+	./scripts/bump-version.sh major
+
+bump-minor:
+	./scripts/bump-version.sh minor
+
+bump-patch:
+	./scripts/bump-version.sh patch
+
+bump-build:
+	./scripts/bump-version.sh build
+
+bump-and-commit-major:
+	./scripts/bump-version.sh major --commit
+
+bump-and-commit-minor:
+	./scripts/bump-version.sh minor --commit
+
+bump-and-commit-patch:
+	./scripts/bump-version.sh patch --commit
+
+inspect-android-bundle:
+	bundletool validate --bundle=build/app/outputs/bundle/release/app-release.aab
+
+validate-android-bundle:
+	bundletool validate --bundle=build/app/outputs/bundle/release/app-release.aab
+
+generate-android-apks:
+	bundletool build-apks \
+  --bundle=build/app/outputs/bundle/release/app-release.aab \
+  --output=test.apks \
+  --ks=~/upload-keystore.jks \
+  --ks-key-alias=upload
+
+install-android-bundle:
+	bundletool install-apks --apks=test.apks

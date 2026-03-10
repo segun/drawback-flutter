@@ -1,7 +1,7 @@
 name: drawback_flutter
-description: DrawkcaB Flutter client (auth MVP)
+description: DrawBack
 publish_to: 'none'
-version: 0.1.0+1
+version: 1.0.2+4
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
