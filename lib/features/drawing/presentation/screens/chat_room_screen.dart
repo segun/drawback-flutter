@@ -272,6 +272,11 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
   }
 
   void _onSocketError(dynamic data) {
+    if (_socketService.isConnectivityError(data)) {
+      widget.onNotice(SocketService.offlineConnectionMessage, 'error');
+      return;
+    }
+
     if (data is! Map<String, dynamic>) {
       return;
     }

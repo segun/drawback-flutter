@@ -1,8 +1,10 @@
+DEVICE ?= 00008130-001935290821401C
+
 run-dev:
-	flutter run --dart-define=BACKEND_URL=https://6a57-143-105-174-218.ngrok-free.app/api -d 00008130-001935290821401C
+	flutter run --dart-define=BACKEND_URL=https://6a57-143-105-174-218.ngrok-free.app/api -d $(DEVICE)
 
 run-prod:	
-	flutter run --dart-define=BACKEND_URL=https://drawback.chat/api -d 00008130-001935290821401C
+	flutter run --dart-define=BACKEND_URL=https://drawback.chat/api -d $(DEVICE)
 
 run-web-prod:
 	flutter run -d chrome --web-port=28080 --dart-define=BACKEND_URL=https://drawback.chat/api

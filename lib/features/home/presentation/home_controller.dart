@@ -226,7 +226,7 @@ class HomeController extends ChangeNotifier {
     });
 
     socket.on('connect_error', (dynamic error) {
-      _error = 'Realtime connection failed';
+      _error = _socketService.mapConnectionErrorMessage(error);
       notifyListeners();
     });
   }

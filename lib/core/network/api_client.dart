@@ -18,17 +18,22 @@ class ApiClient {
   final http.Client _httpClient;
   final void Function()? _onUnauthorized;
 
+  static const String _offlineErrorMessage =
+      'No internet connection. Please check your network and try again.';
+
   Future<dynamic> get(
     String path, {
     Map<String, String>? headers,
   }) async {
-    final response = await _httpClient.get(
-      Uri.parse('$_baseUrl$path'),
-      headers: <String, String>{
-        'Accept': 'application/json',
-        ...?headers,
-      },
-    );
+    final response = await _sendRequest(() {
+      return _httpClient.get(
+        Uri.parse('$_baseUrl$path'),
+        headers: <String, String>{
+          'Accept': 'application/json',
+          ...?headers,
+        },
+      );
+    });
 
     return _decodeResponse(response);
   }
@@ -37,13 +42,15 @@ class ApiClient {
     String path, {
     Map<String, String>? headers,
   }) async {
-    final response = await _httpClient.get(
-      Uri.parse('$_baseUrl$path'),
-      headers: <String, String>{
-        'Accept': 'application/json',
-        ...?headers,
-      },
-    );
+    final response = await _sendRequest(() {
+      return _httpClient.get(
+        Uri.parse('$_baseUrl$path'),
+        headers: <String, String>{
+          'Accept': 'application/json',
+          ...?headers,
+        },
+      );
+    });
 
     return _decodeObjectResponse(response);
   }
@@ -53,15 +60,17 @@ class ApiClient {
     Map<String, dynamic>? body,
     Map<String, String>? headers,
   }) async {
-    final response = await _httpClient.post(
-      Uri.parse('$_baseUrl$path'),
-      headers: <String, String>{
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        ...?headers,
-      },
-      body: jsonEncode(body ?? <String, dynamic>{}),
-    );
+    final response = await _sendRequest(() {
+      return _httpClient.post(
+        Uri.parse('$_baseUrl$path'),
+        headers: <String, String>{
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          ...?headers,
+        },
+        body: jsonEncode(body ?? <String, dynamic>{}),
+      );
+    });
 
     return _decodeObjectResponse(response);
   }
@@ -71,15 +80,17 @@ class ApiClient {
     Map<String, dynamic>? body,
     Map<String, String>? headers,
   }) async {
-    final response = await _httpClient.post(
-      Uri.parse('$_baseUrl$path'),
-      headers: <String, String>{
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        ...?headers,
-      },
-      body: jsonEncode(body ?? <String, dynamic>{}),
-    );
+    final response = await _sendRequest(() {
+      return _httpClient.post(
+        Uri.parse('$_baseUrl$path'),
+        headers: <String, String>{
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          ...?headers,
+        },
+        body: jsonEncode(body ?? <String, dynamic>{}),
+      );
+    });
 
     if (!response.statusCode.toString().startsWith('2')) {
       throw _toApiException(response);
@@ -91,15 +102,17 @@ class ApiClient {
     Map<String, dynamic>? body,
     Map<String, String>? headers,
   }) async {
-    final response = await _httpClient.patch(
-      Uri.parse('$_baseUrl$path'),
-      headers: <String, String>{
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        ...?headers,
-      },
-      body: jsonEncode(body ?? <String, dynamic>{}),
-    );
+    final response = await _sendRequest(() {
+      return _httpClient.patch(
+        Uri.parse('$_baseUrl$path'),
+        headers: <String, String>{
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          ...?headers,
+        },
+        body: jsonEncode(body ?? <String, dynamic>{}),
+      );
+    });
 
     return _decodeObjectResponse(response);
   }
@@ -108,13 +121,15 @@ class ApiClient {
     String path, {
     Map<String, String>? headers,
   }) async {
-    final response = await _httpClient.delete(
-      Uri.parse('$_baseUrl$path'),
-      headers: <String, String>{
-        'Accept': 'application/json',
-        ...?headers,
-      },
-    );
+    final response = await _sendRequest(() {
+      return _httpClient.delete(
+        Uri.parse('$_baseUrl$path'),
+        headers: <String, String>{
+          'Accept': 'application/json',
+          ...?headers,
+        },
+      );
+    });
 
     if (!response.statusCode.toString().startsWith('2')) {
       throw _toApiException(response);
@@ -185,5 +200,48 @@ class ApiClient {
     }
 
     return ApiException(response.statusCode, 'Request failed: ${response.statusCode}');
+  }
+
+  Future<http.Response> _sendRequest(
+    Future<http.Response> Function() request,
+  ) async {
+    try {
+      return await request();
+    } catch (error) {
+      if (_isConnectivityError(error)) {
+        throw const ApiException(0, _offlineErrorMessage);
+      }
+      rethrow;
+    }
+  }
+
+  bool _isConnectivityError(Object error) {
+    if (error is http.ClientException &&
+        _containsConnectivityText(error.message)) {
+      return true;
+    }
+    return _containsConnectivityText(error.toString());
+  }
+
+  bool _containsConnectivityText(String value) {
+    final String text = value.toLowerCase();
+    const List<String> connectivityHints = <String>[
+      'socketexception',
+      'failed host lookup',
+      'network is unreachable',
+      'connection refused',
+      'connection reset',
+      'connection closed',
+      'connection terminated',
+      'timed out',
+      'failed to fetch',
+      'xmlhttprequest error',
+      'network request failed',
+      'name or service not known',
+      'no address associated with hostname',
+      'dns',
+    ];
+
+    return connectivityHints.any(text.contains);
   }
 }

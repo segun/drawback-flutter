@@ -236,6 +236,9 @@ class SocketService {
 
   static final SocketService _instance = SocketService._internal();
 
+  static const String offlineConnectionMessage =
+      'No internet connection. Please check your network and try again.';
+
   io.Socket? _socket;
   String? _currentToken;
   void Function()? _onUnauthorized;
@@ -368,6 +371,85 @@ class SocketService {
     }
 
     return false;
+  }
+
+  /// Returns true when socket error payload looks like connectivity failure.
+  bool isConnectivityError(dynamic payload) {
+    final String text = _extractErrorText(payload).toLowerCase();
+    if (text.isEmpty) {
+      return false;
+    }
+
+    const List<String> connectivityHints = <String>[
+      'socketexception',
+      'failed host lookup',
+      'network is unreachable',
+      'connection refused',
+      'connection reset',
+      'connection closed',
+      'connection terminated',
+      'timed out',
+      'failed to fetch',
+      'xmlhttprequest error',
+      'network request failed',
+      'name or service not known',
+      'no address associated with hostname',
+      'dns',
+      'xhr poll error',
+      'websocket error',
+      'transport error',
+    ];
+
+    return connectivityHints.any(text.contains);
+  }
+
+  /// Maps raw socket errors to a user-friendly message.
+  String mapConnectionErrorMessage(
+    dynamic payload, {
+    String fallback = 'Realtime connection failed',
+  }) {
+    if (isConnectivityError(payload)) {
+      return offlineConnectionMessage;
+    }
+    return fallback;
+  }
+
+  String _extractErrorText(dynamic payload) {
+    if (payload == null) {
+      return '';
+    }
+
+    if (payload is SocketErrorPayload) {
+      return payload.message;
+    }
+
+    if (payload is Map<String, dynamic>) {
+      return _messageFromMap(payload);
+    }
+
+    if (payload is Map) {
+      try {
+        return _messageFromMap(Map<String, dynamic>.from(payload));
+      } catch (_) {
+        // Fall through to toString for unknown map shapes.
+      }
+    }
+
+    return payload.toString();
+  }
+
+  String _messageFromMap(Map<String, dynamic> data) {
+    final dynamic message = data['message'] ?? data['error'] ?? data['description'];
+
+    if (message is String) {
+      return message;
+    }
+
+    if (message is List) {
+      return message.whereType<String>().join(' ');
+    }
+
+    return data.toString();
   }
 
   void _triggerUnauthorizedHandler() {
