@@ -94,18 +94,18 @@ storeFile=/Users/YOUR_USERNAME/upload-keystore.jks
 - Or use relative path: `storeFile=../../../upload-keystore.jks`
 
 **Security checklist:**
-- [ ] `key.properties` is listed in `.gitignore` (already configured)
-- [ ] Keystore file is NOT in project directory
-- [ ] Keystore file is backed up to secure location
-- [ ] Passwords are stored in password manager
+- [x] `key.properties` is listed in `.gitignore` (already configured)
+- [x] Keystore file is NOT in project directory
+- [x] Keystore file is backed up to secure location
+- [x] Passwords are stored in password manager
 
 ### 3. Verify Signing Configuration
 
 The app is already configured to read signing properties from `key.properties`. Verify:
 
-- [ ] `android/key.properties` file exists with correct paths
-- [ ] Keystore file path in `key.properties` is accessible
-- [ ] Run `make build-android-prod` to verify signing works
+- [x] `android/key.properties` file exists with correct paths
+- [x] Keystore file path in `key.properties` is accessible
+- [x] Run `make build-android-prod` to verify signing works
 
 If signing fails, the build will automatically fall back to debug signing (for development only).
 

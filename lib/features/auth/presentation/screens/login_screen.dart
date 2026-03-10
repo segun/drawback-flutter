@@ -20,11 +20,14 @@ class _LoginScreenState extends State<LoginScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _forgotPasswordEmailController =
+      TextEditingController();
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _forgotPasswordEmailController.dispose();
     super.dispose();
   }
 
@@ -44,14 +47,18 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _openForgotPasswordDialog() async {
-    final TextEditingController emailController = TextEditingController();
+    _forgotPasswordEmailController.text = _emailController.text.trim();
+    _forgotPasswordEmailController.selection = TextSelection.collapsed(
+      offset: _forgotPasswordEmailController.text.length,
+    );
+
     await showDialog<void>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Reset password'),
           content: TextField(
-            controller: emailController,
+            controller: _forgotPasswordEmailController,
             keyboardType: TextInputType.emailAddress,
             decoration: const InputDecoration(labelText: 'Email'),
           ),
@@ -62,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             FilledButton(
               onPressed: () async {
-                final String email = emailController.text.trim();
+                final String email = _forgotPasswordEmailController.text.trim();
                 if (email.isEmpty) {
                   return;
                 }
@@ -77,10 +84,6 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       },
     );
-    emailController.dispose();
-    if (mounted) {
-      setState(() {});
-    }
   }
 
   @override
