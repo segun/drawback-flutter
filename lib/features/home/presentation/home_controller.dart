@@ -488,6 +488,33 @@ class HomeController extends ChangeNotifier {
     );
   }
 
+  /// Submit a safety report against another user.
+  Future<bool> submitReport({
+    required String reportedUserId,
+    required ReportType reportType,
+    required String description,
+    String? chatRequestId,
+    String? sessionContext,
+  }) async {
+    return _runGuarded<bool>(
+      () async {
+        await _socialApi.submitReport(
+          reportedUserId: reportedUserId,
+          reportType: reportType,
+          description: description,
+          chatRequestId: chatRequestId,
+          sessionContext: sessionContext,
+        );
+
+        _notice = reportType == ReportType.csae
+            ? 'CSAE report submitted. Our safety team will review it urgently.'
+            : 'Report submitted. Thank you for helping keep Drawback safe.';
+        return true;
+      },
+      fallback: false,
+    );
+  }
+
   /// Update user profile
   Future<bool> updateProfile(String displayName) async {
     return _runGuarded<bool>(

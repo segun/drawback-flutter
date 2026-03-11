@@ -528,6 +528,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
             // Close the chat when socket error "Not in a room" occurs
             widget.controller.closeChat();
           },
+          onSubmitReport: ({
+            required String reportedUserId,
+            required ReportType reportType,
+            required String description,
+            String? chatRequestId,
+            String? sessionContext,
+          }) async {
+            final bool success = await widget.controller.submitReport(
+              reportedUserId: reportedUserId,
+              reportType: reportType,
+              description: description,
+              chatRequestId: chatRequestId,
+              sessionContext: sessionContext,
+            );
+
+            if (!mounted) {
+              return success;
+            }
+
+            if (success) {
+              final String successMessage = widget.controller.notice ??
+                  'Report submitted. Thank you for helping keep Drawback safe.';
+              widget.controller.clearNotice();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(successMessage),
+                  backgroundColor: Colors.green,
+                ),
+              );
+              return true;
+            }
+
+            final String errorMessage = widget.controller.error ??
+                'Unable to submit report. Please try again.';
+            widget.controller.clearError();
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(errorMessage),
+                backgroundColor: Colors.red,
+              ),
+            );
+            return false;
+          },
           onSaveChat: () async {
             final bool success =
                 await widget.controller.saveChat(widget.controller.selectedChatRequestId!);

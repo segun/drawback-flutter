@@ -18,6 +18,7 @@ class ChatRoomScreen extends StatefulWidget {
     required this.onNotice,
     required this.onSaveChat,
     required this.onCloseChat,
+    required this.onSubmitReport,
     required this.isChatSaved,
     super.key,
   });
@@ -28,6 +29,13 @@ class ChatRoomScreen extends StatefulWidget {
   final Function(String message, String type) onNotice;
   final Future<void> Function() onSaveChat;
   final VoidCallback onCloseChat;
+  final Future<bool> Function({
+    required String reportedUserId,
+    required ReportType reportType,
+    required String description,
+    String? chatRequestId,
+    String? sessionContext,
+  }) onSubmitReport;
   final bool isChatSaved;
 
   @override
@@ -66,6 +74,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
   bool _isSavingChat = false;
   bool _isReconnecting = false;
   bool _showReconnectButton = false;
+  final Set<String> _submittedReportFingerprints = <String>{};
   Timer? _reconnectButtonTimer;
   Timer? _emoteAnimationTimer;
 
@@ -381,6 +390,258 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
         });
       }
     }
+  }
+
+  String _peerUserId() {
+    return widget.profile.id == widget.chatRequest.fromUserId
+        ? widget.chatRequest.toUserId
+        : widget.chatRequest.fromUserId;
+  }
+
+  String _buildReportFingerprint({
+    required String reportedUserId,
+    required ReportType reportType,
+    required String description,
+  }) {
+    final String normalizedDescription = description
+        .toLowerCase()
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+    return '$reportedUserId:${widget.chatRequestId}:${reportType.value}:$normalizedDescription';
+  }
+
+  String _reportTypeLabel(ReportType type) {
+    switch (type) {
+      case ReportType.csae:
+        return 'Child safety concern (CSAE)';
+      case ReportType.harassment:
+        return 'Harassment';
+      case ReportType.inappropriateContent:
+        return 'Inappropriate content';
+      case ReportType.spam:
+        return 'Spam';
+      case ReportType.impersonation:
+        return 'Impersonation';
+      case ReportType.other:
+        return 'Other';
+    }
+  }
+
+  Future<void> _showReportDialog() async {
+    final String reportedUserId = _peerUserId();
+    if (reportedUserId == widget.profile.id) {
+      widget.onNotice('You cannot report yourself.', 'error');
+      return;
+    }
+
+    ReportType selectedType = ReportType.harassment;
+    String description = '';
+    String sessionContext = '';
+    String? formError;
+    bool isSubmitting = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setDialogState) {
+            Future<void> handleSubmit() async {
+              final BuildContext dialogContext = context;
+              final String trimmedDescription = description.trim();
+              final String trimmedSessionContext = sessionContext.trim();
+
+              if (trimmedDescription.isEmpty) {
+                setDialogState(() {
+                  formError = 'Please describe what happened.';
+                });
+                return;
+              }
+
+              if (trimmedDescription.length > 2000) {
+                setDialogState(() {
+                  formError = 'Description cannot exceed 2000 characters.';
+                });
+                return;
+              }
+
+              if (trimmedSessionContext.length > 255) {
+                setDialogState(() {
+                  formError = 'Session context cannot exceed 255 characters.';
+                });
+                return;
+              }
+
+              final String fingerprint = _buildReportFingerprint(
+                reportedUserId: reportedUserId,
+                reportType: selectedType,
+                description: trimmedDescription,
+              );
+              if (_submittedReportFingerprints.contains(fingerprint)) {
+                setDialogState(() {
+                  formError =
+                      'This incident was already reported. Please avoid duplicate reports.';
+                });
+                return;
+              }
+
+              setDialogState(() {
+                formError = null;
+                isSubmitting = true;
+              });
+
+              final bool success = await widget.onSubmitReport(
+                reportedUserId: reportedUserId,
+                reportType: selectedType,
+                description: trimmedDescription,
+                chatRequestId: widget.chatRequestId,
+                sessionContext:
+                    trimmedSessionContext.isEmpty ? null : trimmedSessionContext,
+              );
+
+              if (!dialogContext.mounted) {
+                return;
+              }
+
+              if (success) {
+                _submittedReportFingerprints.add(fingerprint);
+                Navigator.of(dialogContext).pop();
+                widget.onNotice('Report submitted successfully.', 'success');
+                return;
+              }
+
+              setDialogState(() {
+                formError = 'Unable to submit report right now. Please try again.';
+                isSubmitting = false;
+              });
+            }
+
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              title: const Text(
+                'Report User',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF9F1239),
+                ),
+              ),
+              content: SizedBox(
+                width: math.min(MediaQuery.of(context).size.width * 0.9, 420),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      DropdownButtonFormField<ReportType>(
+                        key: ValueKey<ReportType>(selectedType),
+                        initialValue: selectedType,
+                        decoration: const InputDecoration(
+                          labelText: 'Report type',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: ReportType.values
+                            .map(
+                              (ReportType type) => DropdownMenuItem<ReportType>(
+                                value: type,
+                                child: Text(_reportTypeLabel(type)),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: isSubmitting
+                            ? null
+                            : (ReportType? value) {
+                                if (value == null) {
+                                  return;
+                                }
+                                setDialogState(() {
+                                  selectedType = value;
+                                });
+                              },
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        enabled: !isSubmitting,
+                        minLines: 3,
+                        maxLines: 5,
+                        maxLength: 2000,
+                        onChanged: (String value) {
+                          description = value;
+                          if (formError != null) {
+                            setDialogState(() {
+                              formError = null;
+                            });
+                          }
+                        },
+                        decoration: const InputDecoration(
+                          labelText: 'Description',
+                          hintText: 'Describe what happened with specific details.',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        enabled: !isSubmitting,
+                        minLines: 1,
+                        maxLines: 2,
+                        maxLength: 255,
+                        onChanged: (String value) {
+                          sessionContext = value;
+                        },
+                        decoration: const InputDecoration(
+                          labelText: 'Session context (optional)',
+                          hintText: 'Add any useful context for this drawing session.',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        "Don't submit duplicate reports for the same incident.",
+                        style: TextStyle(
+                          color: Color(0xFF9F1239),
+                          fontSize: 12,
+                        ),
+                      ),
+                      if (formError != null) ...<Widget>[
+                        const SizedBox(height: 10),
+                        Text(
+                          formError!,
+                          style: const TextStyle(
+                            color: Color(0xFFB91C1C),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: isSubmitting ? null : () => Navigator.of(context).pop(),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: isSubmitting ? null : () => unawaited(handleSubmit()),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFE11D48),
+                  ),
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Submit'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   void _handleSendEmote(String emoji) {
@@ -1041,6 +1302,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
             backgroundColor: const Color(0xFFFBCFE8),
             iconColor: const Color(0xFF9F1239),
             onPressed: (_roomJoined && _peerPresent) ? _showEmotePicker : null,
+          ),
+          const SizedBox(width: 8),
+          _buildQuickActionButton(
+            icon: Icons.flag_outlined,
+            backgroundColor: const Color(0xFFFDA4AF),
+            iconColor: const Color(0xFF9F1239),
+            onPressed: _showReportDialog,
           ),
           const Spacer(),
           _buildQuickActionButton(

@@ -267,3 +267,95 @@ class DiscoveryUser {
     };
   }
 }
+
+enum ReportType {
+  csae('CSAE'),
+  harassment('HARASSMENT'),
+  inappropriateContent('INAPPROPRIATE_CONTENT'),
+  spam('SPAM'),
+  impersonation('IMPERSONATION'),
+  other('OTHER');
+
+  const ReportType(this.value);
+  final String value;
+
+  static ReportType fromString(String value) {
+    return ReportType.values.firstWhere(
+      (type) => type.value == value,
+      orElse: () => ReportType.other,
+    );
+  }
+}
+
+enum ReportStatus {
+  pending('PENDING'),
+  underReview('UNDER_REVIEW'),
+  resolved('RESOLVED'),
+  dismissed('DISMISSED');
+
+  const ReportStatus(this.value);
+  final String value;
+
+  static ReportStatus fromString(String value) {
+    return ReportStatus.values.firstWhere(
+      (status) => status.value == value,
+      orElse: () => ReportStatus.pending,
+    );
+  }
+}
+
+class UserSafetyReport {
+  const UserSafetyReport({
+    required this.id,
+    required this.reporterId,
+    required this.reportedUserId,
+    required this.reportType,
+    required this.description,
+    required this.status,
+    required this.createdAt,
+    required this.updatedAt,
+    this.chatRequestId,
+    this.sessionContext,
+  });
+
+  final String id;
+  final String reporterId;
+  final String reportedUserId;
+  final ReportType reportType;
+  final String description;
+  final String? chatRequestId;
+  final String? sessionContext;
+  final ReportStatus status;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  factory UserSafetyReport.fromJson(Map<String, dynamic> json) {
+    return UserSafetyReport(
+      id: json['id'] as String,
+      reporterId: json['reporterId'] as String,
+      reportedUserId: json['reportedUserId'] as String,
+      reportType: ReportType.fromString(json['reportType'] as String),
+      description: json['description'] as String,
+      chatRequestId: json['chatRequestId'] as String?,
+      sessionContext: json['sessionContext'] as String?,
+      status: ReportStatus.fromString(json['status'] as String),
+      createdAt: DateTime.parse(json['createdAt'] as String),
+      updatedAt: DateTime.parse(json['updatedAt'] as String),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'id': id,
+      'reporterId': reporterId,
+      'reportedUserId': reportedUserId,
+      'reportType': reportType.value,
+      'description': description,
+      'chatRequestId': chatRequestId,
+      'sessionContext': sessionContext,
+      'status': status.value,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt.toIso8601String(),
+    };
+  }
+}

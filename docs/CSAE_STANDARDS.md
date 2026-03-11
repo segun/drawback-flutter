@@ -45,7 +45,7 @@ Users can report concerning content or behavior through:
 
 - **In-App Reporting**: `POST /api/reports` endpoint with report details (report type, description, user being reported, session context)
 - **Application Interface**: Available within the application UI for easy access
-- **Email**: Report to `safety@drawback.app` or `abuse@drawback.app`
+- **Email**: Report to `safety@drawback.chat` or `abuse@drawback.chat`
 - **Emergency Hotline**: For urgent situations requiring immediate action
 
 All reports are:
@@ -183,7 +183,7 @@ We provide users with:
 
 ### 10.2 Community Guidelines
 
-Clear, accessible community guidelines that explicitly prohibit CSAE and explain consequences. Published at `https://drawback.app/community-guidelines`
+Clear, accessible community guidelines that explicitly prohibit CSAE and explain consequences. Published at `https://drawback.chat/community-guidelines`
 
 ## 11. Continuous Improvement
 
@@ -208,9 +208,9 @@ These standards are reviewed and updated:
 
 ### 12.1 Safety Team
 
-- **Email**: `safety@drawback.app`
-- **Abuse Reports**: `abuse@drawback.app`
-- **Legal/Law Enforcement**: `legal@drawback.app`
+- **Email**: `safety@drawback.chat`
+- **Abuse Reports**: `abuse@drawback.chat`
+- **Legal/Law Enforcement**: `legal@drawback.chat`
 
 ### 12.2 Emergency Resources
 
@@ -244,4 +244,4 @@ Drawback is committed to providing a safe platform for creative collaboration. P
 **Next Review Date**: June 11, 2026  
 **Owner**: Drawback Safety and Trust Team
 
-For questions about these standards, contact: `safety@drawback.app`
+For questions about these standards, contact: `safety@drawback.chat`

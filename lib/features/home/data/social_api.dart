@@ -228,6 +228,30 @@ class SocialApi {
     );
   }
 
+  Future<UserSafetyReport> submitReport({
+    required String reportedUserId,
+    required ReportType reportType,
+    required String description,
+    String? chatRequestId,
+    String? sessionContext,
+  }) async {
+    final Map<String, dynamic> response = await _client.postJson(
+      '/reports',
+      body: <String, dynamic>{
+        'reportedUserId': reportedUserId,
+        'reportType': reportType.value,
+        'description': description.trim(),
+        if (chatRequestId != null && chatRequestId.isNotEmpty)
+          'chatRequestId': chatRequestId,
+        if (sessionContext != null && sessionContext.trim().isNotEmpty)
+          'sessionContext': sessionContext.trim(),
+      },
+      headers: await _authHeaders(),
+    );
+
+    return UserSafetyReport.fromJson(response);
+  }
+
   // Discovery Game Management
 
   Future<UserProfile> updateDiscoveryGameStatus({
