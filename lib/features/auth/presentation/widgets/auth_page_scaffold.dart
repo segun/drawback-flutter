@@ -46,10 +46,8 @@ class AuthPageScaffold extends StatelessWidget {
       extendBodyBehindAppBar: false,
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: const SystemUiOverlayStyle(
-          statusBarColor: Color(0xFFFCE7F3),
           statusBarBrightness: Brightness.light,
           statusBarIconBrightness: Brightness.dark,
-          systemNavigationBarColor: Color(0xFFFCE7F3),
           systemNavigationBarIconBrightness: Brightness.dark,
         ),
         child: SafeArea(
