@@ -1,0 +1,34 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Flutter: Chrome (Local API)",
+      "request": "launch",
+      "type": "dart",
+      "cwd": ".",
+      "deviceId": "chrome",
+      "toolArgs": [
+        "--dart-define=BACKEND_URL=http://localhost:3000/api"
+      ]
+    },
+    {
+      "name": "Flutter: iPhone (LAN API)",
+      "request": "launch",
+      "type": "dart",
+      "cwd": ".",
+      "deviceId": "00008130-001935290821401C",
+      "toolArgs": [
+        "--dart-define=BACKEND_URL=http://192.168.1.147:3000/api"
+      ]
+    },
+    {
+      "name": "Flutter: Emulator (Local API)",
+      "request": "launch",
+      "type": "dart",
+      "cwd": ".",
+      "toolArgs": [
+        "--dart-define=BACKEND_URL=http://localhost:3000/api"
+      ]
+    }
+  ]
+}
