@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 
 import '../../features/auth/data/token_store.dart';
 import '../network/api_client.dart';
@@ -14,13 +17,14 @@ class PurchaseService {
 
   final ApiClient _client;
   final TokenStore _tokenStore;
+  final InAppPurchase _inAppPurchase = InAppPurchase.instance;
 
   /// Toggle for development vs production
-  /// Set to false when ready to use real in-app purchases
-  static const bool useMockPurchases = true;
+  /// Set to false after configuring products in Play/App Store
+  static const bool useMockPurchases = false;
 
-  /// Product IDs for in-app purchases
-  static const String discoveryProductId = 'discovery_unlock_forever';
+  /// Product ID for subscription (monthly, quarterly, yearly available)
+  static const String discoveryProductId = 'discovery_premium';
 
   Future<Map<String, String>> _authHeaders() async {
     final String? token = await _tokenStore.readToken();
@@ -38,12 +42,80 @@ class PurchaseService {
     if (useMockPurchases) {
       return _mockPurchaseDiscovery();
     }
-    // TODO: Implement real IAP when ready
-    // 1. Initialize in_app_purchase package
-    // 2. Load products
-    // 3. Complete purchase flow
-    // 4. Verify receipt with backend
-    return false;
+
+    final bool storeAvailable = await _inAppPurchase.isAvailable();
+    if (!storeAvailable) {
+      debugPrint('In-app purchase store is unavailable');
+      return false;
+    }
+
+    final ProductDetailsResponse response =
+        await _inAppPurchase.queryProductDetails(<String>{discoveryProductId});
+    if (response.error != null || response.productDetails.isEmpty) {
+      debugPrint('Could not load product details: ${response.error}');
+      return false;
+    }
+
+    final ProductDetails product = response.productDetails.first;
+    final Completer<bool> resultCompleter = Completer<bool>();
+
+    late final StreamSubscription<List<PurchaseDetails>> subscription;
+    subscription = _inAppPurchase.purchaseStream.listen(
+      (List<PurchaseDetails> purchases) async {
+        for (final PurchaseDetails purchase in purchases) {
+          if (purchase.productID != discoveryProductId) {
+            continue;
+          }
+
+          if (purchase.status == PurchaseStatus.pending) {
+            continue;
+          }
+
+          if (purchase.pendingCompletePurchase) {
+            await _inAppPurchase.completePurchase(purchase);
+          }
+
+          if (purchase.status == PurchaseStatus.purchased ||
+              purchase.status == PurchaseStatus.restored) {
+            final bool verified = await verifyReceipt(
+              platform: _platformName(),
+              receipt: purchase.verificationData.serverVerificationData,
+            );
+            if (!resultCompleter.isCompleted) {
+              resultCompleter.complete(verified);
+            }
+            continue;
+          }
+
+          if (!resultCompleter.isCompleted) {
+            resultCompleter.complete(false);
+          }
+        }
+      },
+      onError: (Object error) {
+        debugPrint('Purchase stream error: $error');
+        if (!resultCompleter.isCompleted) {
+          resultCompleter.complete(false);
+        }
+      },
+    );
+
+    final bool purchaseStarted = await _inAppPurchase.buyNonConsumable(
+      purchaseParam: PurchaseParam(productDetails: product),
+    );
+    if (!purchaseStarted) {
+      await subscription.cancel();
+      return false;
+    }
+
+    try {
+      return await resultCompleter.future.timeout(
+        const Duration(minutes: 2),
+        onTimeout: () => false,
+      );
+    } finally {
+      await subscription.cancel();
+    }
   }
 
   /// Mock purchase for development testing
@@ -71,10 +143,31 @@ class PurchaseService {
       debugPrint('Mock restore: Profile refresh will handle this');
       return true;
     }
-    // TODO: Implement real IAP restore when ready
-    // 1. Call restorePurchases on in_app_purchase
-    // 2. Re-verify receipts with backend
-    return false;
+
+    try {
+      final bool storeAvailable = await _inAppPurchase.isAvailable();
+      if (!storeAvailable) {
+        debugPrint('In-app purchase store is unavailable');
+        return false;
+      }
+
+      await _inAppPurchase.restorePurchases();
+      return true;
+    } catch (e) {
+      debugPrint('Restore purchases failed: $e');
+      return false;
+    }
+  }
+
+  String _platformName() {
+    switch (defaultTargetPlatform) {
+      case TargetPlatform.android:
+        return 'android';
+      case TargetPlatform.iOS:
+        return 'ios';
+      default:
+        return 'unknown';
+    }
   }
 
   /// Verify a purchase receipt with the backend

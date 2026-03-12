@@ -224,7 +224,7 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
                       child: FilledButton.icon(
                         onPressed: _isProcessing ? null : _handlePurchase,
                         icon: const Icon(Icons.diamond),
-                        label: const Text('Unlock Forever — \$2.99'),
+                        label: const Text('Subscribe — \$1.49/month'),
                         style: FilledButton.styleFrom(
                           backgroundColor: const Color(0xFFE11D48),
                           disabledBackgroundColor: const Color(0xFFE11D48).withAlpha(128),
