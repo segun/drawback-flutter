@@ -28,9 +28,13 @@ class AuthUser {
 }
 
 class AuthResult {
-  const AuthResult({required this.accessToken});
+  const AuthResult({
+    required this.accessToken,
+    this.canAddPasskey = false,
+  });
 
   final String accessToken;
+  final bool canAddPasskey;
 }
 
 class ResetPasswordResult {

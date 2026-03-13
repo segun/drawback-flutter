@@ -27,6 +27,7 @@ class FakeApiClient implements ApiClient {
     String path, {
     Map<String, dynamic>? body,
     Map<String, String>? headers,
+    bool triggerUnauthorizedCallback = true,
   }) async {
     return postJsonFn(path, body: body, headers: headers);
   }
@@ -36,6 +37,7 @@ class FakeApiClient implements ApiClient {
     String path, {
     Map<String, dynamic>? body,
     Map<String, String>? headers,
+    bool triggerUnauthorizedCallback = true,
   }) async {
     throw UnimplementedError();
   }

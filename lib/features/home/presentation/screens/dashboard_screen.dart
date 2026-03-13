@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/realtime/socket_service.dart';
 import '../../../../core/services/discovery_access_manager.dart';
 import '../../../../core/widgets/status_banner.dart';
+import '../../../auth/presentation/auth_controller.dart';
 import '../../../discovery/presentation/discovery_controller.dart';
 import '../../../discovery/presentation/screens/discovery_game_screen.dart';
 import '../../../discovery/presentation/screens/discovery_paywall_screen.dart';
@@ -23,15 +26,19 @@ enum DashboardView { chat, profile, discoveryPaywall, discoveryGame, discoverySw
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({
     required this.controller,
+    required this.authController,
     required this.discoveryController,
     required this.discoveryAccessManager,
+    required this.promptPasskeyEnrollment,
     required this.onLogout,
     super.key,
   });
 
   final HomeController controller;
+  final AuthController authController;
   final DiscoveryController discoveryController;
   final DiscoveryAccessManager discoveryAccessManager;
+  final bool promptPasskeyEnrollment;
   final VoidCallback onLogout;
 
   @override
@@ -41,13 +48,127 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   DashboardView _currentView = DashboardView.chat;
   bool _isSidebarOpen = false;
+  bool _hasHandledPasskeyPrompt = false;
+  String? _passkeyNotice;
+  String? _passkeyError;
 
   @override
   void initState() {
     super.initState();
-    // Load dashboard data on init
+    // Load dashboard data and handle post-login prompts once the page is visible.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.controller.loadDashboardData();
+      unawaited(_showPasskeyEnrollmentPromptIfNeeded());
+    });
+  }
+
+  Future<void> _showPasskeyEnrollmentPromptIfNeeded() async {
+    if (!widget.promptPasskeyEnrollment || _hasHandledPasskeyPrompt) {
+      return;
+    }
+
+    // Don't set the flag until we actually show the dialog
+    await widget.authController.refreshPasskeyAvailability(notify: false);
+
+    if (!mounted || !widget.authController.canAddPasskey) {
+      return;
+    }
+
+    if (!widget.authController.isPasskeyAvailable) {
+      _hasHandledPasskeyPrompt = true; // Set here - we showed the "not available" dialog
+      await showDialog<void>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Passkey not available'),
+            content: const Text(
+              'Your account can add a passkey, but this device is not ready for passkeys yet. '
+              'Set up screen lock/biometrics (and Google account on Android), then try again.',
+            ),
+            actions: <Widget>[
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFBE185D),
+                  foregroundColor: const Color(0xFFFCE7F3),
+                  padding: const EdgeInsets.all(16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(1),
+                  ),
+                ),
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
+    _hasHandledPasskeyPrompt = true; // Set here - about to show enrollment dialog
+    final bool? shouldEnroll = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add passkey?'),
+          content: const Text(
+            'Use Face ID, Touch ID, or your device biometrics for faster login next time.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              style: TextButton.styleFrom(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
+              child: const Text('Not now'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFBE185D),
+                foregroundColor: const Color(0xFFFCE7F3),
+                padding: const EdgeInsets.all(16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
+              child: const Text('Add passkey'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldEnroll != true || !mounted) {
+      return;
+    }
+
+    final bool registered =
+        await widget.authController.registerPasskeyForCurrentUser();
+
+    if (!mounted) {
+      return;
+    }
+
+    if (registered) {
+      final String message = widget.authController.notice ??
+          'Passkey added successfully.';
+      widget.authController.clearNotice();
+      setState(() {
+        _passkeyNotice = message;
+        _passkeyError = null;
+      });
+      return;
+    }
+
+    final String message = widget.authController.error ??
+        'Could not add passkey right now. Please try again.';
+    widget.authController.clearError();
+    setState(() {
+      _passkeyError = message;
+      _passkeyNotice = null;
     });
   }
 
@@ -141,6 +262,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       builder: (BuildContext context, _) {
         final String? error = widget.controller.error;
         final String? notice = widget.controller.notice;
+        final String? bannerError = _passkeyError ?? error;
+        final String? bannerNotice =
+            bannerError == null ? (_passkeyNotice ?? notice) : null;
 
         return Scaffold(
           backgroundColor: const Color(0xFFFCE7F3),
@@ -183,14 +307,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 )
               : Column(
                   children: <Widget>[
-                    if (error != null || notice != null)
+                    if (bannerError != null || bannerNotice != null)
                       Padding(
                         padding: const EdgeInsets.all(6),
                         child: StatusBanner(
-                          key: ValueKey('${error ?? notice}'),
-                          text: error ?? notice!,
-                          kind: error != null ? BannerKind.error : BannerKind.success,
+                          key: ValueKey('${bannerError ?? bannerNotice}'),
+                          text: bannerError ?? bannerNotice!,
+                          kind: bannerError != null
+                              ? BannerKind.error
+                              : BannerKind.success,
                           onDismiss: () {
+                            if (_passkeyError != null || _passkeyNotice != null) {
+                              setState(() {
+                                _passkeyError = null;
+                                _passkeyNotice = null;
+                              });
+                            }
                             widget.controller.clearMessages();
                           },
                         ),

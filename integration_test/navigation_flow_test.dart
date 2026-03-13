@@ -303,65 +303,6 @@ void main() {
       expect(mockTokenStore.hasToken, false);
     });
 
-    testWidgets('Email confirmation page with success status', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        TestApp(
-          initialRoute: '/confirm?status=success&email=test@example.com',
-          mockAuthApi: mockAuthApi,
-          mockTokenStore: mockTokenStore,
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      // Verify confirmation screen content
-      expect(find.textContaining('confirmed', findRichText: true), findsAny);
-      expect(find.textContaining('test@example.com'), findsOneWidget);
-    });
-
-    testWidgets('Email confirmation page with error status', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        TestApp(
-          initialRoute: '/confirm?status=error&reason=invalid_token',
-          mockAuthApi: mockAuthApi,
-          mockTokenStore: mockTokenStore,
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      // Verify error message
-      expect(find.textContaining('error', findRichText: true), findsAny);
-    });
-
-    testWidgets('Navigate to login from confirmation page', (WidgetTester tester) async {
-      await tester.pumpWidget(
-        TestApp(
-          initialRoute: '/confirm?status=success&email=test@example.com',
-          mockAuthApi: mockAuthApi,
-          mockTokenStore: mockTokenStore,
-        ),
-      );
-
-      await tester.pumpAndSettle();
-
-      // Find login button/link
-      final loginButton = find.widgetWithText(ElevatedButton, 'Go to Log In');
-      if (loginButton.evaluate().isEmpty) {
-        final loginLink = find.textContaining('Log In');
-        if (loginLink.evaluate().isNotEmpty) {
-          await tester.tap(loginLink.first);
-          await tester.pumpAndSettle();
-        }
-      } else {
-        await tester.tap(loginButton);
-        await tester.pumpAndSettle();
-      }
-
-      // Verify we're on login screen
-      expect(find.text('Log In'), findsOneWidget);
-    });
-
     testWidgets('Deep link navigation preserves authentication', (WidgetTester tester) async {
       await mockTokenStore.writeToken('mock_token_testuser@example.com');
 

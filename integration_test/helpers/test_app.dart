@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:drawback_flutter/features/auth/presentation/auth_controller.dart';
-import 'package:drawback_flutter/features/auth/presentation/screens/confirm_screen.dart';
 import 'package:drawback_flutter/features/auth/presentation/screens/home_screen.dart';
 import 'package:drawback_flutter/features/auth/presentation/screens/login_screen.dart';
 import 'package:drawback_flutter/features/auth/presentation/screens/main_screen.dart';
@@ -38,10 +37,10 @@ class _TestAppState extends State<TestApp> {
   @override
   void initState() {
     super.initState();
-    
+
     _mockAuthApi = widget.mockAuthApi ?? MockAuthApi();
     _mockTokenStore = widget.mockTokenStore ?? MockTokenStore();
-    
+
     _authController = AuthController(
       authApi: _mockAuthApi,
       tokenStore: _mockTokenStore,
@@ -53,10 +52,9 @@ class _TestAppState extends State<TestApp> {
       routes: <GoRoute>[
         GoRoute(
           path: '/',
-          builder: (BuildContext context, GoRouterState state) =>
-              MainScreen(
-                controller: _authController,
-              ),
+          builder: (BuildContext context, GoRouterState state) => MainScreen(
+            controller: _authController,
+          ),
         ),
         GoRoute(
           path: '/login',
@@ -66,7 +64,8 @@ class _TestAppState extends State<TestApp> {
         ),
         GoRoute(
           path: '/register',
-          builder: (BuildContext context, GoRouterState state) => RegisterScreen(
+          builder: (BuildContext context, GoRouterState state) =>
+              RegisterScreen(
             controller: _authController,
           ),
         ),
@@ -74,16 +73,8 @@ class _TestAppState extends State<TestApp> {
           path: '/reset-password',
           builder: (BuildContext context, GoRouterState state) =>
               ResetPasswordScreen(
-                controller: _authController,
-                tokenFromQuery: state.uri.queryParameters['token'],
-              ),
-        ),
-        GoRoute(
-          path: '/confirm',
-          builder: (BuildContext context, GoRouterState state) => ConfirmScreen(
-            status: state.uri.queryParameters['status'],
-            email: state.uri.queryParameters['email'],
-            reason: state.uri.queryParameters['reason'],
+            controller: _authController,
+            tokenFromQuery: state.uri.queryParameters['token'],
           ),
         ),
         GoRoute(
@@ -102,7 +93,6 @@ class _TestAppState extends State<TestApp> {
         final bool isAuthRoute = state.fullPath == '/login' ||
             state.fullPath == '/register' ||
             state.fullPath == '/reset-password' ||
-            state.fullPath == '/confirm' ||
             state.fullPath == '/privacy' ||
             state.fullPath == '/';
 

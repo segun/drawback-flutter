@@ -36,7 +36,34 @@ class FakeAuthApi implements AuthApi {
   }
 
   @override
-  Future<AuthResult> login({required String email, required String password}) async {
+  Future<AuthResult> login(
+      {required String email, required String password}) async {
+    return AuthResult(accessToken: 'token123');
+  }
+
+  @override
+  Future<Map<String, dynamic>> startPasskeyRegistration({
+    required String bearerToken,
+  }) async {
+    return <String, dynamic>{};
+  }
+
+  @override
+  Future<void> finishPasskeyRegistration({
+    required String bearerToken,
+    required Map<String, dynamic> credentialData,
+  }) async {}
+
+  @override
+  Future<Map<String, dynamic>> startPasskeyLogin(
+      {required String email}) async {
+    return <String, dynamic>{};
+  }
+
+  @override
+  Future<AuthResult> finishPasskeyLogin({
+    required Map<String, dynamic> credentialData,
+  }) async {
     return AuthResult(accessToken: 'token123');
   }
 
@@ -60,7 +87,8 @@ class FakeAuthApi implements AuthApi {
     required String token,
     required String password,
   }) async {
-    return ResetPasswordResult(status: 'success', message: 'Password reset successfully');
+    return ResetPasswordResult(
+        status: 'success', message: 'Password reset successfully');
   }
 
   @override
@@ -78,14 +106,15 @@ class FakeAuthApi implements AuthApi {
 
 void main() {
   group('RegisterScreen', () {
-
     testWidgets('should render registration form', (WidgetTester tester) async {
       final tokenStore = FakeTokenStore();
-      final controller = AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
+      final controller =
+          AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SizedBox(width: 800, child: RegisterScreen(controller: controller)),
+            body: SizedBox(
+                width: 800, child: RegisterScreen(controller: controller)),
           ),
         ),
       );
@@ -94,11 +123,13 @@ void main() {
 
     testWidgets('should display register title', (WidgetTester tester) async {
       final tokenStore = FakeTokenStore();
-      final controller = AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
+      final controller =
+          AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SizedBox(width: 800, child: RegisterScreen(controller: controller)),
+            body: SizedBox(
+                width: 800, child: RegisterScreen(controller: controller)),
           ),
         ),
       );
@@ -107,11 +138,13 @@ void main() {
 
     testWidgets('should have login link', (WidgetTester tester) async {
       final tokenStore = FakeTokenStore();
-      final controller = AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
+      final controller =
+          AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SizedBox(width: 800, child: RegisterScreen(controller: controller)),
+            body: SizedBox(
+                width: 800, child: RegisterScreen(controller: controller)),
           ),
         ),
       );
@@ -120,37 +153,46 @@ void main() {
 
     testWidgets('should have register button', (WidgetTester tester) async {
       final tokenStore = FakeTokenStore();
-      final controller = AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
+      final controller =
+          AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SizedBox(width: 800, child: RegisterScreen(controller: controller)),
+            body: SizedBox(
+                width: 800, child: RegisterScreen(controller: controller)),
           ),
         ),
       );
-      expect(find.widgetWithText(FilledButton, 'Create Account'), findsOneWidget);
+      expect(
+          find.widgetWithText(FilledButton, 'Create Account'), findsOneWidget);
     });
 
-    testWidgets('should have proper form structure', (WidgetTester tester) async {
+    testWidgets('should have proper form structure',
+        (WidgetTester tester) async {
       final tokenStore = FakeTokenStore();
-      final controller = AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
+      final controller =
+          AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SizedBox(width: 800, child: RegisterScreen(controller: controller)),
+            body: SizedBox(
+                width: 800, child: RegisterScreen(controller: controller)),
           ),
         ),
       );
       expect(find.byType(Form), findsOneWidget);
     });
 
-    testWidgets('should render without layout errors', (WidgetTester tester) async {
+    testWidgets('should render without layout errors',
+        (WidgetTester tester) async {
       final tokenStore = FakeTokenStore();
-      final controller = AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
+      final controller =
+          AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SizedBox(width: 800, child: RegisterScreen(controller: controller)),
+            body: SizedBox(
+                width: 800, child: RegisterScreen(controller: controller)),
           ),
         ),
       );
@@ -159,11 +201,13 @@ void main() {
 
     testWidgets('should have ListenableBuilder', (WidgetTester tester) async {
       final tokenStore = FakeTokenStore();
-      final controller = AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
+      final controller =
+          AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SizedBox(width: 800, child: RegisterScreen(controller: controller)),
+            body: SizedBox(
+                width: 800, child: RegisterScreen(controller: controller)),
           ),
         ),
       );

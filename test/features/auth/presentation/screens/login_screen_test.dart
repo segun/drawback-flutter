@@ -36,7 +36,34 @@ class FakeAuthApi implements AuthApi {
   }
 
   @override
-  Future<AuthResult> login({required String email, required String password}) async {
+  Future<AuthResult> login(
+      {required String email, required String password}) async {
+    return AuthResult(accessToken: 'token123');
+  }
+
+  @override
+  Future<Map<String, dynamic>> startPasskeyRegistration({
+    required String bearerToken,
+  }) async {
+    return <String, dynamic>{};
+  }
+
+  @override
+  Future<void> finishPasskeyRegistration({
+    required String bearerToken,
+    required Map<String, dynamic> credentialData,
+  }) async {}
+
+  @override
+  Future<Map<String, dynamic>> startPasskeyLogin(
+      {required String email}) async {
+    return <String, dynamic>{};
+  }
+
+  @override
+  Future<AuthResult> finishPasskeyLogin({
+    required Map<String, dynamic> credentialData,
+  }) async {
     return AuthResult(accessToken: 'token123');
   }
 
@@ -60,7 +87,8 @@ class FakeAuthApi implements AuthApi {
     required String token,
     required String password,
   }) async {
-    return ResetPasswordResult(status: 'success', message: 'Password reset successfully');
+    return ResetPasswordResult(
+        status: 'success', message: 'Password reset successfully');
   }
 
   @override
@@ -78,11 +106,11 @@ class FakeAuthApi implements AuthApi {
 
 void main() {
   group('LoginScreen', () {
-
     testWidgets('should render login form with email and password fields',
         (WidgetTester tester) async {
       final tokenStore = FakeTokenStore();
-      final controller = AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
+      final controller =
+          AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -98,11 +126,13 @@ void main() {
 
     testWidgets('should display login title', (WidgetTester tester) async {
       final tokenStore = FakeTokenStore();
-      final controller = AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
+      final controller =
+          AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SizedBox(width: 800, child: LoginScreen(controller: controller)),
+            body: SizedBox(
+                width: 800, child: LoginScreen(controller: controller)),
           ),
         ),
       );
@@ -111,50 +141,62 @@ void main() {
 
     testWidgets('should have register link', (WidgetTester tester) async {
       final tokenStore = FakeTokenStore();
-      final controller = AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
+      final controller =
+          AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SizedBox(width: 800, child: LoginScreen(controller: controller)),
+            body: SizedBox(
+                width: 800, child: LoginScreen(controller: controller)),
           ),
         ),
       );
       expect(find.text('Need an account? Register'), findsWidgets);
     });
 
-    testWidgets('should have filled button for login', (WidgetTester tester) async {
+    testWidgets('should have filled button for login',
+        (WidgetTester tester) async {
       final tokenStore = FakeTokenStore();
-      final controller = AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
+      final controller =
+          AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SizedBox(width: 800, child: LoginScreen(controller: controller)),
+            body: SizedBox(
+                width: 800, child: LoginScreen(controller: controller)),
           ),
         ),
       );
       expect(find.widgetWithText(FilledButton, 'Login'), findsOneWidget);
     });
 
-    testWidgets('should have forgot password button', (WidgetTester tester) async {
+    testWidgets('should have forgot password button',
+        (WidgetTester tester) async {
       final tokenStore = FakeTokenStore();
-      final controller = AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
+      final controller =
+          AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SizedBox(width: 800, child: LoginScreen(controller: controller)),
+            body: SizedBox(
+                width: 800, child: LoginScreen(controller: controller)),
           ),
         ),
       );
-      expect(find.widgetWithText(TextButton, 'Forgot password?'), findsOneWidget);
+      expect(
+          find.widgetWithText(TextButton, 'Forgot password?'), findsOneWidget);
     });
 
-    testWidgets('should have proper form structure', (WidgetTester tester) async {
+    testWidgets('should have proper form structure',
+        (WidgetTester tester) async {
       final tokenStore = FakeTokenStore();
-      final controller = AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
+      final controller =
+          AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SizedBox(width: 800, child: LoginScreen(controller: controller)),
+            body: SizedBox(
+                width: 800, child: LoginScreen(controller: controller)),
           ),
         ),
       );
@@ -164,11 +206,13 @@ void main() {
 
     testWidgets('should render without errors', (WidgetTester tester) async {
       final tokenStore = FakeTokenStore();
-      final controller = AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
+      final controller =
+          AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SizedBox(width: 800, child: LoginScreen(controller: controller)),
+            body: SizedBox(
+                width: 800, child: LoginScreen(controller: controller)),
           ),
         ),
       );
@@ -178,11 +222,13 @@ void main() {
     testWidgets('should have ListenableBuilder to listen to controller',
         (WidgetTester tester) async {
       final tokenStore = FakeTokenStore();
-      final controller = AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
+      final controller =
+          AuthController(authApi: FakeAuthApi(), tokenStore: tokenStore);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
-            body: SizedBox(width: 800, child: LoginScreen(controller: controller)),
+            body: SizedBox(
+                width: 800, child: LoginScreen(controller: controller)),
           ),
         ),
       );

@@ -11,7 +11,6 @@ import 'core/services/purchase_service.dart';
 import 'features/auth/data/auth_api.dart';
 import 'features/auth/data/secure_token_store.dart';
 import 'features/auth/presentation/auth_controller.dart';
-import 'features/auth/presentation/screens/confirm_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/main_screen.dart';
 import 'features/auth/presentation/screens/privacy_screen.dart';
@@ -105,7 +104,8 @@ class _DrawbackAppState extends State<DrawbackApp> {
         ),
         GoRoute(
           path: '/register',
-          builder: (BuildContext context, GoRouterState state) => RegisterScreen(
+          builder: (BuildContext context, GoRouterState state) =>
+              RegisterScreen(
             controller: _authController,
           ),
         ),
@@ -113,16 +113,8 @@ class _DrawbackAppState extends State<DrawbackApp> {
           path: '/reset-password',
           builder: (BuildContext context, GoRouterState state) =>
               ResetPasswordScreen(
-                controller: _authController,
-                tokenFromQuery: state.uri.queryParameters['token'],
-              ),
-        ),
-        GoRoute(
-          path: '/confirm',
-          builder: (BuildContext context, GoRouterState state) => ConfirmScreen(
-            status: state.uri.queryParameters['status'],
-            email: state.uri.queryParameters['email'],
-            reason: state.uri.queryParameters['reason'],
+            controller: _authController,
+            tokenFromQuery: state.uri.queryParameters['token'],
           ),
         ),
         GoRoute(
@@ -132,10 +124,15 @@ class _DrawbackAppState extends State<DrawbackApp> {
         ),
         GoRoute(
           path: '/home',
-          builder: (BuildContext context, GoRouterState state) => DashboardScreen(
+          builder: (BuildContext context, GoRouterState state) =>
+              DashboardScreen(
             controller: _homeController,
+            authController: _authController,
             discoveryController: _discoveryController,
             discoveryAccessManager: _discoveryAccessManager,
+            promptPasskeyEnrollment: state.extra is bool
+                ? state.extra as bool
+                : false,
             onLogout: () async {
               await _authController.logout();
               if (context.mounted) {
@@ -149,7 +146,6 @@ class _DrawbackAppState extends State<DrawbackApp> {
         final bool isAuthRoute = state.fullPath == '/login' ||
             state.fullPath == '/register' ||
             state.fullPath == '/reset-password' ||
-            state.fullPath == '/confirm' ||
             state.fullPath == '/privacy' ||
             state.fullPath == '/';
 
@@ -157,7 +153,9 @@ class _DrawbackAppState extends State<DrawbackApp> {
           return null;
         }
 
-        if (_authController.isAuthenticated && isAuthRoute) {
+        if (_authController.isAuthenticated &&
+            isAuthRoute &&
+            state.fullPath != '/login') {
           return '/home';
         }
 
@@ -193,7 +191,8 @@ class _DrawbackAppState extends State<DrawbackApp> {
 
   void _handleAuthStateChange() {
     // Initialize socket when user becomes authenticated
-    if (_authController.isAuthenticated && _authController.accessToken != null) {
+    if (_authController.isAuthenticated &&
+        _authController.accessToken != null) {
       _homeController.initializeSocket(_authController.accessToken!);
     } else {
       // Disconnect socket when user logs out

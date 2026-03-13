@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/widgets/custom_text_field.dart';
@@ -22,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _forgotPasswordEmailController =
       TextEditingController();
+  String _lastPrefilledEmail = '';
 
   @override
   void dispose() {
@@ -42,8 +44,46 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (mounted && ok) {
+      await widget.controller.refreshPasskeyAvailability(notify: false);
+      context.go('/home', extra: widget.controller.canAddPasskey);
+    }
+  }
+
+  Future<void> _submitPasskey() async {
+    final String email = _emailController.text.trim().isNotEmpty
+        ? _emailController.text.trim()
+        : widget.controller.rememberedEmail;
+    final bool ok = await widget.controller.loginWithPasskey(email: email);
+    if (mounted && ok) {
       context.go('/home');
     }
+  }
+
+  void _prefillRememberedEmailIfNeeded(String rememberedEmail) {
+    if (rememberedEmail.isEmpty || rememberedEmail == _lastPrefilledEmail) {
+      return;
+    }
+
+    if (_emailController.text.trim().isNotEmpty) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      if (_emailController.text.trim().isNotEmpty) {
+        return;
+      }
+
+      _emailController.text = rememberedEmail;
+      _emailController.selection = TextSelection.collapsed(
+        offset: rememberedEmail.length,
+      );
+    });
+
+    _lastPrefilledEmail = rememberedEmail;
   }
 
   Future<void> _openForgotPasswordDialog() async {
@@ -93,6 +133,7 @@ class _LoginScreenState extends State<LoginScreen> {
       builder: (BuildContext context, _) {
         final String? error = widget.controller.error;
         final String? notice = widget.controller.notice;
+        _prefillRememberedEmailIfNeeded(widget.controller.rememberedEmail);
 
         return AuthPageScaffold(
           child: SingleChildScrollView(
@@ -145,13 +186,16 @@ class _LoginScreenState extends State<LoginScreen> {
                             widget.controller.clearMessages();
                           },
                         ),
-                        if (error != null && widget.controller.canResendActivationEmail) ...<Widget>[
+                        if (error != null &&
+                            widget.controller
+                                .canResendActivationEmail) ...<Widget>[
                           const SizedBox(height: 8),
                           TextButton(
                             onPressed: widget.controller.isBusy
                                 ? null
                                 : () async {
-                                    await widget.controller.resendActivationEmail(
+                                    await widget.controller
+                                        .resendActivationEmail(
                                       _emailController.text,
                                     );
                                   },
@@ -170,6 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: <Widget>[
                             CustomTextField(
+                              key: const Key('emailField'),
                               controller: _emailController,
                               labelText: 'Email',
                               keyboardType: TextInputType.emailAddress,
@@ -183,6 +228,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 10),
                             CustomTextField(
+                              key: const Key('passwordField'),
                               controller: _passwordController,
                               labelText: 'Password',
                               obscureText: true,
@@ -195,29 +241,81 @@ class _LoginScreenState extends State<LoginScreen> {
                               },
                             ),
                             const SizedBox(height: 16),
-                            FilledButton(
-                              onPressed:
-                                  widget.controller.isBusy ? null : _submit,
-                              style: FilledButton.styleFrom(
-                                backgroundColor:
-                                    const Color(0xFFBE185D), // rose-700
-                                foregroundColor:
-                                    const Color(0xFFFCE7F3), // rose-100
-                                padding: const EdgeInsets.all(16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(1),
-                                ),
-                              ),
-                              child: widget.controller.isBusy
-                                  ? const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
+                            ValueListenableBuilder<TextEditingValue>(
+                              valueListenable: _emailController,
+                              builder: (BuildContext context,
+                                  TextEditingValue value, _) {
+                                final bool hasEnteredEmail =
+                                    value.text.trim().isNotEmpty;
+                                final bool hasRememberedEmail = widget
+                                    .controller.rememberedEmail
+                                    .trim()
+                                    .isNotEmpty;
+                                final bool canUsePasswordLogin =
+                                    !widget.controller.isBusy &&
+                                        hasEnteredEmail;
+                                final bool canUsePasskey =
+                                    widget.controller.isPasskeyAvailable &&
+                                        !widget.controller.isBusy &&
+                                        (hasEnteredEmail || hasRememberedEmail);
+
+                                return Row(
+                                  children: <Widget>[
+                                    Expanded(
+                                      child: FilledButton(
+                                        onPressed: canUsePasswordLogin
+                                            ? _submit
+                                            : null,
+                                        style: FilledButton.styleFrom(
+                                          backgroundColor: const Color(
+                                              0xFFBE185D), // rose-700
+                                          foregroundColor: const Color(
+                                              0xFFFCE7F3), // rose-100
+                                          padding: const EdgeInsets.all(16),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(1),
+                                          ),
+                                        ),
+                                        child: widget.controller.isBusy
+                                            ? const SizedBox(
+                                                width: 18,
+                                                height: 18,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                ),
+                                              )
+                                            : const Text(
+                                                'Login',
+                                                style: TextStyle(fontSize: 13),
+                                              ),
                                       ),
-                                    )
-                                  : const Text('Login',
-                                      style: TextStyle(fontSize: 13)),
+                                    ),
+                                    if (widget.controller
+                                        .isPasskeyAvailable) ...<Widget>[
+                                      const SizedBox(width: 8),
+                                      OutlinedButton.icon(
+                                        onPressed: canUsePasskey
+                                            ? _submitPasskey
+                                            : null,
+                                        icon: const Icon(Icons.fingerprint),
+                                        label: const Text('Biometric'),
+                                        style: OutlinedButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 16,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(1),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                );
+                              },
                             ),
                             const SizedBox(height: 12),
                             TextButton(

@@ -34,8 +34,72 @@ class FakeAuthApi implements AuthApi {
   }
 
   @override
-  Future<AuthResult> login({required String email, required String password}) async {
+  Future<AuthResult> login(
+      {required String email, required String password}) async {
     if (loginException != null) throw loginException!;
+    return loginResult ?? AuthResult(accessToken: 'token');
+  }
+
+  @override
+  Future<Map<String, dynamic>> startPasskeyRegistration({
+    required String bearerToken,
+  }) async {
+    if (loginException != null) {
+      throw loginException!;
+    }
+    return <String, dynamic>{
+      'challenge': 'challenge',
+      'rp': <String, dynamic>{'name': 'Drawback', 'id': 'drawback.chat'},
+      'user': <String, dynamic>{
+        'id': 'dXNlcg',
+        'name': 'test@example.com',
+        'displayName': '@testuser',
+      },
+      'pubKeyCredParams': <Map<String, dynamic>>[
+        <String, dynamic>{'type': 'public-key', 'alg': -7},
+      ],
+      'authenticatorSelection': <String, dynamic>{
+        'requireResidentKey': false,
+        'residentKey': 'preferred',
+        'userVerification': 'preferred',
+      },
+      'excludeCredentials': <Map<String, dynamic>>[],
+    };
+  }
+
+  @override
+  Future<void> finishPasskeyRegistration({
+    required String bearerToken,
+    required Map<String, dynamic> credentialData,
+  }) async {
+    if (loginException != null) {
+      throw loginException!;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> startPasskeyLogin(
+      {required String email}) async {
+    if (loginException != null) {
+      throw loginException!;
+    }
+
+    return <String, dynamic>{
+      'challenge': 'challenge',
+      'rpId': 'drawback.chat',
+      'allowCredentials': <Map<String, dynamic>>[],
+      'userVerification': 'preferred',
+    };
+  }
+
+  @override
+  Future<AuthResult> finishPasskeyLogin({
+    required Map<String, dynamic> credentialData,
+  }) async {
+    if (loginException != null) {
+      throw loginException!;
+    }
+
     return loginResult ?? AuthResult(accessToken: 'token');
   }
 
@@ -109,6 +173,7 @@ void main() {
   late AuthController authController;
 
   setUp(() {
+    TestWidgetsFlutterBinding.ensureInitialized();
     fakeAuthApi = FakeAuthApi();
     fakeTokenStore = FakeTokenStore();
     authController = AuthController(
@@ -203,8 +268,7 @@ void main() {
     });
 
     test('should set error on login failure', () async {
-      fakeAuthApi.loginException =
-          ApiException(401, 'Invalid credentials');
+      fakeAuthApi.loginException = ApiException(401, 'Invalid credentials');
 
       final result = await authController.login(
         email: 'test@example.com',
@@ -218,7 +282,9 @@ void main() {
       expect(authController.isBusy, false);
     });
 
-    test('should expose resend activation option for account not activated login errors', () async {
+    test(
+        'should expose resend activation option for account not activated login errors',
+        () async {
       fakeAuthApi.loginException = ApiException(
         401,
         'Account not activated. Please check your email.',
@@ -230,7 +296,8 @@ void main() {
       );
 
       expect(result, false);
-      expect(authController.error, 'Account not activated. Please check your email.');
+      expect(authController.error,
+          'Account not activated. Please check your email.');
       expect(authController.canResendActivationEmail, true);
     });
 
@@ -285,7 +352,8 @@ void main() {
   });
 
   group('AuthController.register', () {
-    test('should return true and set notice on successful registration', () async {
+    test('should return true and set notice on successful registration',
+        () async {
       const email = 'newuser@example.com';
       const password = 'password123';
       const displayName = '@newuser';
@@ -305,8 +373,7 @@ void main() {
     });
 
     test('should return false and set error on registration failure', () async {
-      fakeAuthApi.registerException =
-          ApiException(400, 'Email already exists');
+      fakeAuthApi.registerException = ApiException(400, 'Email already exists');
 
       final result = await authController.register(
         email: 'existing@example.com',
@@ -333,8 +400,7 @@ void main() {
     });
 
     test('should return false and set error on failure', () async {
-      fakeAuthApi.forgotPasswordException =
-          ApiException(404, 'User not found');
+      fakeAuthApi.forgotPasswordException = ApiException(404, 'User not found');
 
       final result =
           await authController.forgotPassword('nonexistent@example.com');
@@ -379,8 +445,7 @@ void main() {
     });
 
     test('should return false and set error on exception', () async {
-      fakeAuthApi.resetPasswordException =
-          ApiException(500, 'Server error');
+      fakeAuthApi.resetPasswordException = ApiException(500, 'Server error');
 
       final result = await authController.resetPassword(
         token: 'token',
@@ -397,7 +462,8 @@ void main() {
       fakeAuthApi.resendConfirmationResult =
           'If that email exists and is unactivated, a new confirmation link has been sent.';
 
-      final result = await authController.resendActivationEmail('test@example.com');
+      final result =
+          await authController.resendActivationEmail('test@example.com');
 
       expect(result, true);
       expect(
@@ -407,7 +473,8 @@ void main() {
       expect(authController.error, null);
     });
 
-    test('should return false when resend is requested without email', () async {
+    test('should return false when resend is requested without email',
+        () async {
       final result = await authController.resendActivationEmail('   ');
 
       expect(result, false);
@@ -416,9 +483,11 @@ void main() {
     });
 
     test('should return false and set error on resend failure', () async {
-      fakeAuthApi.resendConfirmationException = ApiException(500, 'Server error');
+      fakeAuthApi.resendConfirmationException =
+          ApiException(500, 'Server error');
 
-      final result = await authController.resendActivationEmail('test@example.com');
+      final result =
+          await authController.resendActivationEmail('test@example.com');
 
       expect(result, false);
       expect(authController.error, 'Server error');
@@ -489,8 +558,7 @@ void main() {
 
   group('AuthController.clearError', () {
     test('should clear error message', () async {
-      fakeAuthApi.loginException =
-          ApiException(401, 'Invalid credentials');
+      fakeAuthApi.loginException = ApiException(401, 'Invalid credentials');
 
       await authController.login(
         email: 'test@example.com',

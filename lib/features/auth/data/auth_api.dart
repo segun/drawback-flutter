@@ -1,4 +1,5 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_exception.dart';
 import '../domain/auth_models.dart';
 import 'token_store.dart';
 
@@ -27,7 +28,8 @@ class AuthApi {
     return response['message'] as String;
   }
 
-  Future<AuthResult> login({required String email, required String password}) async {
+  Future<AuthResult> login(
+      {required String email, required String password}) async {
     final Map<String, dynamic> response = await _client.postJson(
       '/auth/login',
       body: <String, dynamic>{
@@ -37,8 +39,77 @@ class AuthApi {
     );
 
     final String token = response['accessToken'] as String;
+    final bool canAddPasskey = response['canAddPasskey'] as bool? ?? false;    
     await _tokenStore.writeToken(token);
-    return AuthResult(accessToken: token);
+    return AuthResult(
+      accessToken: token,
+      canAddPasskey: canAddPasskey,
+    );
+  }
+
+  Future<Map<String, dynamic>> startPasskeyRegistration({
+    required String bearerToken,
+  }) {
+    return _client.postJson(
+      '/auth/passkey/register/start',
+      triggerUnauthorizedCallback: false,
+      headers: <String, String>{
+        'Authorization': 'Bearer $bearerToken',
+      },
+    );
+  }
+
+  Future<void> finishPasskeyRegistration({
+    required String bearerToken,
+    required Map<String, dynamic> credentialData,
+  }) {
+    return _client.postEmpty(
+      '/auth/passkey/register/finish',
+      triggerUnauthorizedCallback: false,
+      headers: <String, String>{
+        'Authorization': 'Bearer $bearerToken',
+      },
+      body: <String, dynamic>{
+        'data': credentialData,
+      },
+    );
+  }
+
+  Future<Map<String, dynamic>> startPasskeyLogin({required String email}) {
+    return _client.postJson(
+      '/auth/passkey/login/start',
+      body: <String, dynamic>{
+        'email': email.trim(),
+      },
+    );
+  }
+
+  Future<AuthResult> finishPasskeyLogin({
+    required Map<String, dynamic> credentialData,
+  }) async {
+    final Map<String, dynamic> response = await _client.postJson(
+      '/auth/passkey/login/finish',
+      body: <String, dynamic>{
+        'data': credentialData,
+      },
+    );
+
+    final String? token = response['accessToken'] as String?;
+
+    if (token == null || token.isEmpty) {
+      throw ApiException(
+        500,
+        'Server returned invalid authentication response.',
+      );
+    }
+
+    await _tokenStore.writeToken(token);
+
+    final bool canAddPasskey = response['canAddPasskey'] as bool? ?? false;
+    return AuthResult(
+      accessToken: token,
+      canAddPasskey: canAddPasskey,
+    );
   }
 
   Future<bool> checkDisplayNameAvailability(String name) async {

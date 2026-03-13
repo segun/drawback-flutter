@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Passkey Login Demo</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+	<style>
+		:root {
+			--bg-a: #f4ede4;
+			--bg-b: #dbe9ec;
+			--ink: #132123;
+			--ink-soft: #2f4449;
+			--accent: #0d8a84;
+			--accent-2: #f0a13f;
+			--ok: #177a4a;
+			--warn: #9b2c1d;
+			--card: rgba(255, 255, 255, 0.78);
+			--border: rgba(19, 33, 35, 0.18);
+			--shadow: 0 24px 50px rgba(8, 18, 19, 0.15);
+		}
+
+		* {
+			box-sizing: border-box;
+		}
+
+		html,
+		body {
+			margin: 0;
+			min-height: 100%;
+		}
+
+		body {
+			font-family: "Space Grotesk", "Segoe UI", sans-serif;
+			color: var(--ink);
+			background:
+				radial-gradient(circle at 10% 15%, rgba(13, 138, 132, 0.18), transparent 38%),
+				radial-gradient(circle at 90% 0%, rgba(240, 161, 63, 0.22), transparent 36%),
+				linear-gradient(130deg, var(--bg-a), var(--bg-b));
+			display: grid;
+			place-items: center;
+			padding: 22px;
+			overflow-x: hidden;
+		}
+
+		body::before,
+		body::after {
+			content: "";
+			position: fixed;
+			z-index: -1;
+			border-radius: 999px;
+			filter: blur(0.5px);
+			opacity: 0.7;
+			animation: drift 16s ease-in-out infinite;
+		}
+
+		body::before {
+			width: 280px;
+			height: 280px;
+			right: -90px;
+			top: -70px;
+			background: linear-gradient(45deg, rgba(13, 138, 132, 0.35), rgba(19, 33, 35, 0.15));
+		}
+
+		body::after {
+			width: 240px;
+			height: 240px;
+			left: -80px;
+			bottom: -90px;
+			background: linear-gradient(45deg, rgba(240, 161, 63, 0.35), rgba(155, 44, 29, 0.1));
+			animation-delay: 1.2s;
+		}
+
+		.panel {
+			width: min(620px, 100%);
+			border: 1px solid var(--border);
+			border-radius: 20px;
+			background: var(--card);
+			box-shadow: var(--shadow);
+			backdrop-filter: blur(6px);
+			padding: 28px;
+			animation: pop-in 360ms ease-out;
+		}
+
+		h1 {
+			margin: 0;
+			font-size: clamp(1.55rem, 3.5vw, 2.2rem);
+			letter-spacing: 0.03em;
+		}
+
+		.subtitle {
+			margin: 8px 0 0;
+			color: var(--ink-soft);
+			line-height: 1.45;
+			font-size: 0.98rem;
+		}
+
+		.form {
+			margin-top: 22px;
+			display: grid;
+			gap: 14px;
+		}
+
+		label {
+			font-weight: 500;
+			font-size: 0.92rem;
+		}
+
+		input {
+			width: 100%;
+			border: 1px solid var(--border);
+			border-radius: 12px;
+			background: rgba(255, 255, 255, 0.88);
+			color: var(--ink);
+			font-size: 1rem;
+			padding: 12px 14px;
+			font-family: inherit;
+			transition: border-color 140ms ease, box-shadow 140ms ease;
+		}
+
+		input:focus {
+			outline: none;
+			border-color: rgba(13, 138, 132, 0.9);
+			box-shadow: 0 0 0 3px rgba(13, 138, 132, 0.18);
+		}
+
+		.actions {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: 10px;
+			margin-top: 6px;
+		}
+
+		button {
+			border: 0;
+			border-radius: 12px;
+			padding: 12px 14px;
+			font-weight: 700;
+			font-size: 0.98rem;
+			letter-spacing: 0.02em;
+			cursor: pointer;
+			font-family: inherit;
+			transition: transform 130ms ease, filter 130ms ease;
+		}
+
+		button:hover {
+			transform: translateY(-1px);
+			filter: brightness(1.02);
+		}
+
+		button:active {
+			transform: translateY(0);
+		}
+
+		button:disabled {
+			opacity: 0.6;
+			cursor: wait;
+			transform: none;
+		}
+
+		.btn-register {
+			background: linear-gradient(130deg, var(--accent-2), #ef8042);
+			color: #111;
+		}
+
+		.btn-login {
+			background: linear-gradient(130deg, var(--accent), #2d6f88);
+			color: #fff;
+		}
+
+		.note {
+			margin-top: 14px;
+			font-size: 0.86rem;
+			color: var(--ink-soft);
+			line-height: 1.45;
+		}
+
+		.status {
+			margin-top: 18px;
+			padding: 12px 14px;
+			border-radius: 12px;
+			border: 1px dashed var(--border);
+			background: rgba(255, 255, 255, 0.65);
+			font-size: 0.9rem;
+			line-height: 1.45;
+			min-height: 64px;
+			white-space: pre-wrap;
+			word-break: break-word;
+		}
+
+		.mono {
+			font-family: "IBM Plex Mono", Menlo, monospace;
+			font-size: 0.83rem;
+		}
+
+		.ok {
+			color: var(--ok);
+		}
+
+		.warn {
+			color: var(--warn);
+		}
+
+		@media (max-width: 640px) {
+			.panel {
+				padding: 20px;
+			}
+
+			.actions {
+				grid-template-columns: 1fr;
+			}
+		}
+
+		@keyframes pop-in {
+			from {
+				opacity: 0;
+				transform: translateY(10px) scale(0.99);
+			}
+
+			to {
+				opacity: 1;
+				transform: translateY(0) scale(1);
+			}
+		}
+
+		@keyframes drift {
+			0%,
+			100% {
+				transform: translate(0, 0);
+			}
+
+			50% {
+				transform: translate(10px, -12px);
+			}
+		}
+	</style>
+</head>
+<body>
+	<main class="panel">
+		<h1>Passkey Login</h1>
+		<p class="subtitle">
+			Register once, then authenticate without passwords using your platform authenticator.
+		</p>
+
+		<form class="form" id="passkey-form">
+			<div>
+				<label for="username">Username</label>
+				<input id="username" name="username" type="text" minlength="3" maxlength="64" required autocomplete="username webauthn" placeholder="e.g. alex" />
+			</div>
+
+			<div class="actions">
+				<button type="button" class="btn-register" id="register-btn">Create Passkey</button>
+				<button type="button" class="btn-login" id="login-btn">Login With Passkey</button>
+			</div>
+		</form>
+
+		<p class="note">
+			This only works in a secure context. Open this page from the same
+			<span class="mono">http://localhost:&lt;port&gt;</span> origin as your backend.
+		</p>
+
+		<div class="status" id="status" aria-live="polite">Ready.</div>
+	</main>
+
+	<script>
+		const API_BASE = window.location.origin && window.location.origin.startsWith("http")
+			? window.location.origin
+			: "http://localhost:8082";
+
+		const form = document.getElementById("passkey-form");
+		const usernameInput = document.getElementById("username");
+		const registerBtn = document.getElementById("register-btn");
+		const loginBtn = document.getElementById("login-btn");
+		const statusBox = document.getElementById("status");
+
+		function setStatus(message, variant) {
+			statusBox.textContent = message;
+			statusBox.classList.remove("ok", "warn");
+			if (variant) {
+				statusBox.classList.add(variant);
+			}
+		}
+
+		function ensurePasskeySupport() {
+			if (!window.PublicKeyCredential) {
+				throw new Error("This browser does not support passkeys/WebAuthn.");
+			}
+		}
+
+		function usernameOrThrow() {
+			const username = usernameInput.value.trim();
+			if (!username) {
+				throw new Error("Enter a username first.");
+			}
+			return username;
+		}
+
+		function toBase64url(arrayBuffer) {
+			const bytes = new Uint8Array(arrayBuffer);
+			let str = "";
+			for (let i = 0; i < bytes.length; i += 1) {
+				str += String.fromCharCode(bytes[i]);
+			}
+			return btoa(str).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+		}
+
+		function fromBase64url(base64urlString) {
+			const padded = base64urlString.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((base64urlString.length + 3) % 4);
+			const binary = atob(padded);
+			const bytes = new Uint8Array(binary.length);
+			for (let i = 0; i < binary.length; i += 1) {
+				bytes[i] = binary.charCodeAt(i);
+			}
+			return bytes;
+		}
+
+		function encodeUtf8(value) {
+			return new TextEncoder().encode(value);
+		}
+
+		function normalizeCredentialId(idValue) {
+			if (idValue instanceof ArrayBuffer) {
+				return new Uint8Array(idValue);
+			}
+
+			if (ArrayBuffer.isView(idValue)) {
+				return new Uint8Array(idValue.buffer);
+			}
+
+			if (typeof idValue === "string") {
+				return fromBase64url(idValue);
+			}
+
+			if (idValue && idValue.type === "Buffer" && Array.isArray(idValue.data)) {
+				return new Uint8Array(idValue.data);
+			}
+
+			if (Array.isArray(idValue)) {
+				return new Uint8Array(idValue);
+			}
+
+			throw new Error("Unsupported credential ID format returned by server.");
+		}
+
+		async function requestJson(path, payload) {
+			const response = await fetch(`${API_BASE}${path}`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(payload),
+			});
+
+			const contentType = response.headers.get("content-type") || "";
+			const body = contentType.includes("application/json") ? await response.json() : await response.text();
+
+			if (!response.ok) {
+				if (typeof body === "object" && body && body.error) {
+					throw new Error(body.error);
+				}
+				throw new Error(typeof body === "string" ? body || `HTTP ${response.status}` : `HTTP ${response.status}`);
+			}
+
+			return body;
+		}
+
+		function serializeRegistrationCredential(credential) {
+			return {
+				id: credential.id,
+				rawId: toBase64url(credential.rawId),
+				type: credential.type,
+				response: {
+					clientDataJSON: toBase64url(credential.response.clientDataJSON),
+					attestationObject: toBase64url(credential.response.attestationObject),
+					transports: typeof credential.response.getTransports === "function" ? credential.response.getTransports() : undefined,
+				},
+				clientExtensionResults: credential.getClientExtensionResults(),
+			};
+		}
+
+		function serializeAuthenticationCredential(credential) {
+			return {
+				id: credential.id,
+				rawId: toBase64url(credential.rawId),
+				type: credential.type,
+				response: {
+					authenticatorData: toBase64url(credential.response.authenticatorData),
+					clientDataJSON: toBase64url(credential.response.clientDataJSON),
+					signature: toBase64url(credential.response.signature),
+					userHandle: credential.response.userHandle ? toBase64url(credential.response.userHandle) : null,
+				},
+				clientExtensionResults: credential.getClientExtensionResults(),
+			};
+		}
+
+		async function registerPasskey() {
+			ensurePasskeySupport();
+			const username = usernameOrThrow();
+
+			setStatus("Starting registration...", "");
+			const options = await requestJson("/register/start", { username });
+
+			const publicKey = {
+				...options,
+				challenge: encodeUtf8(options.challenge),
+				user: {
+					...options.user,
+					id: encodeUtf8(options.user.id),
+				},
+			};
+
+			const credential = await navigator.credentials.create({ publicKey });
+			if (!credential) {
+				throw new Error("Credential creation returned an empty result.");
+			}
+
+			const payload = serializeRegistrationCredential(credential);
+			await requestJson("/register/finish", { username, data: payload });
+			setStatus(`Passkey created for ${username}. You can now login.`, "ok");
+		}
+
+		async function loginPasskey() {
+			ensurePasskeySupport();
+			const username = usernameOrThrow();
+
+			setStatus("Starting login...", "");
+			const options = await requestJson("/login/start", { username });
+
+			const publicKey = {
+				...options,
+				challenge: encodeUtf8(options.challenge),
+				allowCredentials: (options.allowCredentials || []).map((cred) => ({
+					...cred,
+					id: normalizeCredentialId(cred.id),
+				})),
+			};
+
+			const assertion = await navigator.credentials.get({ publicKey });
+			if (!assertion) {
+				throw new Error("Authentication returned an empty result.");
+			}
+
+			const payload = serializeAuthenticationCredential(assertion);
+			const verifyResult = await requestJson("/login/finish", { username, data: payload });
+
+			if (verifyResult && verifyResult.res) {
+				setStatus(`Login successful for ${username}.`, "ok");
+				return;
+			}
+
+			throw new Error("Login failed. Server verification returned false.");
+		}
+
+		function setBusy(isBusy) {
+			registerBtn.disabled = isBusy;
+			loginBtn.disabled = isBusy;
+			usernameInput.disabled = isBusy;
+		}
+
+		async function runWithUi(task) {
+			setBusy(true);
+			try {
+				await task();
+			} catch (error) {
+				setStatus(error && error.message ? error.message : String(error), "warn");
+			} finally {
+				setBusy(false);
+			}
+		}
+
+		registerBtn.addEventListener("click", () => {
+			runWithUi(registerPasskey);
+		});
+
+		loginBtn.addEventListener("click", () => {
+			runWithUi(loginPasskey);
+		});
+
+		form.addEventListener("submit", (event) => {
+			event.preventDefault();
+			runWithUi(loginPasskey);
+		});
+	</script>
+</body>
+</html>

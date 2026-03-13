@@ -59,6 +59,7 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? body,
     Map<String, String>? headers,
+    bool triggerUnauthorizedCallback = true,
   }) async {
     final response = await _sendRequest(() {
       return _httpClient.post(
@@ -72,13 +73,17 @@ class ApiClient {
       );
     });
 
-    return _decodeObjectResponse(response);
+    return _decodeObjectResponse(
+      response,
+      triggerUnauthorizedCallback: triggerUnauthorizedCallback,
+    );
   }
 
   Future<void> postEmpty(
     String path, {
     Map<String, dynamic>? body,
     Map<String, String>? headers,
+    bool triggerUnauthorizedCallback = true,
   }) async {
     final response = await _sendRequest(() {
       return _httpClient.post(
@@ -93,7 +98,10 @@ class ApiClient {
     });
 
     if (!response.statusCode.toString().startsWith('2')) {
-      throw _toApiException(response);
+      throw _toApiException(
+        response,
+        triggerUnauthorizedCallback: triggerUnauthorizedCallback,
+      );
     }
   }
 
@@ -159,9 +167,15 @@ class ApiClient {
     return jsonDecode(response.body);
   }
 
-  Map<String, dynamic> _decodeObjectResponse(http.Response response) {
+  Map<String, dynamic> _decodeObjectResponse(
+    http.Response response, {
+    bool triggerUnauthorizedCallback = true,
+  }) {
     if (!response.statusCode.toString().startsWith('2')) {
-      throw _toApiException(response);
+      throw _toApiException(
+        response,
+        triggerUnauthorizedCallback: triggerUnauthorizedCallback,
+      );
     }
 
     if (response.body.isEmpty) {
@@ -176,8 +190,11 @@ class ApiClient {
     throw const ApiException(500, 'Unexpected response shape.');
   }
 
-  ApiException _toApiException(http.Response response) {
-    if (response.statusCode == 401) {
+  ApiException _toApiException(
+    http.Response response, {
+    bool triggerUnauthorizedCallback = true,
+  }) {
+    if (triggerUnauthorizedCallback && response.statusCode == 401) {
       _onUnauthorized?.call();
     }
 

@@ -1,7 +1,10 @@
 DEVICE ?= 00008130-001935290821401C
 
-run-dev:
-	flutter run --dart-define=BACKEND_URL=https://6a57-143-105-174-218.ngrok-free.app/api -d $(DEVICE)
+prepare-android:
+	adb -s $(DEVICE) reverse tcp:3000 tcp:3000
+
+run-dev: prepare-android
+	flutter run --dart-define=BACKEND_URL=http://localhost:3000/api -d $(DEVICE)
 
 run-prod:	
 	flutter run --dart-define=BACKEND_URL=https://drawback.chat/api -d $(DEVICE)
@@ -10,7 +13,7 @@ run-web-prod:
 	flutter run -d chrome --web-port=28080 --dart-define=BACKEND_URL=https://drawback.chat/api
 
 run-web-dev:
-	flutter run -d chrome --web-port=28080 --dart-define=BACKEND_URL=http://localhost:3000/api	
+	flutter run -d chrome --web-port=28080 --dart-define=BACKEND_URL=https://cd19-2605-59c1-182a-5608-186f-929e-6917-2ba1.ngrok-free.app/api	
 
 build-ios-prod:
 	flutter build ios --dart-define=BACKEND_URL=https://drawback.chat/api

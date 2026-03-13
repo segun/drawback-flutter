@@ -8,7 +8,7 @@ class MockAuthApi implements AuthApi {
   final Map<String, String> _displayNames = {};
   final Set<String> _unavailableDisplayNames = {'@admin', '@test'};
   final Map<String, String> _resetTokens = {};
-  
+
   bool shouldFailNextRequest = false;
   String? nextFailureMessage;
   int? nextFailureStatusCode;
@@ -52,7 +52,7 @@ class MockAuthApi implements AuthApi {
     }
 
     return !_displayNames.containsValue(displayName) &&
-           !_unavailableDisplayNames.contains(displayName);
+        !_unavailableDisplayNames.contains(displayName);
   }
 
   @override
@@ -82,6 +82,90 @@ class MockAuthApi implements AuthApi {
   }
 
   @override
+  Future<Map<String, dynamic>> startPasskeyRegistration({
+    required String bearerToken,
+  }) async {
+    if (shouldFailNextRequest) {
+      shouldFailNextRequest = false;
+      throw ApiException(
+        nextFailureStatusCode ?? 400,
+        nextFailureMessage ?? 'Could not start passkey registration',
+      );
+    }
+
+    return <String, dynamic>{
+      'challenge': 'challenge',
+      'rp': <String, dynamic>{'name': 'Drawback', 'id': 'drawback.chat'},
+      'user': <String, dynamic>{
+        'id': 'dXNlcl9pZA',
+        'name': 'test@example.com',
+        'displayName': '@testuser',
+      },
+      'pubKeyCredParams': <Map<String, dynamic>>[
+        <String, dynamic>{'type': 'public-key', 'alg': -7},
+      ],
+      'authenticatorSelection': <String, dynamic>{
+        'requireResidentKey': false,
+        'residentKey': 'preferred',
+        'userVerification': 'preferred',
+      },
+      'excludeCredentials': <Map<String, dynamic>>[],
+    };
+  }
+
+  @override
+  Future<void> finishPasskeyRegistration({
+    required String bearerToken,
+    required Map<String, dynamic> credentialData,
+  }) async {
+    if (shouldFailNextRequest) {
+      shouldFailNextRequest = false;
+      throw ApiException(
+        nextFailureStatusCode ?? 400,
+        nextFailureMessage ?? 'Could not finish passkey registration',
+      );
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> startPasskeyLogin(
+      {required String email}) async {
+    if (shouldFailNextRequest) {
+      shouldFailNextRequest = false;
+      throw ApiException(
+        nextFailureStatusCode ?? 401,
+        nextFailureMessage ?? 'Could not start passkey login',
+      );
+    }
+
+    if (!_registeredUsers.containsKey(email)) {
+      throw ApiException(400, 'No passkeys found for this account');
+    }
+
+    return <String, dynamic>{
+      'challenge': 'challenge',
+      'rpId': 'drawback.chat',
+      'allowCredentials': <Map<String, dynamic>>[],
+      'userVerification': 'preferred',
+    };
+  }
+
+  @override
+  Future<AuthResult> finishPasskeyLogin({
+    required Map<String, dynamic> credentialData,
+  }) async {
+    if (shouldFailNextRequest) {
+      shouldFailNextRequest = false;
+      throw ApiException(
+        nextFailureStatusCode ?? 401,
+        nextFailureMessage ?? 'Could not finish passkey login',
+      );
+    }
+
+    return const AuthResult(accessToken: 'mock_token_passkey_user@example.com');
+  }
+
+  @override
   Future<AuthUser> me(String accessToken) async {
     if (shouldFailNextRequest) {
       shouldFailNextRequest = false;
@@ -92,7 +176,7 @@ class MockAuthApi implements AuthApi {
     }
 
     final email = accessToken.replaceFirst('mock_token_', '');
-    
+
     if (!_registeredUsers.containsKey(email)) {
       throw ApiException(401, 'Invalid token');
     }
@@ -163,7 +247,8 @@ class MockAuthApi implements AuthApi {
 
     return ResetPasswordResult(
       status: 'success',
-      message: 'Password reset successful. You can now log in with your new password.',
+      message:
+          'Password reset successful. You can now log in with your new password.',
     );
   }
 

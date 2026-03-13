@@ -16,6 +16,7 @@ dependencies:
   socket_io_client: ^3.0.4
   flutter_colorpicker: ^1.0.3
   in_app_purchase: ^3.2.3
+  passkeys: ^2.17.4
 
 dev_dependencies:
   flutter_test:
