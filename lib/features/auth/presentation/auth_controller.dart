@@ -358,7 +358,7 @@ class AuthController extends ChangeNotifier with WidgetsBindingObserver {
       return false;
     } catch (_unknownError) {
       if (kDebugMode) {
-        debugPrint('Passkey registration failed: ${_unknownError.runtimeType}');
+        debugPrint('Passkey registration failed: ${_unknownError}');
       }
       _error = AuthErrorMessages.passkeyRegistrationFailed;
       return false;

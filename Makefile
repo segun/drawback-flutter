@@ -3,7 +3,7 @@ DEVICE ?= 00008130-001935290821401C
 prepare-android:
 	adb -s $(DEVICE) reverse tcp:3000 tcp:3000
 
-run-dev: prepare-android
+run-dev:
 	flutter run --dart-define=BACKEND_URL=http://localhost:3000/api -d $(DEVICE)
 
 run-prod:	
@@ -102,3 +102,12 @@ generate-android-apks:
 
 install-android-bundle:
 	bundletool install-apks --apks=test.apks
+
+list-android-devices:
+	adb devices
+
+list-ios-devices:
+	xcrun simctl list devices
+
+start-ios-simulator:
+	open -a Simulator --args -CurrentDeviceUDID $(DEVICE)

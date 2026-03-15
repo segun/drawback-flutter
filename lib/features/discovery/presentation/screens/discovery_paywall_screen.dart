@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/services/discovery_access_manager.dart';
 
 /// Paywall screen shown when user doesn't have discovery access
-/// Offers two options: permanent purchase or temporary ad-based access
+/// Offers subscription tiers (monthly/quarterly/yearly) or temporary ad-based access
 class DiscoveryPaywallScreen extends StatefulWidget {
   const DiscoveryPaywallScreen({
     required this.accessManager,
@@ -112,23 +112,15 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
     });
 
     try {
-      final bool success = await widget.accessManager.restorePurchases();
+      final String message = await widget.accessManager.restorePurchases();
       
-      if (success) {
-        // Refresh profile to check if hasDiscoveryAccess is now true
-        await widget.onProfileRefresh();
-        
-        if (mounted) {
-          setState(() {
-            _statusMessage = 'Restore complete! Please check your access.';
-          });
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _statusMessage = widget.accessManager.error ?? 'Restore failed';
-          });
-        }
+      // Refresh profile to get updated hasDiscoveryAccess and subscription info
+      await widget.onProfileRefresh();
+      
+      if (mounted) {
+        setState(() {
+          _statusMessage = message;
+        });
       }
     } finally {
       if (mounted) {

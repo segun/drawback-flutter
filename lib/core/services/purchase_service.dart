@@ -6,6 +6,9 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 import '../../features/auth/data/token_store.dart';
 import '../network/api_client.dart';
 
+/// Subscription tiers for in-app purchases
+enum SubscriptionTier { monthly, quarterly, yearly }
+
 /// Service for handling in-app purchases
 /// Uses mock purchases for development, can be toggled to real IAP
 class PurchaseService {
@@ -19,12 +22,10 @@ class PurchaseService {
   final TokenStore _tokenStore;
   final InAppPurchase _inAppPurchase = InAppPurchase.instance;
 
-  /// Toggle for development vs production
-  /// Set to false after configuring products in Play/App Store
-  static const bool useMockPurchases = false;
-
-  /// Product ID for subscription (monthly, quarterly, yearly available)
-  static const String discoveryProductId = 'discovery_premium';
+  /// Base product IDs (used when _useSameProductIdsAcrossPlatforms is true)
+  static const String monthlyProductId = 'monthly';
+  static const String quarterlyProductId = 'quarterly';
+  static const String yearlyProductId = 'yearly';
 
   Future<Map<String, String>> _authHeaders() async {
     final String? token = await _tokenStore.readToken();
@@ -36,13 +37,37 @@ class PurchaseService {
     };
   }
 
-  /// Purchase discovery game access (permanent unlock)
-  /// Returns true if purchase was successful
-  Future<bool> purchaseDiscovery() async {
-    if (useMockPurchases) {
-      return _mockPurchaseDiscovery();
+  /// Get the appropriate product ID based on platform and tier
+  String _getProductId({SubscriptionTier tier = SubscriptionTier.monthly}) {
+    // If using same IDs across platforms, return base product IDs
+    switch (tier) {
+      case SubscriptionTier.monthly:
+        return monthlyProductId;
+      case SubscriptionTier.quarterly:
+        return quarterlyProductId;
+      case SubscriptionTier.yearly:
+        return yearlyProductId;
     }
+  }
 
+  /// Purchase discovery game access
+  /// Returns true if purchase was successful
+  Future<bool> purchaseDiscovery({
+    SubscriptionTier tier = SubscriptionTier.monthly,
+  }) async {
+    final String productId = _getProductId(tier: tier);
+    return _completePurchase(productId);
+  }
+
+  /// Purchase a subscription (primarily for iOS)
+  /// Allows explicit tier selection
+  Future<bool> purchaseSubscription(SubscriptionTier tier) async {
+    final String productId = _getProductId(tier: tier);
+    return _completePurchase(productId);
+  }
+
+  /// Internal method to complete a purchase for a given product ID
+  Future<bool> _completePurchase(String productId) async {
     final bool storeAvailable = await _inAppPurchase.isAvailable();
     if (!storeAvailable) {
       debugPrint('In-app purchase store is unavailable');
@@ -50,7 +75,7 @@ class PurchaseService {
     }
 
     final ProductDetailsResponse response =
-        await _inAppPurchase.queryProductDetails(<String>{discoveryProductId});
+        await _inAppPurchase.queryProductDetails(<String>{productId});
     if (response.error != null || response.productDetails.isEmpty) {
       debugPrint('Could not load product details: ${response.error}');
       return false;
@@ -63,7 +88,7 @@ class PurchaseService {
     subscription = _inAppPurchase.purchaseStream.listen(
       (List<PurchaseDetails> purchases) async {
         for (final PurchaseDetails purchase in purchases) {
-          if (purchase.productID != discoveryProductId) {
+          if (purchase.productID != productId) {
             continue;
           }
 
@@ -71,24 +96,26 @@ class PurchaseService {
             continue;
           }
 
-          if (purchase.pendingCompletePurchase) {
-            await _inAppPurchase.completePurchase(purchase);
-          }
-
           if (purchase.status == PurchaseStatus.purchased ||
               purchase.status == PurchaseStatus.restored) {
+            // IMPORTANT: For Android, the receipt is the purchase token
             final bool verified = await verifyReceipt(
               platform: _platformName(),
               receipt: purchase.verificationData.serverVerificationData,
+              productId: productId,
             );
+
             if (!resultCompleter.isCompleted) {
               resultCompleter.complete(verified);
             }
-            continue;
+          } else {
+            if (!resultCompleter.isCompleted) {
+              resultCompleter.complete(false);
+            }
           }
 
-          if (!resultCompleter.isCompleted) {
-            resultCompleter.complete(false);
+          if (purchase.pendingCompletePurchase) {
+            await _inAppPurchase.completePurchase(purchase);
           }
         }
       },
@@ -118,44 +145,28 @@ class PurchaseService {
     }
   }
 
-  /// Mock purchase for development testing
-  Future<bool> _mockPurchaseDiscovery() async {
-    try {
-      // Call mock endpoint on backend
-      await _client.postJson(
-        '/purchases/mock-unlock',
-        headers: await _authHeaders(),
-      );
-      debugPrint('Mock purchase successful');
-      return true;
-    } catch (e) {
-      debugPrint('Mock purchase failed: $e');
-      return false;
-    }
-  }
-
   /// Restore previous purchases
   /// Used when user reinstalls app or switches devices
-  Future<bool> restorePurchases() async {
-    if (useMockPurchases) {
-      // In mock mode, just refresh profile from backend
-      // The hasDiscoveryAccess field will reflect the current state
-      debugPrint('Mock restore: Profile refresh will handle this');
-      return true;
-    }
-
+  /// Returns a user-friendly message about what was restored
+  Future<String> restorePurchases() async {
     try {
       final bool storeAvailable = await _inAppPurchase.isAvailable();
       if (!storeAvailable) {
         debugPrint('In-app purchase store is unavailable');
-        return false;
+        return 'App store is not available. Please try again later.';
       }
 
+      // Trigger platform restore
       await _inAppPurchase.restorePurchases();
-      return true;
+      
+      // Note: The restore will trigger the purchase stream if there are
+      // any purchases to restore. The backend will be updated through
+      // the normal verification flow.
+      
+      return 'Restore completed. Your subscriptions have been refreshed.';
     } catch (e) {
       debugPrint('Restore purchases failed: $e');
-      return false;
+      return 'Failed to restore purchases. Please try again.';
     }
   }
 
@@ -170,10 +181,41 @@ class PurchaseService {
     }
   }
 
+  /// Get available subscription products for the current platform
+  /// Returns product details that can be used to display pricing info in UI
+  Future<List<ProductDetails>> getAvailableProducts() async {
+    final bool storeAvailable = await _inAppPurchase.isAvailable();
+    if (!storeAvailable) {
+      debugPrint('In-app purchase store is unavailable');
+      return <ProductDetails>[];
+    }
+
+    final Set<String> productIds;
+
+    // If using same IDs across platforms, use base product IDs
+
+    productIds = <String>{
+      monthlyProductId,
+      quarterlyProductId,
+      yearlyProductId,
+    };
+
+    final ProductDetailsResponse response =
+        await _inAppPurchase.queryProductDetails(productIds);
+
+    if (response.error != null) {
+      debugPrint('Error loading products: ${response.error}');
+      return <ProductDetails>[];
+    }
+
+    return response.productDetails;
+  }
+
   /// Verify a purchase receipt with the backend
   Future<bool> verifyReceipt({
     required String platform,
     required String receipt,
+    required String productId,
   }) async {
     try {
       final Map<String, dynamic> response = await _client.postJson(
@@ -181,6 +223,7 @@ class PurchaseService {
         body: <String, dynamic>{
           'platform': platform,
           'receipt': receipt,
+          'productId': productId,
         },
         headers: await _authHeaders(),
       );

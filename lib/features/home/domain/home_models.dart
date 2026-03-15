@@ -17,6 +17,53 @@ enum UserMode {
   }
 }
 
+/// Subscription information from backend
+class Subscription {
+  const Subscription({
+    required this.tier,
+    required this.platform,
+    required this.endDate,
+    required this.autoRenew,
+  });
+
+  final String tier; // 'monthly', 'quarterly', 'yearly'
+  final String platform; // 'android', 'ios', 'mock'
+  final DateTime endDate;
+  final bool autoRenew;
+
+  factory Subscription.fromJson(Map<String, dynamic> json) {
+    return Subscription(
+      tier: json['tier'] as String,
+      platform: json['platform'] as String? ?? 'unknown',
+      endDate: DateTime.parse(json['endDate'] as String),
+      autoRenew: (json['autoRenew'] as bool?) ?? false,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'tier': tier,
+      'platform': platform,
+      'endDate': endDate.toIso8601String(),
+      'autoRenew': autoRenew,
+    };
+  }
+
+  /// Get human-readable platform name for UI display
+  String get platformDisplayName {
+    switch (platform.toLowerCase()) {
+      case 'android':
+        return 'Google Play Store';
+      case 'ios':
+        return 'App Store';
+      case 'mock':
+        return 'Test Subscription';
+      default:
+        return platform;
+    }
+  }
+}
+
 class UserProfile {
   const UserProfile({
     required this.id,
@@ -28,6 +75,7 @@ class UserProfile {
     required this.hasDiscoveryAccess,
     required this.createdAt,
     required this.updatedAt,
+    this.subscription,
   });
 
   final String id;
@@ -39,6 +87,7 @@ class UserProfile {
   final bool hasDiscoveryAccess;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final Subscription? subscription;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
@@ -51,6 +100,9 @@ class UserProfile {
       hasDiscoveryAccess: (json['hasDiscoveryAccess'] as bool?) ?? false,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      subscription: json['subscription'] != null
+          ? Subscription.fromJson(json['subscription'] as Map<String, dynamic>)
+          : null,
     );
   }
 
@@ -65,6 +117,7 @@ class UserProfile {
       'hasDiscoveryAccess': hasDiscoveryAccess,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      if (subscription != null) 'subscription': subscription!.toJson(),
     };
   }
 
@@ -78,6 +131,7 @@ class UserProfile {
     bool? hasDiscoveryAccess,
     DateTime? createdAt,
     DateTime? updatedAt,
+    Subscription? subscription,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -89,6 +143,7 @@ class UserProfile {
       hasDiscoveryAccess: hasDiscoveryAccess ?? this.hasDiscoveryAccess,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      subscription: subscription ?? this.subscription,
     );
   }
 }

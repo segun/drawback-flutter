@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'ad_service.dart';
 import 'purchase_service.dart';
 
-/// Manages discovery game access combining permanent purchases and temporary ad access
+/// Manages discovery game access combining subscription purchases and temporary ad access
 class DiscoveryAccessManager extends ChangeNotifier {
   DiscoveryAccessManager({
     required PurchaseService purchaseService,
@@ -36,10 +36,10 @@ class DiscoveryAccessManager extends ChangeNotifier {
   bool get isShowingAd => _isShowingAd;
   String? get error => _error;
 
-  /// Check if user has any form of access (permanent or temporary)
-  bool hasAccess(bool hasPermanentAccess) {
-    // Permanent purchase takes priority
-    if (hasPermanentAccess) {
+  /// Check if user has any form of access (subscription or temporary ad-based)
+  bool hasAccess(bool hasActiveSubscription) {
+    // Active subscription takes priority
+    if (hasActiveSubscription) {
       return true;
     }
 
@@ -92,7 +92,7 @@ class DiscoveryAccessManager extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Purchase permanent discovery access
+  /// Purchase discovery subscription
   /// Returns true if successful
   Future<bool> purchaseDiscovery() async {
     _isPurchasing = true;
@@ -143,22 +143,18 @@ class DiscoveryAccessManager extends ChangeNotifier {
   }
 
   /// Restore previous purchases
-  Future<bool> restorePurchases() async {
+  /// Returns a message describing what happened (for UI display)
+  Future<String> restorePurchases() async {
     _isPurchasing = true;
     _error = null;
     notifyListeners();
 
     try {
-      final bool success = await _purchaseService.restorePurchases();
-      
-      if (!success) {
-        _error = 'Could not restore purchases. Please try again.';
-      }
-      
-      return success;
+      final String message = await _purchaseService.restorePurchases();
+      return message;
     } catch (e) {
       _error = 'Restore error: $e';
-      return false;
+      return 'An error occurred while restoring purchases.';
     } finally {
       _isPurchasing = false;
       notifyListeners();

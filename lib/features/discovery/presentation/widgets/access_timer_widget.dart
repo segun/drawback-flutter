@@ -123,7 +123,7 @@ class AccessExpiredDialog extends StatelessWidget {
       ),
       content: const Text(
         'Your temporary access has expired. '
-        'Watch another ad or unlock forever to continue.',
+        'Watch another ad or subscribe to continue.',
         style: TextStyle(
           color: Color(0xFF881337),
         ),

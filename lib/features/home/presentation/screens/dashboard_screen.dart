@@ -183,9 +183,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _handleDiscoveryGameClick() async {
     SocketService().emitDrawLeave();
     
-    // Check if user has access (permanent purchase or temporary ad access)
-    final bool hasPermanentAccess = widget.controller.profile?.hasDiscoveryAccess ?? false;
-    final bool hasAccess = widget.discoveryAccessManager.hasAccess(hasPermanentAccess);
+    // Check if user has access (active subscription or temporary ad access)
+    final bool hasActiveSubscription = widget.controller.profile?.hasDiscoveryAccess ?? false;
+    final bool hasAccess = widget.discoveryAccessManager.hasAccess(hasActiveSubscription);
     
     if (!hasAccess) {
       // Show paywall
@@ -559,7 +559,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return DiscoverySwipeScreen(
           controller: widget.discoveryController,
           accessManager: widget.discoveryAccessManager,
-          hasPermanentAccess: widget.controller.profile?.hasDiscoveryAccess ?? false,
+          hasActiveSubscription: widget.controller.profile?.hasDiscoveryAccess ?? false,
           onBackToDashboard: () {
             setState(() {
               _currentView = DashboardView.chat;

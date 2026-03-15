@@ -22,7 +22,7 @@ class DiscoverySwipeScreen extends StatefulWidget {
     required this.pendingOutgoingUserIds,
     required this.acceptedChatByUserId,
     required this.incomingChatRequests,
-    required this.hasPermanentAccess,
+    required this.hasActiveSubscription,
     super.key,
   });
 
@@ -38,7 +38,7 @@ class DiscoverySwipeScreen extends StatefulWidget {
   final Set<String> pendingOutgoingUserIds;
   final Map<String, String> acceptedChatByUserId;
   final List<ChatRequest> incomingChatRequests;
-  final bool hasPermanentAccess;
+  final bool hasActiveSubscription;
 
   @override
   State<DiscoverySwipeScreen> createState() => _DiscoverySwipeScreenState();
@@ -214,8 +214,8 @@ class _DiscoverySwipeScreenState extends State<DiscoverySwipeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Show timer if using temporary access (not permanent)
-    final bool showTimer = !widget.hasPermanentAccess && 
+    // Show timer if using temporary access (not subscription)
+    final bool showTimer = !widget.hasActiveSubscription && 
         widget.accessManager.hasTemporaryAccess;
 
     return Container(
