@@ -22,12 +22,14 @@ class DiscoveryController extends ChangeNotifier {
 
   bool _isInDiscoveryGame = false;
   bool _isBusy = false;
+  bool _lastDiscoveryFetchAccessDenied = false;
   String? _error;
   String? _notice;
 
   // Getters
   bool get isInDiscoveryGame => _isInDiscoveryGame;
   bool get isBusy => _isBusy;
+  bool get lastDiscoveryFetchAccessDenied => _lastDiscoveryFetchAccessDenied;
   String? get error => _error;
   String? get notice => _notice;
 
@@ -90,10 +92,27 @@ class DiscoveryController extends ChangeNotifier {
 
   /// Get a random discovery user
   Future<DiscoveryUser?> getRandomDiscoveryUser() async {
-    return _runGuarded<DiscoveryUser?>(() async {
+    try {
+      _isBusy = true;
+      _error = null;
+      _notice = null;
+      _lastDiscoveryFetchAccessDenied = false;
+      notifyListeners();
+
       final DiscoveryUser user = await _socialApi.getRandomDiscoveryUser();
       return user;
-    }, fallback: null);
+    } on ApiException catch (e) {
+      _error = e.message;
+      _lastDiscoveryFetchAccessDenied = e.statusCode == 403;
+      return null;
+    } catch (e) {
+      _error = 'An unexpected error occurred: $e';
+      _lastDiscoveryFetchAccessDenied = false;
+      return null;
+    } finally {
+      _isBusy = false;
+      notifyListeners();
+    }
   }
 
   /// Convert strokes to base64-encoded PNG image

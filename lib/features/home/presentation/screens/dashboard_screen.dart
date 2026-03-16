@@ -182,11 +182,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _handleDiscoveryGameClick() async {
     SocketService().emitDrawLeave();
-    
+
+    // Refresh current profile state before checking access, so expiration/grace
+    // period changes are reflected immediately.
+    await widget.controller.loadDashboardData(showLoading: false);
+
     // Check if user has access (active subscription or temporary ad access)
     final bool hasActiveSubscription = widget.controller.profile?.hasDiscoveryAccess ?? false;
     final bool hasAccess = widget.discoveryAccessManager.hasAccess(hasActiveSubscription);
-    
+
     if (!hasAccess) {
       // Show paywall
       setState(() {

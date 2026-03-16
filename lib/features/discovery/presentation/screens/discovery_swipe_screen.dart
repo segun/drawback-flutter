@@ -57,6 +57,21 @@ class _DiscoverySwipeScreenState extends State<DiscoverySwipeScreen> {
 
   Future<void> _loadRandomUser() async {
     SocketService().emitDrawLeave();
+
+    final bool hasAccess =
+        widget.accessManager.hasAccess(widget.hasActiveSubscription);
+    if (!hasAccess) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isLoading = false;
+        _error = 'Discovery access has expired. Please renew to continue.';
+      });
+      widget.onAccessExpired();
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _error = null;
@@ -72,7 +87,15 @@ class _DiscoverySwipeScreenState extends State<DiscoverySwipeScreen> {
       _currentUser = user;
       _isLoading = false;
       if (user == null) {
-        _error = 'No users found in discovery game';
+        final String? controllerError = widget.controller.error;
+        _error =
+            (controllerError != null && controllerError.isNotEmpty)
+                ? controllerError
+                : 'No users found in discovery game';
+
+        if (widget.controller.lastDiscoveryFetchAccessDenied) {
+          widget.onAccessExpired();
+        }
       }
     });
   }
