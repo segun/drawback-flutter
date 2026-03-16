@@ -304,9 +304,20 @@ class DiscoveryUser {
   final String? discoveryImageUrl;
 
   factory DiscoveryUser.fromJson(Map<String, dynamic> json) {
-    // Handle both wrapped {"user": {...}} and unwrapped {...} responses
-    final Map<String, dynamic> userData =
-        json.containsKey('user') ? json['user'] as Map<String, dynamic> : json;
+    // Handle both wrapped {"user": {...}} and unwrapped {...} responses.
+    final dynamic wrappedUser = json['user'];
+    final Map<String, dynamic> userData;
+
+    if (wrappedUser == null) {
+      userData = json;
+    } else if (wrappedUser is Map<String, dynamic>) {
+      userData = wrappedUser;
+    } else if (wrappedUser is Map) {
+      userData = Map<String, dynamic>.from(wrappedUser);
+    } else {
+      throw const FormatException('Invalid discovery user payload.');
+    }
+
     return DiscoveryUser(
       id: userData['id'] as String,
       displayName: userData['displayName'] as String,

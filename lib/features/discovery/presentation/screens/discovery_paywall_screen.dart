@@ -34,19 +34,19 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
 
     try {
       final bool success = await widget.accessManager.purchaseDiscovery();
-      
+
       if (success) {
         // Refresh profile to get updated hasDiscoveryAccess
         await widget.onProfileRefresh();
-        
+
         if (mounted) {
           setState(() {
             _statusMessage = 'Purchase successful!';
           });
-          
+
           // Small delay to show success message
           await Future<void>.delayed(const Duration(milliseconds: 500));
-          
+
           if (mounted) {
             widget.onAccessGranted();
           }
@@ -75,16 +75,16 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
 
     try {
       final bool success = await widget.accessManager.watchAdForAccess();
-      
+
       if (success) {
         if (mounted) {
           setState(() {
             _statusMessage = 'Access granted!';
           });
-          
+
           // Small delay to show success message
           await Future<void>.delayed(const Duration(milliseconds: 500));
-          
+
           if (mounted) {
             widget.onAccessGranted();
           }
@@ -113,10 +113,10 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
 
     try {
       final String message = await widget.accessManager.restorePurchases();
-      
+
       // Refresh profile to get updated hasDiscoveryAccess and subscription info
       await widget.onProfileRefresh();
-      
+
       if (mounted) {
         setState(() {
           _statusMessage = message;
@@ -144,12 +144,13 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
               child: Row(
                 children: <Widget>[
                   IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Color(0xFF9F1239)),
+                    icon:
+                        const Icon(Icons.arrow_back, color: Color(0xFF9F1239)),
                     onPressed: widget.onBack,
                   ),
                   const Expanded(
                     child: Text(
-                      'Discovery Game',
+                      'Back',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -164,27 +165,27 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
             // Content
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.fromLTRB(24, 1, 24, 1),
                 child: Column(
                   children: <Widget>[
-                    const SizedBox(height: 32),
-                    
+                    const SizedBox(height: 1),
+
                     // Icon
                     Container(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         color: Colors.white.withAlpha(51),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.palette,
-                        size: 64,
+                        size: 44,
                         color: Color(0xFF9F1239),
                       ),
                     ),
-                    
-                    const SizedBox(height: 24),
-                    
+
+                    const SizedBox(height: 16),
+
                     // Title
                     const Text(
                       'Unlock Discovery Game',
@@ -194,9 +195,9 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
                         color: Color(0xFF9F1239),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // Description
                     const Text(
                       'Find random users and start drawing together! '
@@ -207,9 +208,9 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
                         color: Color(0xFF881337),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 48),
-                    
+
                     // Purchase button
                     SizedBox(
                       width: double.infinity,
@@ -219,7 +220,8 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
                         label: const Text('Subscribe — \$1.49/month'),
                         style: FilledButton.styleFrom(
                           backgroundColor: const Color(0xFFE11D48),
-                          disabledBackgroundColor: const Color(0xFFE11D48).withAlpha(128),
+                          disabledBackgroundColor:
+                              const Color(0xFFE11D48).withAlpha(128),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 32,
                             vertical: 20,
@@ -230,9 +232,9 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // Or divider
                     Row(
                       children: <Widget>[
@@ -253,9 +255,9 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: 16),
-                    
+
                     // Watch ad button
                     SizedBox(
                       width: double.infinity,
@@ -279,9 +281,9 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
                         ),
                       ),
                     ),
-                    
-                    const SizedBox(height: 32),
-                    
+
+                    const SizedBox(height: 16),
+
                     // Status message
                     if (_statusMessage != null)
                       Container(
@@ -319,9 +321,9 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
                           ],
                         ),
                       ),
-                    
-                    const SizedBox(height: 32),
-                    
+
+                    SizedBox(height: _statusMessage != null ? 20 : 8),
+
                     // Restore purchases link
                     TextButton(
                       onPressed: _isProcessing ? null : _handleRestorePurchases,

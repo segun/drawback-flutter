@@ -275,12 +275,17 @@ class SocialApi {
     return UserProfile.fromJson(response);
   }
 
-  Future<DiscoveryUser> getRandomDiscoveryUser() async {
-    final dynamic response = await _client.getJson(
+  Future<DiscoveryUser?> getRandomDiscoveryUser() async {
+    final Map<String, dynamic> response = await _client.getJson(
       '/users/discovery/random',
       headers: await _authHeaders(),
     );
 
-    return DiscoveryUser.fromJson(response as Map<String, dynamic>);
+    final dynamic wrappedUser = response['user'];
+    if (wrappedUser == null && !response.containsKey('id')) {
+      return null;
+    }
+
+    return DiscoveryUser.fromJson(response);
   }
 }

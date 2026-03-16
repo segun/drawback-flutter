@@ -99,7 +99,7 @@ class DiscoveryController extends ChangeNotifier {
       _lastDiscoveryFetchAccessDenied = false;
       notifyListeners();
 
-      final DiscoveryUser user = await _socialApi.getRandomDiscoveryUser();
+      final DiscoveryUser? user = await _socialApi.getRandomDiscoveryUser();
       return user;
     } on ApiException catch (e) {
       _error = e.message;

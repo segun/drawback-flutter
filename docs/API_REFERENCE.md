@@ -1,38 +1,51 @@
 # API Reference - Subscription Endpoints
 
-Quick reference for exact request/response formats.
+Quick reference for request/response formats for Android and iOS subscription flows.
 
 ---
 
 ## POST /purchases/verify
 
-Verify purchase receipt from Flutter app and activate subscription.
+Verify a store receipt/token and activate or update user subscription.
 
-### Request from Flutter
+### Request from Flutter (Android)
 
 ```json
 {
   "platform": "android",
   "receipt": "abcdefghijklmnop.AO-J1OxYZ123...",
+  "productId": "discovery_unlock_forever"
+}
+```
+
+### Request from Flutter (iOS)
+
+```json
+{
+  "platform": "ios",
+  "receipt": "MIIUVQYJKoZIhvcNAQcCoIIURjCCFEICAQEx...",
   "productId": "monthly"
 }
 ```
 
-**Field details:**
-- `platform`: `"android"` for Android, `"ios"` for iOS
-- `receipt`: Purchase token from Google Play (`purchase.verificationData.serverVerificationData`)
-- `productId`: Base plan ID - `monthly`, `quarterly`, or `yearly`
+### Field details
 
-**Important:** Flutter sends base plan ID (`monthly`), but backend uses parent subscription ID (`discovery_access`) when calling Google API.
+- `platform`: `android` or `ios`
+- `receipt`:
+  - Android: Google purchase token (`serverVerificationData`)
+  - iOS: App receipt payload (`serverVerificationData`)
+- `productId`:
+  - Android: `discovery_unlock_forever`
+  - iOS: `monthly`, `quarterly`, or `yearly`
 
-### Response to Flutter
+### Success response
 
-**Success:**
 ```json
 {
   "success": true,
   "subscription": {
     "tier": "monthly",
+    "platform": "ios",
     "startDate": "2026-03-14T10:30:00.000Z",
     "endDate": "2026-04-14T10:30:00.000Z",
     "autoRenew": true
@@ -40,12 +53,13 @@ Verify purchase receipt from Flutter app and activate subscription.
 }
 ```
 
-**Failure:**
+### Failure response
+
 ```json
 {
   "success": false,
-  "error": "Invalid or unpaid subscription",
-  "details": "Subscription not found"
+  "error": "Verification failed",
+  "details": "Invalid or expired receipt"
 }
 ```
 
@@ -53,50 +67,40 @@ Verify purchase receipt from Flutter app and activate subscription.
 
 ## GET /users/me
 
-Get current user profile with subscription status.
+Get current user profile and effective subscription access.
 
-### Request
-
-No request body (authenticated via Bearer token in header).
-
-### Response
+### Response example
 
 ```json
 {
   "id": "user123",
   "email": "user@example.com",
   "displayName": "John Doe",
-  "mode": "PUBLIC",
-  "appearInSearches": true,
-  "appearInDiscoveryGame": true,
   "hasDiscoveryAccess": true,
-  "createdAt": "2026-01-01T00:00:00.000Z",
-  "updatedAt": "2026-03-14T10:30:00.000Z",
   "subscription": {
     "tier": "monthly",
-    "platform": "android",
+    "platform": "ios",
     "endDate": "2026-04-14T10:30:00.000Z",
     "autoRenew": true
   }
 }
 ```
 
-**Note:** `hasDiscoveryAccess` is computed on the backend:
+### Access computation
+
 ```javascript
-hasDiscoveryAccess = (now < subscription_end_date) && (status === 'active')
+hasDiscoveryAccess =
+  (now < subscription_end_date) &&
+  (subscription_status === 'active');
 ```
 
-**Cross-platform behavior:** The `platform` field indicates where the subscription was purchased (`android`, `ios`, or `mock`), but access is granted on all platforms. A user who subscribes on Android will have `hasDiscoveryAccess: true` when they log in on iOS.
+Access is platform-independent. A user subscribed on Android should still have access when logged in on iOS, and vice versa.
 
 ---
 
 ## POST /purchases/mock-unlock
 
-Development-only endpoint to simulate subscription without real payment.
-
-### Request
-
-No body required (authenticated route).
+Development-only endpoint to simulate access.
 
 ### Response
 
@@ -106,17 +110,13 @@ No body required (authenticated route).
 }
 ```
 
-**What it does:** Sets subscription end date to 30 days from now for testing.
-
-**Availability:** Only works when `NODE_ENV === 'development'`
+Only available when running in development mode.
 
 ---
 
-## Google Pub/Sub Notification Format
+## Android Notification Payload (Google RTDN)
 
-Notifications arrive at your Pub/Sub subscription (via pull or push).
-
-### Notification Structure
+Delivered via Pub/Sub.
 
 ```json
 {
@@ -127,76 +127,303 @@ Notifications arrive at your Pub/Sub subscription (via pull or push).
     "version": "1.0",
     "notificationType": 2,
     "purchaseToken": "abcdefghijklmnop.AO-J1OxYZ123...",
-    "subscriptionId": "discovery_access"
+    "subscriptionId": "discovery_unlock_forever"
   }
 }
 ```
 
-**Important:** The `subscriptionId` is the **parent subscription ID** (not the base plan ID). To determine which base plan the user purchased (monthly/quarterly/yearly), query the purchase details using the `purchaseToken`.
+Common `notificationType` values:
 
-### Notification Types
-
-| Code | Type | Meaning | Action Required |
-|------|------|---------|----------------|
-| 1 | SUBSCRIPTION_RECOVERED | Payment recovered after being on hold | Update status to 'active' |
-| 2 | SUBSCRIPTION_RENEWED | Auto-renewal succeeded | Update `subscription_end_date` |
-| 3 | SUBSCRIPTION_CANCELED | User cancelled subscription | Set `auto_renew = false`, status = 'cancelled' |
-| 4 | SUBSCRIPTION_PURCHASED | New subscription | Process same as verify (if not already done) |
-| 5 | SUBSCRIPTION_ON_HOLD | Payment failed, retry period | Set status = 'on_hold' |
-| 6 | SUBSCRIPTION_IN_GRACE_PERIOD | Payment failed, still has access | Set status = 'grace_period' |
-| 7 | SUBSCRIPTION_RESTARTED | User restarted a cancelled sub | Set status = 'active', `auto_renew = true` |
-| 10 | SUBSCRIPTION_PRICE_CHANGE_CONFIRMED | User accepted price change | Log, no action needed |
-| 12 | SUBSCRIPTION_REVOKED | Refund issued | Set status = 'revoked', remove access immediately |
-| 13 | SUBSCRIPTION_EXPIRED | Subscription ended | Set status = 'expired' |
+| Code | Meaning | Typical backend action |
+|---|---|---|
+| 2 | SUBSCRIPTION_RENEWED | update `subscription_end_date`, status `active` |
+| 3 | SUBSCRIPTION_CANCELED | set `subscription_auto_renew = false`, status `cancelled` |
+| 6 | SUBSCRIPTION_IN_GRACE_PERIOD | status `grace_period` |
+| 12 | SUBSCRIPTION_REVOKED | status `revoked`, remove access |
+| 13 | SUBSCRIPTION_EXPIRED | status `expired` |
 
 ---
 
-## Google Play Developer API Response
+## iOS Notification Payload (App Store Server Notifications V2)
 
-When you call `androidPublisher.purchases.subscriptions.get()`:
+Delivered via HTTPS webhook as signed JWS payload.
+
+### Top-level example
 
 ```json
 {
-  "kind": "androidpublisher#subscriptionPurchase",
-  "startTimeMillis": "1710412200000",
-  "expiryTimeMillis": "1713004200000",
-  "autoRenewing": true,
-  "priceCurrencyCode": "USD",
-  "priceAmountMicros": "4990000",
-  "countryCode": "US",
-  "developerPayload": "",
-  "paymentState": 1,
-  "cancelReason": 0,
-  "userCancellationTimeMillis": null,
-  "orderId": "GPA.1234-5678-9012-34567",
-  "linkedPurchaseToken": null,
-  "purchaseType": 0,
-  "acknowledgementState": 1,
-  "emailAddress": "user@example.com"
+  "signedPayload": "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
 
-### Key Fields
+After decoding/validating `signedPayload`, payload contains fields like:
 
-- `startTimeMillis`: Subscription start (milliseconds since epoch)
-- `expiryTimeMillis`: Subscription end (milliseconds since epoch)
-- `autoRenewing`: `true` if will auto-renew, `false` if cancelled
-- `paymentState`: 
-  - `0` = pending
-  - `1` = paid
-  - `2` = free trial
-  - `3` = pending deferred
-- `orderId`: Unique transaction ID (use as `original_transaction_id`)
-- `purchaseType`:
-  - `0` = test
-  - `1` = promo
-  - `2` = rewarded
+```json
+{
+  "notificationType": "DID_RENEW",
+  "subtype": "",
+  "data": {
+    "bundleId": "chat.drawback.flutter",
+    "environment": "Sandbox",
+    "signedTransactionInfo": "...",
+    "signedRenewalInfo": "..."
+  }
+}
+```
+
+### How to decode the iOS notification payload (debug only)
+
+You can inspect a JWS payload without verifying it for local debugging:
+
+```ts
+function decodeJwsPayloadUnsafe(signedJws: string): unknown {
+  const parts = signedJws.split('.');
+  if (parts.length !== 3) {
+    throw new Error('Invalid JWS format');
+  }
+  return JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+}
+```
+
+Do not trust this decoded data for entitlement decisions until signature verification succeeds.
+
+### How to verify and decode in production (required)
+
+Use Apple App Store Server Library to verify:
+
+1. Verify and decode top-level `signedPayload`.
+2. Verify and decode nested `data.signedTransactionInfo` (if present).
+3. Verify and decode nested `data.signedRenewalInfo` (if present).
+4. Deduplicate by `notificationUUID` before applying updates.
+
+```ts
+import fs from 'node:fs';
+import express from 'express';
+import {
+  Environment,
+  SignedDataVerifier,
+} from '@apple/app-store-server-library';
+
+const app = express();
+app.use(express.json());
+
+const appleRootCAs: Buffer[] = [
+  fs.readFileSync('./certs/AppleRootCA-G3.cer'),
+];
+
+const environment = process.env.APPLE_ENV === 'production'
+  ? Environment.PRODUCTION
+  : Environment.SANDBOX;
+
+const verifier = new SignedDataVerifier(
+  appleRootCAs,
+  true,
+  environment,
+  process.env.APPLE_BUNDLE_ID!,
+  process.env.APPLE_APP_ID ? Number(process.env.APPLE_APP_ID) : undefined,
+);
+
+app.post('/webhooks/apple/subscriptions', async (req, res) => {
+  try {
+    const signedPayload = req.body?.signedPayload;
+    if (!signedPayload) {
+      return res.status(400).json({ error: 'Missing signedPayload' });
+    }
+
+    const notification = await verifier.verifyAndDecodeNotification(signedPayload);
+    const transaction = notification.data?.signedTransactionInfo
+      ? await verifier.verifyAndDecodeTransaction(notification.data.signedTransactionInfo)
+      : undefined;
+    const renewal = notification.data?.signedRenewalInfo
+      ? await verifier.verifyAndDecodeRenewalInfo(notification.data.signedRenewalInfo)
+      : undefined;
+
+    // Idempotency: store notificationUUID and ignore duplicates.
+    // Apply state transition based on notificationType + subtype.
+    // Use transaction/renewal fields to set expiry, product, auto-renew, etc.
+
+    return res.status(200).json({ ok: true });
+  } catch (error) {
+    return res.status(400).json({ error: 'Invalid signed payload' });
+  }
+});
+```
+
+### ABC123 processing order for backend handlers
+
+- A: Authenticate payload (signature + bundle id + environment checks).
+- B: Build normalized event from notification + decoded transaction/renewal data.
+- C: Commit atomically with idempotency key = `notificationUUID`.
+- 1: Update status (`active`, `grace_period`, `expired`, `revoked`, etc.).
+- 2: Update dates and renewal flags (`subscription_end_date`, `subscription_auto_renew`).
+- 3: Return HTTP `200` quickly after durable write.
+
+### Full `notificationType` list (App Store Server Notifications V2)
+
+| notificationType | Description | Suggested backend action |
+|---|---|---|
+| SUBSCRIBED | New or returning auto-renewable subscriber | Set `active`, store tier/product, set expiry |
+| DID_CHANGE_RENEWAL_PREF | User changed plan preference in same subscription group | Update planned tier change metadata |
+| DID_CHANGE_RENEWAL_STATUS | Auto-renew toggled on/off | Update `subscription_auto_renew` |
+| OFFER_REDEEMED | Offer redeemed for active subscription | Record offer usage and effective product |
+| DID_RENEW | Subscription renewed successfully | Extend `subscription_end_date`, set `active` |
+| EXPIRED | Subscription expired | Set `expired` and remove paid access |
+| DID_FAIL_TO_RENEW | Renewal failed and entered billing retry | Set `billing_retry` or `grace_period` |
+| GRACE_PERIOD_EXPIRED | Grace period ended without recovery | Remove access unless recovered later |
+| PRICE_INCREASE | Price increase notification/consent state | Store consent state for support/audit |
+| REFUND | Refund granted | Set `revoked` and revoke entitlement |
+| REFUND_DECLINED | Refund request declined | Keep entitlement unchanged |
+| CONSUMPTION_REQUEST | Apple requests consumption data for refund flow | Send consumption data if supported |
+| RENEWAL_EXTENDED | A specific subscription renewal date was extended | Update expiry from transaction data |
+| RENEWAL_EXTENSION | Bulk renewal extension progress/result | Handle `SUMMARY` or `FAILURE` payload |
+| REVOKE | Family Sharing entitlement revoked | Recompute entitlement and revoke if needed |
+| TEST | Test notification from App Store Connect | Log and return `200` |
+| REFUND_REVERSED | Previously granted refund reversed | Reinstate entitlement if applicable |
+| EXTERNAL_PURCHASE_TOKEN | External Purchase token lifecycle event | Store/report token state (if used) |
+| ONE_TIME_CHARGE | Non-subscription purchase event | Ignore for subscription entitlement, or route to one-time handler |
+| RESCIND_CONSENT | Child account consent rescinded | Restrict access according to policy |
+| METADATA_UPDATE | Advanced Commerce metadata update event | Sync metadata if using Advanced Commerce API |
+| MIGRATION | Advanced Commerce migration event | Handle migration reconciliation |
+| PRICE_CHANGE | Advanced Commerce price change event | Sync price change metadata |
+
+### Full `subtype` list and where each applies
+
+| subtype | Applies to notificationType | Meaning |
+|---|---|---|
+| INITIAL_BUY | SUBSCRIBED | First-time subscription purchase/family access |
+| RESUBSCRIBE | SUBSCRIBED | User subscribed again after expiration |
+| DOWNGRADE | DID_CHANGE_RENEWAL_PREF, OFFER_REDEEMED | Changed to lower plan/effective next renewal |
+| UPGRADE | DID_CHANGE_RENEWAL_PREF, OFFER_REDEEMED | Changed to higher plan/effective immediately |
+| AUTO_RENEW_ENABLED | DID_CHANGE_RENEWAL_STATUS | Auto-renew turned on |
+| AUTO_RENEW_DISABLED | DID_CHANGE_RENEWAL_STATUS | Auto-renew turned off |
+| VOLUNTARY | EXPIRED | Expired because user disabled auto-renew |
+| BILLING_RETRY | EXPIRED | Expired after billing retry window ended |
+| PRICE_INCREASE | EXPIRED | Expired due to required price consent not granted |
+| GRACE_PERIOD | DID_FAIL_TO_RENEW | Renewal failed, but grace period is active |
+| PENDING | PRICE_INCREASE | Price consent required, user has not responded |
+| ACCEPTED | PRICE_INCREASE | User accepted price increase (or consent not required) |
+| BILLING_RECOVERY | DID_RENEW | Recovered from previous billing failure |
+| PRODUCT_NOT_FOR_SALE | EXPIRED | Product unavailable during renewal |
+| SUMMARY | RENEWAL_EXTENSION | Bulk extension completed summary payload |
+| FAILURE | RENEWAL_EXTENSION | Bulk extension failed for a subscription |
+| CREATED | EXTERNAL_PURCHASE_TOKEN | External purchase token created |
+| ACTIVE_TOKEN_REMINDER | EXTERNAL_PURCHASE_TOKEN | Token still active reminder |
+| UNREPORTED | EXTERNAL_PURCHASE_TOKEN | Token created but not yet reported |
+
+Many notifications may also arrive with an empty subtype.
+
+---
+
+## Apple verifyReceipt Response (iOS)
+
+If you use the verifyReceipt API, backend posts receipt data to Apple and parses:
+
+```json
+{
+  "status": 0,
+  "environment": "Sandbox",
+  "latest_receipt_info": [
+    {
+      "product_id": "monthly",
+      "original_transaction_id": "1000001234567890",
+      "transaction_id": "1000001234567999",
+      "expires_date_ms": "1713004200000"
+    }
+  ],
+  "pending_renewal_info": [
+    {
+      "product_id": "monthly",
+      "auto_renew_status": "1"
+    }
+  ]
+}
+```
+
+Key status codes:
+
+| Status | Meaning |
+|---|---|
+| 0 | Valid receipt |
+| 21007 | Sandbox receipt sent to production endpoint |
+| 21008 | Production receipt sent to sandbox endpoint |
+
+---
+
+## Google Play Subscription API Response (Android)
+
+`androidPublisher.purchases.subscriptions.get()` returns fields similar to:
+
+```json
+{
+  "startTimeMillis": "1710412200000",
+  "expiryTimeMillis": "1713004200000",
+  "autoRenewing": true,
+  "paymentState": 1,
+  "orderId": "GPA.1234-5678-9012-34567"
+}
+```
+
+Useful fields:
+
+- `expiryTimeMillis` -> `subscription_end_date`
+- `autoRenewing` -> `subscription_auto_renew`
+- `orderId` -> `original_transaction_id`
+
+---
+
+## ID Mapping Reference
+
+| Context | Android value | iOS value |
+|---|---|---|
+| Store product IDs in Flutter | `discovery_unlock_forever` | `monthly`, `quarterly`, `yearly` |
+| `productId` sent to `/purchases/verify` | `discovery_unlock_forever` | one of tier IDs |
+| Database `subscription_tier` | backend-defined tier mapping | `monthly`/`quarterly`/`yearly` |
+| Database `original_transaction_id` | Google `orderId` | Apple `original_transaction_id` |
+
+---
+
+## Environment Variables
+
+```bash
+# Google Play
+GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
+GOOGLE_PACKAGE_NAME=chat.drawback.flutter
+GOOGLE_SUBSCRIPTION_ID=discovery_unlock_forever
+GOOGLE_CLOUD_PROJECT_ID=your-project-id
+GOOGLE_PUBSUB_SUBSCRIPTION=play-subscriptions-pull
+
+# Apple App Store
+APPLE_BUNDLE_ID=chat.drawback.flutter
+APPLE_SHARED_SECRET=your-app-specific-shared-secret
+# Optional for App Store Server API JWT auth (not required for webhook signature verification):
+APPLE_ISSUER_ID=your-issuer-id
+APPLE_KEY_ID=your-key-id
+APPLE_PRIVATE_KEY_PATH=/path/to/SubscriptionKey_KEYID.p8
+```
+
+`APPLE_PRIVATE_KEY_PATH` should use your `SubscriptionKey` key.
+
+---
+
+## Database Schema
+
+```sql
+subscription_platform        VARCHAR(20)   -- android, ios, mock
+subscription_tier            VARCHAR(20)   -- monthly, quarterly, yearly, etc.
+subscription_status          VARCHAR(20)   -- active, cancelled, expired, grace_period, revoked
+subscription_start_date      TIMESTAMP
+subscription_end_date        TIMESTAMP
+subscription_auto_renew      BOOLEAN
+original_transaction_id      VARCHAR(255)  -- Google orderId or Apple original_transaction_id
+purchase_token               TEXT          -- Google token or raw receipt reference
+```
 
 ---
 
 ## Common Error Responses
 
 ### 401 Unauthorized
+
 ```json
 {
   "error": "No authentication token provided"
@@ -204,6 +431,7 @@ When you call `androidPublisher.purchases.subscriptions.get()`:
 ```
 
 ### 400 Bad Request
+
 ```json
 {
   "error": "Missing required field: receipt"
@@ -211,6 +439,7 @@ When you call `androidPublisher.purchases.subscriptions.get()`:
 ```
 
 ### 403 Forbidden
+
 ```json
 {
   "error": "DISCOVERY_LOCKED",
@@ -220,134 +449,11 @@ When you call `androidPublisher.purchases.subscriptions.get()`:
 ```
 
 ### 500 Internal Server Error
+
 ```json
 {
   "success": false,
   "error": "Verification failed",
-  "details": "Unable to connect to Google Play API"
+  "details": "Unable to verify purchase with store provider"
 }
 ```
-
----
-
-## ID Reference Quick Table
-
-| Context | Use Which ID? | Example Value |
-|---------|---------------|---------------|
-| **Play Console - Subscription** | Parent ID | `discovery_access` |
-| **Play Console - Base Plans** | Base plan IDs | `monthly`, `quarterly`, `yearly` |
-| **Flutter - Product IDs** | Base plan IDs | `monthly`, `quarterly`, `yearly` |
-| **Flutter → Backend** | Base plan ID | `"productId": "monthly"` |
-| **Backend → Google API** | Parent subscription ID | `subscriptionId: "discovery_access"` |
-| **Google Notifications** | Parent subscription ID | `"subscriptionId": "discovery_access"` |
-| **Database - Tier Column** | Base plan ID | `"monthly"` |
-
----
-
-## Cross-Platform Subscription Notes
-
-### Platform Independence
-
-Subscriptions are **account-based**, not platform-specific:
-
-- User subscribes on Android → Backend stores subscription with `platform: 'android'`
-- User logs in on iOS → Backend returns `hasDiscoveryAccess: true`
-- ✅ Access works seamlessly across all platforms
-
-### Subscription Management
-
-Users must manage subscriptions through the platform where they purchased:
-
-```json
-{
-  "subscription": {
-    "platform": "android"  // User must use Google Play Store to manage
-  }
-}
-```
-
-**Display in UI:**
-- Android: "Manage in Google Play Store"
-- iOS: "Manage in App Store"
-- Mock: "Test Subscription (Development)"
-
-### Restore Purchases Behavior
-
-When a user taps "Restore Purchases":
-
-1. Flutter calls platform-specific restore (`restorePurchases()`)
-2. Platform returns any purchases made on **that platform**
-3. App refreshes user profile from backend
-4. Backend returns `hasDiscoveryAccess` based on **any platform's** subscription
-5. UI shows appropriate message:
-   - If has access: "Your subscription is active"
-   - If no access: "No subscription found"
-
-**Important:** Don't reveal in the iOS app that a user has an Android subscription (App Store guideline compliance).
-
----
-
-## Environment Variables Reference
-
-### Backend Required Variables
-
-```bash
-# Google Play (Android)
-GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account-key.json
-GOOGLE_CLOUD_PROJECT_ID=your-project-id
-GOOGLE_PUBSUB_SUBSCRIPTION=play-subscriptions-pull
-GOOGLE_PACKAGE_NAME=chat.drawback.flutter
-GOOGLE_SUBSCRIPTION_ID=discovery_access
-
-# Apple App Store (iOS) - if implementing
-APPLE_SHARED_SECRET=your-app-store-shared-secret
-```
-
----
-
-## Database Schema Reference
-
-```sql
--- User subscription fields
-subscription_platform        VARCHAR(20)   -- 'android', 'ios', 'mock'
-subscription_tier           VARCHAR(20)   -- 'monthly', 'quarterly', 'yearly'
-subscription_status         VARCHAR(20)   -- 'active', 'cancelled', 'expired', 'grace_period', 'revoked'
-subscription_start_date     TIMESTAMP
-subscription_end_date       TIMESTAMP
-subscription_auto_renew     BOOLEAN
-original_transaction_id     VARCHAR(255)  -- Google orderId or Apple originalTransactionId
-purchase_token              TEXT          -- Google purchase token (for Android)
-```
-
----
-
-## Quick Implementation Checklist
-
-### Flutter Side
-- [ ] Product IDs use base plan IDs: `monthly`, `quarterly`, `yearly`
-- [ ] Send `productId` to backend in verify request
-- [ ] Handle purchase success/failure states
-- [ ] Implement restore purchases flow
-
-### Backend Side
-- [ ] Use parent subscription ID (`discovery_access`) in Google API calls
-- [ ] Store base plan ID (`monthly`, etc.) in database tier field
-- [ ] Compute `hasDiscoveryAccess` dynamically from `subscription_end_date`
-- [ ] Set up Pub/Sub listener for real-time notifications
-- [ ] Handle all notification types (renewed, cancelled, expired, etc.)
-
-### Google Cloud Side
-- [ ] Enable Google Play Developer API
-- [ ] Create service account with proper permissions
-- [ ] Configure Pub/Sub topic and subscription
-- [ ] Grant Play Console access to service account
-- [ ] Configure RTDN in Play Console
-
----
-
-## Support Links
-
-- [Google Play Billing Documentation](https://developer.android.com/google/play/billing/subscriptions)
-- [Google Play Developer API Reference](https://developers.google.com/android-publisher/api-ref/rest/v3/purchases.subscriptions)
-- [Pub/Sub Documentation](https://cloud.google.com/pubsub/docs/pull)
-- [Real-time Developer Notifications](https://developer.android.com/google/play/billing/rtdn-reference)
