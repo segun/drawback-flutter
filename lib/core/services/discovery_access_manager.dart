@@ -108,12 +108,32 @@ class DiscoveryAccessManager extends ChangeNotifier {
       
       return success;
     } catch (e) {
-      _error = 'Purchase error: $e';
+      debugPrint('Purchase failed with platform error: $e');
+      _error = _mapPurchaseError(e);
       return false;
     } finally {
       _isPurchasing = false;
       notifyListeners();
     }
+  }
+
+  String _mapPurchaseError(Object error) {
+    final String message = error.toString();
+    final String lower = message.toLowerCase();
+
+    if (lower.contains('not authorized to make purchases') &&
+        lower.contains('sandbox')) {
+      return 'This Apple ID is not authorized for Sandbox purchases. '
+          'Sign in with a Sandbox Tester account and try again.';
+    }
+
+    if (lower.contains('user cancelled') ||
+        lower.contains('cancelled by user') ||
+        lower.contains('canceled by user')) {
+      return 'Purchase was cancelled.';
+    }
+
+    return 'Could not complete purchase. Please try again.';
   }
 
   /// Watch a rewarded ad for temporary access

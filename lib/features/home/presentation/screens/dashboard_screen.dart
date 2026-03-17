@@ -20,7 +20,13 @@ import '../widgets/saved_chats_widget.dart';
 import '../widgets/user_search_widget.dart';
 import 'profile_screen.dart';
 
-enum DashboardView { chat, profile, discoveryPaywall, discoveryGame, discoverySwipe }
+enum DashboardView {
+  chat,
+  profile,
+  discoveryPaywall,
+  discoveryGame,
+  discoverySwipe
+}
 
 /// Main dashboard screen with sidebar and content area
 class DashboardScreen extends StatefulWidget {
@@ -75,7 +81,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     if (!widget.authController.isPasskeyAvailable) {
-      _hasHandledPasskeyPrompt = true; // Set here - we showed the "not available" dialog
+      _hasHandledPasskeyPrompt =
+          true; // Set here - we showed the "not available" dialog
       await showDialog<void>(
         context: context,
         builder: (BuildContext context) {
@@ -105,7 +112,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return;
     }
 
-    _hasHandledPasskeyPrompt = true; // Set here - about to show enrollment dialog
+    _hasHandledPasskeyPrompt =
+        true; // Set here - about to show enrollment dialog
     final bool? shouldEnroll = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -153,8 +161,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
 
     if (registered) {
-      final String message = widget.authController.notice ??
-          'Passkey added successfully.';
+      final String message =
+          widget.authController.notice ?? 'Passkey added successfully.';
       widget.authController.clearNotice();
       setState(() {
         _passkeyNotice = message;
@@ -188,8 +196,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await widget.controller.loadDashboardData(showLoading: false);
 
     // Check if user has access (active subscription or temporary ad access)
-    final bool hasActiveSubscription = widget.controller.profile?.hasDiscoveryAccess ?? false;
-    final bool hasAccess = widget.discoveryAccessManager.hasAccess(hasActiveSubscription);
+    final bool hasActiveSubscription =
+        widget.controller.profile?.hasDiscoveryAccess ?? false;
+    final bool hasAccess =
+        widget.discoveryAccessManager.hasAccess(hasActiveSubscription);
 
     if (!hasAccess) {
       // Show paywall
@@ -199,7 +209,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       });
       return;
     }
-    
+
     if (widget.controller.isInDiscoveryGame) {
       // Navigate to discovery swipe screen
       setState(() {
@@ -309,105 +319,111 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ? const Center(
                   child: CircularProgressIndicator(),
                 )
-              : Column(
-                  children: <Widget>[
-                    if (bannerError != null || bannerNotice != null)
-                      Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: StatusBanner(
-                          key: ValueKey('${bannerError ?? bannerNotice}'),
-                          text: bannerError ?? bannerNotice!,
-                          kind: bannerError != null
-                              ? BannerKind.error
-                              : BannerKind.success,
-                          onDismiss: () {
-                            if (_passkeyError != null || _passkeyNotice != null) {
-                              setState(() {
-                                _passkeyError = null;
-                                _passkeyNotice = null;
-                              });
-                            }
-                            widget.controller.clearMessages();
-                          },
+              : SafeArea(
+                  child: Column(
+                    children: <Widget>[
+                      if (bannerError != null || bannerNotice != null)
+                        Padding(
+                          padding: const EdgeInsets.all(6),
+                          child: StatusBanner(
+                            key: ValueKey('${bannerError ?? bannerNotice}'),
+                            text: bannerError ?? bannerNotice!,
+                            kind: bannerError != null
+                                ? BannerKind.error
+                                : BannerKind.success,
+                            onDismiss: () {
+                              if (_passkeyError != null ||
+                                  _passkeyNotice != null) {
+                                setState(() {
+                                  _passkeyError = null;
+                                  _passkeyNotice = null;
+                                });
+                              }
+                              widget.controller.clearMessages();
+                            },
+                          ),
                         ),
-                      ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.all(6),
-                        child: Stack(
-                          children: <Widget>[
-                            // Main content
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: <Widget>[
-                                // Sidebar (visible on larger screens)
-                                if (MediaQuery.of(context).size.width >= 1024)
-                                  Container(
-                                    width: 320,
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.all(6),
+                          child: Stack(
+                            children: <Widget>[
+                              // Main content
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: <Widget>[
+                                  // Sidebar (visible on larger screens)
+                                  if (MediaQuery.of(context).size.width >= 1024)
+                                    Container(
+                                      width: 320,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFFFDA4AF),
+                                        border: Border(
+                                          right: BorderSide(
+                                              color: Color(0xFFFDA4AF)),
+                                        ),
+                                      ),
+                                      child: _buildSidebar(),
+                                    ),
+
+                                  const SizedBox(width: 12),
+
+                                  // Content area
+                                  Expanded(
+                                    child: Container(
+                                      color: const Color(0xFFFDA4AF),
+                                      child: _buildContent(),
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              // Mobile sidebar overlay
+                              if (_isSidebarOpen &&
+                                  MediaQuery.of(context).size.width < 1024)
+                                GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      _isSidebarOpen = false;
+                                    });
+                                  },
+                                  child: Container(
+                                    color: Colors.black54,
+                                  ),
+                                ),
+
+                              // Mobile sidebar
+                              if (_isSidebarOpen &&
+                                  MediaQuery.of(context).size.width < 1024)
+                                Positioned(
+                                  left: 0,
+                                  top: 0,
+                                  bottom: 0,
+                                  child: Container(
+                                    width: 300,
                                     decoration: const BoxDecoration(
                                       color: Color(0xFFFDA4AF),
-                                      border: Border(
-                                        right: BorderSide(color: Color(0xFFFDA4AF)),
-                                      ),
+                                      boxShadow: <BoxShadow>[
+                                        BoxShadow(
+                                          color: Colors.black26,
+                                          blurRadius: 10,
+                                          offset: Offset(2, 0),
+                                        ),
+                                      ],
                                     ),
-                                    child: _buildSidebar(),
-                                  ),
-
-                                const SizedBox(width: 12),
-
-                                // Content area
-                                Expanded(
-                                  child: Container(
-                                    color: const Color(0xFFFDA4AF),
-                                    child: _buildContent(),
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                          // Mobile sidebar overlay
-                          if (_isSidebarOpen && MediaQuery.of(context).size.width < 1024)
-                            GestureDetector(
-                              onTap: () {
-                                setState(() {
-                                  _isSidebarOpen = false;
-                                });
-                              },
-                              child: Container(
-                                color: Colors.black54,
-                              ),
-                            ),
-
-                          // Mobile sidebar
-                          if (_isSidebarOpen && MediaQuery.of(context).size.width < 1024)
-                            Positioned(
-                              left: 0,
-                              top: 0,
-                              bottom: 0,
-                              child: Container(
-                                width: 300,
-                                decoration: const BoxDecoration(
-                                  color: Color(0xFFFDA4AF),
-                                  boxShadow: <BoxShadow>[
-                                    BoxShadow(
-                                      color: Colors.black26,
-                                      blurRadius: 10,
-                                      offset: Offset(2, 0),
+                                    child: Column(
+                                      children: <Widget>[
+                                        Expanded(child: _buildSidebar()),
+                                      ],
                                     ),
-                                  ],
+                                  ),
                                 ),
-                                child: Column(
-                                  children: <Widget>[
-                                    Expanded(child: _buildSidebar()),
-                                  ],
-                                ),
-                              ),
-                            ),
-                        ],
+                            ],
+                          ),
+                        ),
                       ),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
         );
       },
@@ -540,6 +556,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           },
           onProfileRefresh: () async {
             await widget.controller.loadDashboardData(showLoading: false);
+            return widget.controller.profile?.hasDiscoveryAccess ?? false;
           },
         );
       case DashboardView.discoveryGame:
@@ -563,7 +580,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return DiscoverySwipeScreen(
           controller: widget.discoveryController,
           accessManager: widget.discoveryAccessManager,
-          hasActiveSubscription: widget.controller.profile?.hasDiscoveryAccess ?? false,
+          hasActiveSubscription:
+              widget.controller.profile?.hasDiscoveryAccess ?? false,
           onBackToDashboard: () {
             setState(() {
               _currentView = DashboardView.chat;
@@ -609,7 +627,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ),
           );
         }
-        
+
         // Show chat room with drawing canvas
         if (widget.controller.profile == null) {
           return const Center(
@@ -618,7 +636,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         }
 
         final ChatRequest? selectedChat = widget.controller.recentChats
-            .where((ChatRequest chat) => chat.id == widget.controller.selectedChatRequestId)
+            .where((ChatRequest chat) =>
+                chat.id == widget.controller.selectedChatRequestId)
             .firstOrNull;
 
         if (selectedChat == null) {
@@ -708,8 +727,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             return false;
           },
           onSaveChat: () async {
-            final bool success =
-                await widget.controller.saveChat(widget.controller.selectedChatRequestId!);
+            final bool success = await widget.controller
+                .saveChat(widget.controller.selectedChatRequestId!);
             if (success && mounted) {
               widget.controller.loadDashboardData(showLoading: false);
               ScaffoldMessenger.of(context).showSnackBar(

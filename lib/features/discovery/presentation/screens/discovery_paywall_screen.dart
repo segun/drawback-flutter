@@ -16,7 +16,7 @@ class DiscoveryPaywallScreen extends StatefulWidget {
   final DiscoveryAccessManager accessManager;
   final VoidCallback onAccessGranted;
   final VoidCallback onBack;
-  final Future<void> Function() onProfileRefresh;
+  final Future<bool> Function() onProfileRefresh;
 
   @override
   State<DiscoveryPaywallScreen> createState() => _DiscoveryPaywallScreenState();
@@ -37,7 +37,7 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
 
       if (success) {
         // Refresh profile to get updated hasDiscoveryAccess
-        await widget.onProfileRefresh();
+        final bool hasAccess = await widget.onProfileRefresh();
 
         if (mounted) {
           setState(() {
@@ -47,7 +47,7 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
           // Small delay to show success message
           await Future<void>.delayed(const Duration(milliseconds: 500));
 
-          if (mounted) {
+          if (mounted && hasAccess) {
             widget.onAccessGranted();
           }
         }
@@ -106,6 +106,7 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
   }
 
   Future<void> _handleRestorePurchases() async {
+    debugPrint("Restoring purchases...");
     setState(() {
       _isProcessing = true;
       _statusMessage = 'Restoring purchases...';
@@ -115,12 +116,22 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
       final String message = await widget.accessManager.restorePurchases();
 
       // Refresh profile to get updated hasDiscoveryAccess and subscription info
-      await widget.onProfileRefresh();
+      final bool hasAccess = await widget.onProfileRefresh();
 
       if (mounted) {
         setState(() {
           _statusMessage = message;
         });
+
+        // Check if restore was successful by verifying backend response
+        if (hasAccess) {
+          // Small delay to show success message
+          await Future<void>.delayed(const Duration(milliseconds: 500));
+
+          if (mounted) {
+            widget.onAccessGranted();
+          }
+        }
       }
     } finally {
       if (mounted) {
@@ -209,7 +220,7 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 48),
+                    const SizedBox(height: 24),
 
                     // Purchase button
                     SizedBox(

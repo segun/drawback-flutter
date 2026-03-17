@@ -164,6 +164,7 @@ class PurchaseService {
     subscription = _inAppPurchase.purchaseStream.listen(
       (List<PurchaseDetails> purchases) async {
         for (final PurchaseDetails purchase in purchases) {
+          debugPrint('Received purchase update: ${purchase.productID} (${purchase.status}) [${purchase.verificationData}]');
           if (purchase.productID != productId) {
             continue;
           }
@@ -174,10 +175,8 @@ class PurchaseService {
 
           if (purchase.status == PurchaseStatus.purchased ||
               purchase.status == PurchaseStatus.restored) {
-            // IMPORTANT: For Android, the receipt is the purchase token
-            final bool verified = await verifyReceipt(
-              platform: _platformName(),
-              receipt: purchase.verificationData.serverVerificationData,
+            final bool verified = await _verifyPurchase(
+              purchase,
               productId: productId,
             );
 
@@ -261,6 +260,8 @@ class PurchaseService {
   Future<String> restorePurchases() async {
     try {
       final bool storeAvailable = await _inAppPurchase.isAvailable();
+      debugPrint('Restoring purchases, store available: $storeAvailable');
+
       if (!storeAvailable) {
         debugPrint('In-app purchase store is unavailable');
         return 'App store is not available. Please try again later.';
@@ -279,16 +280,13 @@ class PurchaseService {
       subscription = _inAppPurchase.purchaseStream.listen(
         (List<PurchaseDetails> purchases) async {
           for (final PurchaseDetails purchase in purchases) {
+            debugPrint('Received purchase update: ${purchase.productID} (${purchase.status}) [${purchase.verificationData}]');
             if (purchase.status != PurchaseStatus.restored) {
               continue;
             }
 
             // Verify restored purchase
-            final bool verified = await verifyReceipt(
-              platform: _platformName(),
-              receipt: purchase.verificationData.serverVerificationData,
-              productId: purchase.productID,
-            );
+            final bool verified = await _verifyPurchase(purchase);
 
             if (verified) {
               completeOnce('Restore completed. Your subscription has been restored.');
@@ -429,8 +427,6 @@ class PurchaseService {
     required String productId,
   }) async {
     try {
-      debugPrint('Verifying receipt: platform=$platform productId=$productId');
-
       final Map<String, dynamic> response = await _client
           .postJson(
             '/purchases/verify',

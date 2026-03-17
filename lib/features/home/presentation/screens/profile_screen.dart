@@ -46,7 +46,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     final String displayName = _displayNameController.text.trim();
-    
+
     // Update display name if changed
     if (displayName != widget.controller.profileDisplayName) {
       await widget.controller.updateProfile(displayName);
@@ -107,194 +107,191 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return ListenableBuilder(
       listenable: widget.controller,
       builder: (BuildContext context, _) {
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Text(
-                  'Profile Settings',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: const Color(0xFF9F1239),
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const SizedBox(height: 16),
-
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF1F2),
-                    border: Border.all(color: const Color(0xFFFDA4AF)),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      Text(
-                        'Display Name',
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                              color: const Color(0xFF9F1239),
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                      const SizedBox(height: 8),
-                      DisplayNameTextField(
-                        controller: _displayNameController,
-                        hintText: '@username',
-                        onChanged: (String _) {},
-                        validator: (String? value) {
-                          if (value == null || value.trim().isEmpty || value.trim() == '@') {
-                            return 'Display name is required.';
-                          }
-                          if (value.length < 4) {
-                            return 'Display name must be at least 4 characters.';
-                          }
-                          return null;
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF1F2),
-                    border: Border.all(color: const Color(0xFFFDA4AF)),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      Text(
-                        'Privacy Mode',
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                              color: const Color(0xFF9F1239),
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                      const SizedBox(height: 8),
-                      RadioGroup<UserMode>(
-                        groupValue: _selectedMode,
-                        onChanged: (UserMode? value) {
-                          if (value != null) {
-                            setState(() {
-                              _selectedMode = value;
-                            });
-                          }
-                        },
-                        child: Column(
-                          children: <Widget>[
-                            RadioListTile<UserMode>(
-                              title: const Text('Public', style: TextStyle(fontSize: 13)),
-                              subtitle: const Text(
-                                'Visible in public user lists',
-                                style: TextStyle(fontSize: 11),
-                              ),
-                              value: UserMode.public,
-                              dense: true,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                            RadioListTile<UserMode>(
-                              title: const Text('Private', style: TextStyle(fontSize: 13)),
-                              subtitle: const Text(
-                                'Only findable by search',
-                                style: TextStyle(fontSize: 11),
-                              ),
-                              value: UserMode.private,
-                              dense: true,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                          ],
+        return SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Text(
+                    'Profile Settings',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: const Color(0xFF9F1239),
+                          fontWeight: FontWeight.bold,
                         ),
-                      ),
-                    ],
                   ),
-                ),
-
-                const SizedBox(height: 16),
-
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF1F2),
-                    border: Border.all(color: const Color(0xFFFDA4AF)),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: SwitchListTile(
-                    title: const Text('Appear in Searches', style: TextStyle(fontSize: 13)),
-                    subtitle: const Text(
-                      'Allow others to find you via search',
-                      style: TextStyle(fontSize: 11),
-                    ),
-                    value: _appearInSearches,
-                    onChanged: (bool value) {
-                      setState(() {
-                        _appearInSearches = value;
-                      });
-                    },
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                FilledButton(
-                  onPressed: widget.controller.isBusy ? null : _updateProfile,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFBE123C),
+                  const SizedBox(height: 16),
+                  Container(
                     padding: const EdgeInsets.all(16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(1),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF1F2),
+                      border: Border.all(color: const Color(0xFFFDA4AF)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Text(
+                          'Display Name',
+                          style:
+                              Theme.of(context).textTheme.labelMedium?.copyWith(
+                                    color: const Color(0xFF9F1239),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
+                        const SizedBox(height: 8),
+                        DisplayNameTextField(
+                          controller: _displayNameController,
+                          hintText: '@username',
+                          onChanged: (String _) {},
+                          validator: (String? value) {
+                            if (value == null ||
+                                value.trim().isEmpty ||
+                                value.trim() == '@') {
+                              return 'Display name is required.';
+                            }
+                            if (value.length < 4) {
+                              return 'Display name must be at least 4 characters.';
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
                     ),
                   ),
-                  child: widget.controller.isBusy
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF1F2),
+                      border: Border.all(color: const Color(0xFFFDA4AF)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: <Widget>[
+                        Text(
+                          'Privacy Mode',
+                          style:
+                              Theme.of(context).textTheme.labelMedium?.copyWith(
+                                    color: const Color(0xFF9F1239),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                        ),
+                        const SizedBox(height: 8),
+                        RadioGroup<UserMode>(
+                          groupValue: _selectedMode,
+                          onChanged: (UserMode? value) {
+                            if (value != null) {
+                              setState(() {
+                                _selectedMode = value;
+                              });
+                            }
+                          },
+                          child: Column(
+                            children: <Widget>[
+                              RadioListTile<UserMode>(
+                                title: const Text('Public',
+                                    style: TextStyle(fontSize: 13)),
+                                subtitle: const Text(
+                                  'Visible in public user lists',
+                                  style: TextStyle(fontSize: 11),
+                                ),
+                                value: UserMode.public,
+                                dense: true,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                              RadioListTile<UserMode>(
+                                title: const Text('Private',
+                                    style: TextStyle(fontSize: 13)),
+                                subtitle: const Text(
+                                  'Only findable by search',
+                                  style: TextStyle(fontSize: 11),
+                                ),
+                                value: UserMode.private,
+                                dense: true,
+                                contentPadding: EdgeInsets.zero,
+                              ),
+                            ],
                           ),
-                        )
-                      : const Text('Update Profile'),
-                ),
-
-                const SizedBox(height: 32),
-
-                const Divider(),
-
-                const SizedBox(height: 16),
-
-                Text(
-                  'Danger Zone',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-
-                const SizedBox(height: 12),
-
-                OutlinedButton(
-                  onPressed: _deleteAccount,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                    side: const BorderSide(color: Colors.red),
-                    padding: const EdgeInsets.all(16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(1),
+                        ),
+                      ],
                     ),
                   ),
-                  child: const Text('Delete My Account'),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF1F2),
+                      border: Border.all(color: const Color(0xFFFDA4AF)),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: SwitchListTile(
+                      title: const Text('Appear in Searches',
+                          style: TextStyle(fontSize: 13)),
+                      subtitle: const Text(
+                        'Allow others to find you via search',
+                        style: TextStyle(fontSize: 11),
+                      ),
+                      value: _appearInSearches,
+                      onChanged: (bool value) {
+                        setState(() {
+                          _appearInSearches = value;
+                        });
+                      },
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton(
+                    onPressed: widget.controller.isBusy ? null : _updateProfile,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFFBE123C),
+                      padding: const EdgeInsets.all(16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(1),
+                      ),
+                    ),
+                    child: widget.controller.isBusy
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Text('Update Profile'),
+                  ),
+                  const SizedBox(height: 32),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Danger Zone',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton(
+                    onPressed: _deleteAccount,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                      padding: const EdgeInsets.all(16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(1),
+                      ),
+                    ),
+                    child: const Text('Delete My Account'),
+                  ),
+                ],
+              ),
             ),
           ),
         );

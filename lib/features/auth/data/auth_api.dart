@@ -1,3 +1,5 @@
+import 'package:flutter/cupertino.dart';
+
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_exception.dart';
 import '../domain/auth_models.dart';
@@ -39,6 +41,7 @@ class AuthApi {
     );
 
     final String token = response['accessToken'] as String;
+    debugPrint('Login received token: $token');
     final bool canAddPasskey = response['canAddPasskey'] as bool? ?? false;    
     await _tokenStore.writeToken(token);
     return AuthResult(
