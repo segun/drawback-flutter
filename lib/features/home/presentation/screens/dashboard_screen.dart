@@ -188,6 +188,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
+  bool _hasActivePaidSubscription() {
+    final subscription = widget.controller.profile?.subscription;
+    if (subscription == null) {
+      return false;
+    }
+
+    return subscription.endDate.isAfter(DateTime.now());
+  }
+
   Future<void> _handleDiscoveryGameClick() async {
     SocketService().emitDrawLeave();
 
@@ -196,8 +205,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await widget.controller.loadDashboardData(showLoading: false);
 
     // Check if user has access (active subscription or temporary ad access)
-    final bool hasActiveSubscription =
-        widget.controller.profile?.hasDiscoveryAccess ?? false;
+    final bool hasActiveSubscription = _hasActivePaidSubscription();
     final bool hasAccess =
         widget.discoveryAccessManager.hasAccess(hasActiveSubscription);
 
@@ -479,7 +487,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text('Play Discovery Game',
+                    child: Text(
+                      'Play Discovery Game',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -577,8 +586,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return DiscoverySwipeScreen(
           controller: widget.discoveryController,
           accessManager: widget.discoveryAccessManager,
-          hasActiveSubscription:
-              widget.controller.profile?.hasDiscoveryAccess ?? false,
+          hasActiveSubscription: _hasActivePaidSubscription(),
           onBackToDashboard: () {
             setState(() {
               _currentView = DashboardView.chat;
@@ -588,6 +596,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
           },
           onExitGame: _handleExitDiscoveryGame,
           onAccessExpired: () {
+            final bool hasActiveSubscription = _hasActivePaidSubscription();
+            final bool hasAccess =
+                widget.discoveryAccessManager.hasAccess(hasActiveSubscription);
+            if (hasAccess) {
+              return;
+            }
+
             // Show paywall when temporary access expires
             setState(() {
               _currentView = DashboardView.discoveryPaywall;

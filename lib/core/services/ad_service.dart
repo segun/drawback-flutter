@@ -1,30 +1,40 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:yandex_mobileads/mobile_ads.dart';
 
 /// Service for handling rewarded ads
-/// Uses mock ads for development, can be toggled to real AdMob
+/// Uses Yandex rewarded ads with optional mock mode for local development
 class AdService {
   /// Toggle for development vs production
-  /// Set to false when ready to use real AdMob ads
-  static const bool useMockAds = true;
+  /// Set to true to bypass ad SDK calls while testing paywall flow
+  static const bool useMockAds = false;
 
   /// Duration of temporary access granted by watching an ad
   static const int tempAccessMinutes = 5;
 
-  /// Test ad unit IDs (work without AdMob account setup)
-  /// These are Google's official test ad unit IDs
+  static const String _productionRewardedAdUnitId = 'R-M-18953743-1';
+  static const String _demoRewardedAdUnitId = 'demo-rewarded-yandex';
+  static const Duration _loadWaitTimeout = Duration(seconds: 15);
+  static const Duration _inFlightLoadWaitTimeout = Duration(seconds: 20);
+  static const Duration _showFlowTimeout = Duration(seconds: 90);
+
   static String get rewardedAdUnitId {
-    if (Platform.isAndroid) {
-      return 'ca-app-pub-3940256099942544/5224354917'; // Android test
-    } else if (Platform.isIOS) {
-      return 'ca-app-pub-3940256099942544/1712485313'; // iOS test
-    }
-    return '';
+    return kDebugMode ? _demoRewardedAdUnitId : _productionRewardedAdUnitId;
   }
 
-  // RewardedAd? _rewardedAd; // Uncomment when using google_mobile_ads
+  AdService() {
+    if (useMockAds) {
+      return;
+    }
+    _mobileAdsInitFuture = _initializeMobileAds();
+  }
+
+  Future<void>? _mobileAdsInitFuture;
+  Future<RewardedAdLoader>? _adLoader;
+  Completer<void>? _adLoadCompleter;
+  RewardedAd? _rewardedAd;
   bool _isAdLoading = false;
   bool _isAdReady = false;
 
@@ -42,36 +52,80 @@ class AdService {
       return;
     }
 
-    if (_isAdLoading || _isAdReady) {
+    await _ensureSdkInitialized();
+
+    if (_isAdReady) {
+      return;
+    }
+
+    if (_isAdLoading) {
+      final Completer<void>? inFlightLoad = _adLoadCompleter;
+      if (inFlightLoad != null) {
+        try {
+          await inFlightLoad.future.timeout(_inFlightLoadWaitTimeout);
+        } catch (_) {
+          // Ignore in-flight load failures here; caller can retry.
+        }
+      }
       return;
     }
 
     _isAdLoading = true;
+    _adLoadCompleter = Completer<void>();
 
-    // TODO: Uncomment when using google_mobile_ads package
-    /*
-    await RewardedAd.load(
-      adUnitId: rewardedAdUnitId,
-      request: const AdRequest(),
-      rewardedAdLoadCallback: RewardedAdLoadCallback(
-        onAdLoaded: (RewardedAd ad) {
-          _rewardedAd = ad;
-          _isAdReady = true;
-          _isAdLoading = false;
-          debugPrint('Rewarded ad loaded successfully');
-        },
-        onAdFailedToLoad: (LoadAdError error) {
+    try {
+      _adLoader ??= _createRewardedAdLoader();
+      final RewardedAdLoader adLoader = await _adLoader!;
+
+      final Future<void> loadRequest = adLoader.loadAd(
+        adRequestConfiguration: AdRequestConfiguration(
+          adUnitId: rewardedAdUnitId,
+        ),
+      );
+
+      unawaited(
+        loadRequest.catchError((Object error) {
           _isAdLoading = false;
           _isAdReady = false;
-          debugPrint('Rewarded ad failed to load: $error');
-        },
-      ),
-    );
-    */
+          _completeLoadWithError(error);
+          debugPrint('Rewarded ad load call failed: ${_describeError(error)}');
+        }),
+      );
 
-    // Placeholder until real ads are implemented
-    _isAdLoading = false;
-    debugPrint('AdService: Real ads not yet implemented');
+      final Completer<void>? loadCompleter = _adLoadCompleter;
+      if (loadCompleter != null) {
+        await loadCompleter.future.timeout(_loadWaitTimeout);
+      }
+    } catch (e) {
+      _isAdLoading = false;
+      _isAdReady = false;
+      _completeLoadWithError(e);
+      debugPrint('Rewarded ad load request failed: ${_describeError(e)}');
+    } finally {
+      _adLoadCompleter = null;
+    }
+  }
+
+  Future<void> _initializeMobileAds() async {
+    await MobileAds.setUserConsent(false);
+    await MobileAds.setLocationConsent(false);
+    await MobileAds.initialize();
+    if (kDebugMode) {
+      await MobileAds.setLogging(true);
+    }
+    _adLoader = _createRewardedAdLoader();
+    debugPrint('Yandex MobileAds initialized');
+  }
+
+  Future<void> _ensureSdkInitialized() async {
+    _mobileAdsInitFuture ??= _initializeMobileAds();
+    try {
+      await _mobileAdsInitFuture;
+    } catch (_) {
+      // Allow retry on next attempt if SDK initialization fails.
+      _mobileAdsInitFuture = null;
+      rethrow;
+    }
   }
 
   /// Show a rewarded ad for temporary discovery access
@@ -86,72 +140,128 @@ class AdService {
   /// Mock ad experience for development
   Future<bool> _showMockAd() async {
     debugPrint('Mock ad: Simulating ad viewing...');
-    
+
     // Simulate watching a 2-second ad
     await Future<void>.delayed(const Duration(seconds: 2));
-    
+
     debugPrint('Mock ad: User watched ad successfully');
     return true;
   }
 
-  /// Show real AdMob rewarded ad
+  Future<RewardedAdLoader> _createRewardedAdLoader() {
+    return RewardedAdLoader.create(
+      onAdLoaded: (RewardedAd rewardedAd) {
+        _rewardedAd?.destroy();
+        _rewardedAd = rewardedAd;
+        _isAdReady = true;
+        _isAdLoading = false;
+        _completeLoadSuccessfully();
+        debugPrint('Rewarded ad loaded successfully');
+      },
+      onAdFailedToLoad: (AdRequestError error) {
+        _isAdReady = false;
+        _isAdLoading = false;
+        _completeLoadWithError(error);
+        debugPrint('Rewarded ad failed to load: ${_describeError(error)}');
+      },
+    );
+  }
+
+  void _completeLoadSuccessfully() {
+    final Completer<void>? loadCompleter = _adLoadCompleter;
+    if (loadCompleter != null && !loadCompleter.isCompleted) {
+      loadCompleter.complete();
+    }
+  }
+
+  void _completeLoadWithError(Object error) {
+    final Completer<void>? loadCompleter = _adLoadCompleter;
+    if (loadCompleter != null && !loadCompleter.isCompleted) {
+      loadCompleter.completeError(error);
+    }
+  }
+
+  /// Show real Yandex rewarded ad
   Future<bool> _showRealAd() async {
-    // TODO: Uncomment when using google_mobile_ads package
-    /*
-    if (_rewardedAd == null) {
+    if (!_isAdReady || _rewardedAd == null) {
+      await loadRewardedAd();
+    }
+
+    final RewardedAd? ad = _rewardedAd;
+    if (ad == null) {
       debugPrint('No rewarded ad available');
       return false;
     }
 
-    final Completer<bool> completer = Completer<bool>();
     bool rewarded = false;
+    final Completer<bool> showCompleter = Completer<bool>();
 
-    _rewardedAd!.fullScreenContentCallback = FullScreenContentCallback(
-      onAdDismissedFullScreenContent: (RewardedAd ad) {
-        ad.dispose();
-        _rewardedAd = null;
-        _isAdReady = false;
-        
-        // Pre-load next ad
-        loadRewardedAd();
-        
-        // Complete with whether user earned reward
-        if (!completer.isCompleted) {
-          completer.complete(rewarded);
-        }
-      },
-      onAdFailedToShowFullScreenContent: (RewardedAd ad, AdError error) {
-        ad.dispose();
-        _rewardedAd = null;
-        _isAdReady = false;
-        debugPrint('Ad failed to show: $error');
-        if (!completer.isCompleted) {
-          completer.complete(false);
-        }
-      },
+    await ad.setAdEventListener(
+      eventListener: RewardedAdEventListener(
+        onAdShown: () {
+          debugPrint('Rewarded ad shown');
+        },
+        onAdFailedToShow: (AdError error) {
+          debugPrint('Rewarded ad failed to show: ${_describeError(error)}');
+          if (!showCompleter.isCompleted) {
+            showCompleter.complete(false);
+          }
+        },
+        onRewarded: (Reward reward) {
+          rewarded = true;
+          debugPrint('User earned reward: ${reward.amount} ${reward.type}');
+        },
+        onAdDismissed: () {
+          if (!showCompleter.isCompleted) {
+            showCompleter.complete(rewarded);
+          }
+        },
+      ),
     );
 
-    await _rewardedAd!.show(
-      onUserEarnedReward: (AdWithoutView ad, RewardItem reward) {
-        rewarded = true;
-        debugPrint('User earned reward: ${reward.amount} ${reward.type}');
-      },
-    );
+    try {
+      await ad.show();
+      return await showCompleter.future.timeout(_showFlowTimeout);
+    } on TimeoutException {
+      debugPrint('Rewarded ad show timed out after $_showFlowTimeout');
+      return false;
+    } catch (e) {
+      debugPrint('Rewarded ad show failed: ${_describeError(e)}');
+      return false;
+    } finally {
+      _cleanupCurrentAd(preloadNext: true);
+    }
+  }
 
-    return completer.future;
-    */
+  String _describeError(Object error) {
+    if (error is PlatformException) {
+      return 'PlatformException(code: ${error.code}, message: ${error.message}, details: ${error.details})';
+    }
+    if (error is AdError) {
+      return 'AdError(description: ${error.description})';
+    }
+    if (error is AdRequestError) {
+      return 'AdRequestError(adUnitId: ${error.adUnitId}, code: ${error.code}, description: ${error.description})';
+    }
+    return error.toString();
+  }
 
-    debugPrint('AdService: Real ads not yet implemented');
-    return false;
+  void _cleanupCurrentAd({required bool preloadNext}) {
+    _rewardedAd?.destroy();
+    _rewardedAd = null;
+    _isAdReady = false;
+    _isAdLoading = false;
+
+    if (preloadNext) {
+      unawaited(loadRewardedAd());
+    }
   }
 
   /// Dispose of loaded ad resources
   void dispose() {
-    // TODO: Uncomment when using google_mobile_ads package
-    /*
-    _rewardedAd?.dispose();
+    _rewardedAd?.destroy();
     _rewardedAd = null;
-    */
+    _adLoadCompleter = null;
     _isAdReady = false;
     _isAdLoading = false;
   }

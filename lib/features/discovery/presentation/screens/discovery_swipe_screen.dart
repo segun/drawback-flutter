@@ -77,7 +77,8 @@ class _DiscoverySwipeScreenState extends State<DiscoverySwipeScreen> {
       _error = null;
     });
 
-    final DiscoveryUser? user = await widget.controller.getRandomDiscoveryUser();
+    final DiscoveryUser? user =
+        await widget.controller.getRandomDiscoveryUser();
 
     if (!mounted) {
       return;
@@ -88,13 +89,16 @@ class _DiscoverySwipeScreenState extends State<DiscoverySwipeScreen> {
       _isLoading = false;
       if (user == null) {
         final String? controllerError = widget.controller.error;
-        _error =
-            (controllerError != null && controllerError.isNotEmpty)
-                ? controllerError
-                : 'No users found in discovery game';
+        _error = (controllerError != null && controllerError.isNotEmpty)
+            ? controllerError
+            : 'No users found in discovery game';
 
         if (widget.controller.lastDiscoveryFetchAccessDenied) {
-          widget.onAccessExpired();
+          final bool stillHasAccess =
+              widget.accessManager.hasAccess(widget.hasActiveSubscription);
+          if (!stillHasAccess) {
+            widget.onAccessExpired();
+          }
         }
       }
     });
@@ -128,8 +132,9 @@ class _DiscoverySwipeScreenState extends State<DiscoverySwipeScreen> {
         _error = null;
       });
 
-      final bool accepted = await widget.onAcceptChatRequest(incomingRequest.id);
-      
+      final bool accepted =
+          await widget.onAcceptChatRequest(incomingRequest.id);
+
       if (!mounted) {
         return;
       }
@@ -237,9 +242,10 @@ class _DiscoverySwipeScreenState extends State<DiscoverySwipeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Show timer if using temporary access (not subscription)
-    final bool showTimer = !widget.hasActiveSubscription && 
-        widget.accessManager.hasTemporaryAccess;
+    // Show timer whenever ad-based temporary access is active.
+    // Backend access flags can be true for multiple reasons, but the timer is
+    // tied strictly to local temporary access expiry.
+    final bool showTimer = widget.accessManager.hasTemporaryAccess;
 
     return Container(
       color: const Color(0xFFFDA4AF),
@@ -271,7 +277,8 @@ class _DiscoverySwipeScreenState extends State<DiscoverySwipeScreen> {
                       ),
                     ),
                   IconButton(
-                    icon: const Icon(Icons.exit_to_app, color: Color(0xFF9F1239)),
+                    icon:
+                        const Icon(Icons.exit_to_app, color: Color(0xFF9F1239)),
                     onPressed: widget.onExitGame,
                   ),
                   IconButton(
@@ -287,7 +294,8 @@ class _DiscoverySwipeScreenState extends State<DiscoverySwipeScreen> {
               child: _isLoading
                   ? const Center(
                       child: CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE11D48)),
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(Color(0xFFE11D48)),
                       ),
                     )
                   : _error != null
@@ -364,7 +372,8 @@ class _DiscoverySwipeScreenState extends State<DiscoverySwipeScreen> {
                       fit: BoxFit.contain,
                       height: 400,
                       disableCache: true,
-                      errorBuilder: (BuildContext context, Object error, StackTrace? stackTrace) {
+                      errorBuilder: (BuildContext context, Object error,
+                          StackTrace? stackTrace) {
                         return Container(
                           height: 400,
                           color: const Color(0xFFFFF1F2),
@@ -466,7 +475,9 @@ class _DiscoverySwipeScreenState extends State<DiscoverySwipeScreen> {
     final Widget button = Material(
       elevation: 4,
       shape: const CircleBorder(),
-      color: onPressed == null ? backgroundColor.withValues(alpha: 0.5) : backgroundColor,
+      color: onPressed == null
+          ? backgroundColor.withValues(alpha: 0.5)
+          : backgroundColor,
       child: InkWell(
         onTap: onPressed,
         customBorder: const CircleBorder(),

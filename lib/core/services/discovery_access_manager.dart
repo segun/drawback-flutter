@@ -101,11 +101,11 @@ class DiscoveryAccessManager extends ChangeNotifier {
 
     try {
       final bool success = await _purchaseService.purchaseDiscovery();
-      
+
       if (!success) {
         _error = 'Purchase failed. Please try again.';
       }
-      
+
       return success;
     } catch (e) {
       debugPrint('Purchase failed with platform error: $e');
@@ -136,6 +136,31 @@ class DiscoveryAccessManager extends ChangeNotifier {
     return 'Could not complete purchase. Please try again.';
   }
 
+  String _mapAdError(Object error) {
+    final String message = error.toString();
+    final String lower = message.toLowerCase();
+
+    if (lower.contains('timeout') || lower.contains('timed out')) {
+      return 'Ad took too long to load. Please try again.';
+    }
+
+    if (lower.contains('controller') && lower.contains('no view controller')) {
+      return 'Could not open the ad right now. Please try again.';
+    }
+
+    if (lower.contains('kcferrordomaincfnetwork') ||
+        lower.contains('nsurlerrordomain') ||
+        lower.contains('network')) {
+      return 'Could not load the ad due to a network issue. Please try again.';
+    }
+
+    if (lower.contains('no fill') || lower.contains('no ad')) {
+      return 'No ad is available right now. Please try again in a moment.';
+    }
+
+    return 'Could not load the ad right now. Please try again shortly.';
+  }
+
   /// Watch a rewarded ad for temporary access
   /// Returns true if user earned access
   Future<bool> watchAdForAccess() async {
@@ -144,8 +169,10 @@ class DiscoveryAccessManager extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final bool earned = await _adService.showRewardedAdForAccess();
-      
+      final bool earned = await _adService
+          .showRewardedAdForAccess()
+          .timeout(const Duration(seconds: 120));
+
       if (earned) {
         grantTemporaryAccess();
         return true;
@@ -154,7 +181,8 @@ class DiscoveryAccessManager extends ChangeNotifier {
         return false;
       }
     } catch (e) {
-      _error = 'Ad error: $e';
+      debugPrint('Ad failed with platform error: $e');
+      _error = _mapAdError(e);
       return false;
     } finally {
       _isShowingAd = false;

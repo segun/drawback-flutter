@@ -111,3 +111,6 @@ list-ios-devices:
 
 start-ios-simulator:
 	open -a Simulator --args -CurrentDeviceUDID $(DEVICE)
+
+lint-plist:
+	plutil -lint /Users/aardvocate/src/drawback/frontend/flutter/ios/Runner/Info.plist

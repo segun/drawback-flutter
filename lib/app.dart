@@ -13,6 +13,7 @@ import 'features/auth/data/secure_token_store.dart';
 import 'features/auth/presentation/auth_controller.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/main_screen.dart';
+import 'features/auth/presentation/screens/csae_screen.dart';
 import 'features/auth/presentation/screens/privacy_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
 import 'features/auth/presentation/screens/reset_password_screen.dart';
@@ -40,6 +41,7 @@ class _DrawbackAppState extends State<DrawbackApp> {
   @override
   void initState() {
     super.initState();
+
     final tokenStore = SecureTokenStore();
     final client = ApiClient(
       baseUrl: AppConfig.backendUrl,
@@ -123,6 +125,11 @@ class _DrawbackAppState extends State<DrawbackApp> {
               const PrivacyScreen(),
         ),
         GoRoute(
+          path: '/csae',
+          builder: (BuildContext context, GoRouterState state) =>
+              const CsaeScreen(),
+        ),
+        GoRoute(
           path: '/home',
           builder: (BuildContext context, GoRouterState state) =>
               DashboardScreen(
@@ -130,9 +137,8 @@ class _DrawbackAppState extends State<DrawbackApp> {
             authController: _authController,
             discoveryController: _discoveryController,
             discoveryAccessManager: _discoveryAccessManager,
-            promptPasskeyEnrollment: state.extra is bool
-                ? state.extra as bool
-                : false,
+            promptPasskeyEnrollment:
+                state.extra is bool ? state.extra as bool : false,
             onLogout: () async {
               await _authController.logout();
               if (context.mounted) {

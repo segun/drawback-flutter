@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/services/discovery_access_manager.dart';
@@ -25,6 +27,12 @@ class DiscoveryPaywallScreen extends StatefulWidget {
 class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
   bool _isProcessing = false;
   String? _statusMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(widget.accessManager.preloadAd());
+  }
 
   Future<void> _handlePurchase() async {
     setState(() {
