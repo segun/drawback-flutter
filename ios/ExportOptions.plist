@@ -16,10 +16,6 @@
 	<string>automatic</string>
 	<key>destination</key>
 	<string>export</string>
-	<key>provisioningProfiles</key>
-	<dict>
-		<key>chat.drawback.flutter</key>
-		<string>match AppStore chat.drawback.flutter</string>
-	</dict>
+
 </dict>
 </plist>

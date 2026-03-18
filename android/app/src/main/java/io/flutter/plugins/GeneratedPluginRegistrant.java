@@ -60,5 +60,10 @@ public final class GeneratedPluginRegistrant {
     } catch (Exception e) {
       Log.e(TAG, "Error registering plugin ua_client_hints, jp.wasabeef.ua.client_hints.UAClientHintsPlugin", e);
     }
+    try {
+      flutterEngine.getPlugins().add(new com.yandex.mobile.ads.flutter.YandexMobileAdsPlugin());
+    } catch (Exception e) {
+      Log.e(TAG, "Error registering plugin yandex_mobileads, com.yandex.mobile.ads.flutter.YandexMobileAdsPlugin", e);
+    }
   }
 }

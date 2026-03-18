@@ -1,7 +1,7 @@
 name: drawback_flutter
 description: DrawBack
 publish_to: 'none'
-version: 1.2.1+14
+version: 1.3.0+15
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
@@ -19,6 +19,7 @@ dependencies:
   in_app_purchase_android: ^0.4.0+8
   passkeys: ^2.18.0
   device_info_plus: ^11.0.0
+  yandex_mobileads: ^7.18.0
 
 dev_dependencies:
   flutter_test:

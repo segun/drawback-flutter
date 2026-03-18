@@ -34,6 +34,12 @@ if [ -f "$ICON_1024" ]; then
         
         if [ "$WIDTH" = "1024" ] && [ "$HEIGHT" = "1024" ]; then
             echo -e "  ${GREEN}✓${NC} App icon (1024x1024) exists"
+
+            HAS_ALPHA=$(sips -g hasAlpha "$ICON_1024" | awk '/hasAlpha:/ {print $2}')
+            if [ "$HAS_ALPHA" = "yes" ]; then
+                echo -e "  ${RED}✗${NC} App icon contains an alpha channel (App Store icons must be opaque)"
+                ERRORS=$((ERRORS + 1))
+            fi
             
             # Check if it's likely the default Flutter icon
             SIZE=$(stat -f%z "$ICON_1024" 2>/dev/null || stat -c%s "$ICON_1024" 2>/dev/null)

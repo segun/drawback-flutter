@@ -48,6 +48,12 @@
 @import ua_client_hints;
 #endif
 
+#if __has_include(<yandex_mobileads/YandexMobileAdsPlugin.h>)
+#import <yandex_mobileads/YandexMobileAdsPlugin.h>
+#else
+@import yandex_mobileads;
+#endif
+
 @implementation GeneratedPluginRegistrant
 
 + (void)registerWithRegistry:(NSObject<FlutterPluginRegistry>*)registry {
@@ -58,6 +64,7 @@
   [FPPPackageInfoPlusPlugin registerWithRegistrar:[registry registrarForPlugin:@"FPPPackageInfoPlusPlugin"]];
   [PasskeysPlugin registerWithRegistrar:[registry registrarForPlugin:@"PasskeysPlugin"]];
   [UAClientHintsPlugin registerWithRegistrar:[registry registrarForPlugin:@"UAClientHintsPlugin"]];
+  [YandexMobileAdsPlugin registerWithRegistrar:[registry registrarForPlugin:@"YandexMobileAdsPlugin"]];
 }
 
 @end

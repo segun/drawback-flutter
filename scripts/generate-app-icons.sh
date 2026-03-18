@@ -40,6 +40,13 @@ if [ -z "$1" ]; then
 fi
 
 SOURCE_IMAGE="$1"
+TEMP_DIR=$(mktemp -d)
+
+cleanup() {
+    rm -rf "$TEMP_DIR"
+}
+
+trap cleanup EXIT
 
 # Check if source image exists
 if [ ! -f "$SOURCE_IMAGE" ]; then
@@ -63,15 +70,33 @@ else
     exit 1
 fi
 
+OPAQUE_SOURCE="$SOURCE_IMAGE"
+
+if [ "$RESIZE_TOOL" = "sips" ]; then
+    HAS_ALPHA=$(sips -g hasAlpha "$SOURCE_IMAGE" | awk '/hasAlpha:/ {print $2}')
+
+    if [ "$HAS_ALPHA" = "yes" ]; then
+        echo -e "${YELLOW}⚠ Source image has transparency; flattening against a white background for iOS icons${NC}"
+        sips -s format jpeg "$SOURCE_IMAGE" --out "$TEMP_DIR/source.jpg" &> /dev/null
+        OPAQUE_SOURCE="$TEMP_DIR/source.jpg"
+    fi
+fi
+
 # Function to resize image
 resize_image() {
     local size=$1
     local output=$2
     
     if [ "$RESIZE_TOOL" = "sips" ]; then
-        sips -z "$size" "$size" "$SOURCE_IMAGE" --out "$output" &> /dev/null
+        if [ "$OPAQUE_SOURCE" = "$SOURCE_IMAGE" ]; then
+            sips -z "$size" "$size" "$OPAQUE_SOURCE" --out "$output" &> /dev/null
+        else
+            local resized_jpg="$TEMP_DIR/${size}.jpg"
+            sips -z "$size" "$size" "$OPAQUE_SOURCE" --out "$resized_jpg" &> /dev/null
+            sips -s format png "$resized_jpg" --out "$output" &> /dev/null
+        fi
     else
-        convert "$SOURCE_IMAGE" -resize "${size}x${size}" "$output"
+        convert "$SOURCE_IMAGE" -background white -alpha remove -alpha off -resize "${size}x${size}" PNG24:"$output"
     fi
 }
 
@@ -198,6 +223,17 @@ if [ $FAILED -eq 0 ]; then
     echo -e "${GREEN}✓ All $VERIFIED icons verified${NC}"
 else
     echo -e "${YELLOW}⚠ $VERIFIED verified, $FAILED failed${NC}"
+fi
+
+if command -v sips &> /dev/null; then
+    HAS_ALPHA=$(sips -g hasAlpha "$ASSETS_DIR/Icon-App-1024x1024@1x.png" | awk '/hasAlpha:/ {print $2}')
+
+    if [ "$HAS_ALPHA" = "yes" ]; then
+        echo -e "${RED}✗ Generated 1024x1024 icon still has an alpha channel${NC}"
+        exit 1
+    fi
+
+    echo -e "${GREEN}✓ Generated 1024x1024 icon has no alpha channel${NC}"
 fi
 echo ""
 
