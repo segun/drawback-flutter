@@ -1,6 +1,7 @@
+import 'package:drawback_flutter/features/auth/data/device_helper.dart';
 import 'package:passkeys/authenticator.dart';
+import 'package:passkeys/availability.dart';
 import 'package:passkeys/types.dart' hide PasskeyAuthCancelledException;
-
 import '../domain/passkey_exceptions.dart';
 import '../domain/passkey_models.dart';
 
@@ -12,7 +13,16 @@ class PasskeyAuthService {
 
   Future<bool> isAvailable() async {
     try {
-      return await _authenticator.canAuthenticate();
+      final GetAvailability availabilityChecker = _authenticator.getAvailability();    
+      final String platform = DeviceHelper.getPlatformName();
+      switch (platform) {
+        case 'android':
+          return (await availabilityChecker.android()).hasPasskeySupport;
+        case 'ios':
+          return (await availabilityChecker.iOS()).hasPasskeySupport;
+        default:
+          return false;
+      }
     } catch (_) {
       return false;
     }

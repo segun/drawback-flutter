@@ -42,9 +42,13 @@ class _LoginScreenState extends State<LoginScreen> {
       password: _passwordController.text,
     );
 
-    if (mounted && ok) {
+    if (!mounted) return;
+    if (ok) {
       await widget.controller.refreshPasskeyAvailability(notify: false);
-      context.go('/home', extra: widget.controller.canAddPasskey);
+      if (mounted) {
+        // ignore: use_build_context_synchronously
+        context.go('/home', extra: widget.controller.canAddPasskey);
+      }
     }
   }
 
@@ -53,7 +57,9 @@ class _LoginScreenState extends State<LoginScreen> {
         ? _emailController.text.trim()
         : widget.controller.rememberedEmail;
     final bool ok = await widget.controller.loginWithPasskey(email: email);
-    if (mounted && ok) {
+    if (!mounted) return;
+    if (ok) {
+      // ignore: use_build_context_synchronously
       context.go('/home');
     }
   }
