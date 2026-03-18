@@ -479,10 +479,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: Text(
-                      widget.controller.isInDiscoveryGame
-                          ? 'In Discovery'
-                          : 'Play Discovery',
+                    child: Text('Play Discovery Game',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

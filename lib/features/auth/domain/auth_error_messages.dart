@@ -1,8 +1,3 @@
-/// Standardized error messages for authentication operations.
-///
-/// This file contains all user-facing error messages to ensure consistent
-/// capitalization, punctuation, and phrasing across the application.
-
 class AuthErrorMessages {
   AuthErrorMessages._();
 

@@ -30,19 +30,23 @@ class AuthApi {
     return response['message'] as String;
   }
 
-  Future<AuthResult> login(
-      {required String email, required String password}) async {
+  Future<AuthResult> login({
+    required String email,
+    required String password,
+    required String deviceId,
+  }) async {
     final Map<String, dynamic> response = await _client.postJson(
       '/auth/login',
       body: <String, dynamic>{
         'email': email.trim(),
         'password': password,
+        'deviceId': deviceId,
       },
     );
 
     final String token = response['accessToken'] as String;
     debugPrint('Login received token: $token');
-    final bool canAddPasskey = response['canAddPasskey'] as bool? ?? false;    
+    final bool canAddPasskey = response['canAddPasskey'] as bool? ?? false;
     await _tokenStore.writeToken(token);
     return AuthResult(
       accessToken: token,
@@ -65,6 +69,8 @@ class AuthApi {
   Future<void> finishPasskeyRegistration({
     required String bearerToken,
     required Map<String, dynamic> credentialData,
+    required String deviceId,
+    required String platform,
   }) {
     return _client.postEmpty(
       '/auth/passkey/register/finish',
@@ -74,6 +80,8 @@ class AuthApi {
       },
       body: <String, dynamic>{
         'data': credentialData,
+        'deviceId': deviceId,
+        'platform': platform,
       },
     );
   }

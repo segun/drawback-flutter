@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/realtime/socket_service.dart';
 import '../data/auth_api.dart';
+import '../data/device_helper.dart';
 import '../data/login_hint_store.dart';
 import '../data/passkey_auth_service.dart';
 import '../data/token_store.dart';
@@ -101,9 +102,11 @@ class AuthController extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
 
     try {
+      final String deviceId = await DeviceHelper.getDeviceId();
       final AuthResult result = await _authApi.login(
         email: trimmedEmail,
         password: password,
+        deviceId: deviceId,
       );
       _accessToken = result.accessToken;
       _currentUser = await _authApi.me(result.accessToken);
@@ -330,6 +333,8 @@ class AuthController extends ChangeNotifier with WidgetsBindingObserver {
     notifyListeners();
 
     try {
+      final String deviceId = await DeviceHelper.getDeviceId();
+      final String platform = DeviceHelper.getPlatformName();
       final Map<String, dynamic> startOptions =
           await _authApi.startPasskeyRegistration(bearerToken: bearerToken);
       final Map<String, dynamic> credentialData =
@@ -337,6 +342,8 @@ class AuthController extends ChangeNotifier with WidgetsBindingObserver {
       await _authApi.finishPasskeyRegistration(
         bearerToken: bearerToken,
         credentialData: credentialData,
+        deviceId: deviceId,
+        platform: platform,
       );
       _canAddPasskey = false;
       _notice = AuthErrorMessages.passkeyAdded;
@@ -356,9 +363,9 @@ class AuthController extends ChangeNotifier with WidgetsBindingObserver {
     } on PasskeyAuthCancelledException catch (_) {
       _error = AuthErrorMessages.passkeyRegistrationCancelled;
       return false;
-    } catch (_unknownError) {
+    } catch (unknownError) {
       if (kDebugMode) {
-        debugPrint('Passkey registration failed: ${_unknownError}');
+        debugPrint('Passkey registration failed: $unknownError');
       }
       _error = AuthErrorMessages.passkeyRegistrationFailed;
       return false;

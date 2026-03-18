@@ -35,7 +35,9 @@ class FakeAuthApi implements AuthApi {
 
   @override
   Future<AuthResult> login(
-      {required String email, required String password}) async {
+      {required String email,
+      required String password,
+      required String deviceId}) async {
     if (loginException != null) throw loginException!;
     return loginResult ?? AuthResult(accessToken: 'token');
   }
@@ -71,6 +73,8 @@ class FakeAuthApi implements AuthApi {
   Future<void> finishPasskeyRegistration({
     required String bearerToken,
     required Map<String, dynamic> credentialData,
+    required String deviceId,
+    required String platform,
   }) async {
     if (loginException != null) {
       throw loginException!;

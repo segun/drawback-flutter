@@ -59,6 +59,7 @@ class MockAuthApi implements AuthApi {
   Future<AuthResult> login({
     required String email,
     required String password,
+    required String deviceId,
   }) async {
     if (shouldFailNextRequest) {
       shouldFailNextRequest = false;
@@ -117,6 +118,8 @@ class MockAuthApi implements AuthApi {
   Future<void> finishPasskeyRegistration({
     required String bearerToken,
     required Map<String, dynamic> credentialData,
+    required String deviceId,
+    required String platform,
   }) async {
     if (shouldFailNextRequest) {
       shouldFailNextRequest = false;

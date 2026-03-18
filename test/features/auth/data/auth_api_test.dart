@@ -171,6 +171,7 @@ void main() {
       const email = 'test@example.com';
       const password = 'password123';
       const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9';
+      const deviceId = 'device123';
 
       fakeApiClient.postJsonFn = (path, {body, headers}) async {
         return <String, dynamic>{'accessToken': token};
@@ -180,6 +181,7 @@ void main() {
       final result = await authApi.login(
         email: email,
         password: password,
+        deviceId: deviceId,
       );
 
       // Assert
@@ -192,6 +194,7 @@ void main() {
       const email = '  test@example.com  ';
       const password = 'password123';
       const token = 'token123';
+      const deviceId = 'device123';
 
       fakeApiClient.postJsonFn = (path, {body, headers}) async {
         expect(body?['email'], 'test@example.com');
@@ -199,20 +202,29 @@ void main() {
       };
 
       // Act
-      await authApi.login(email: email, password: password);
+      await authApi.login(
+        email: email,
+        password: password,
+        deviceId: deviceId,
+      );
 
       // Assert - verification happens in fakeApiClient
     });
 
     test('should throw ApiException if login fails', () async {
       // Arrange
+      const deviceId = 'device123';
       fakeApiClient.postJsonFn = (path, {body, headers}) async {
         throw ApiException(401, 'Invalid credentials');
       };
 
       // Act & Assert
       expect(
-        () => authApi.login(email: 'test@example.com', password: 'wrong'),
+        () => authApi.login(
+          email: 'test@example.com',
+          password: 'wrong',
+          deviceId: deviceId,
+        ),
         throwsA(isA<ApiException>()),
       );
       expect(await fakeTokenStore.readToken(), isNull);

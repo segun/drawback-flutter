@@ -1,9 +1,3 @@
-/// Strongly-typed models for passkey authentication options.
-///
-/// These models replace the fragile Map<String, dynamic> approach with
-/// type-safe structures that provide better validation and error handling.
-
-/// Represents the relying party (RP) information for passkey operations.
 class PasskeyRelyingParty {
   const PasskeyRelyingParty({
     required this.id,

@@ -1,12 +1,3 @@
-/// Custom exceptions for passkey authentication operations.
-///
-/// These exceptions provide type-safe error handling for passkey-related
-/// operations, replacing fragile string-based error matching.
-
-/// Exception thrown when a user cancels the passkey authentication flow.
-///
-/// This typically occurs when the user dismisses the biometric prompt
-/// or cancels the passkey selection dialog.
 class PasskeyAuthCancelledException implements Exception {
   const PasskeyAuthCancelledException([this.message]);
 
