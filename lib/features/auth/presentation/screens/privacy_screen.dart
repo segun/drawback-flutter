@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/services/ad_consent_service.dart';
 import '../widgets/auth_page_scaffold.dart';
 import '../widgets/auth_top_bar.dart';
 
 class PrivacyScreen extends StatelessWidget {
   const PrivacyScreen({super.key});
+
+  static final AdConsentService _adConsentService = AdConsentService();
 
   @override
   Widget build(BuildContext context) {
@@ -340,11 +343,13 @@ class PrivacyScreen extends StatelessWidget {
             title: '6.6 Cookie and Tracking Technology',
             items: const <String>[
               'We use third-party advertising technologies to load, deliver, measure, and improve ads shown in the app.',
-              'We configure our in-app ads to be non-personalized and not based on cross-app tracking permissions.',
-              'Ads may still be shown even when they are not personalized, but they may be less relevant to your interests.',
+              'Where required by law, we request consent before serving personalized ads.',
+              'Depending on your consent choices, ads may be personalized or non-personalized.',
+              'Ads may still be shown when non-personalized, but they may be less relevant to your interests.',
               'When using our web experience, you can control browser-level cookies through your browser settings.',
             ],
           ),
+          _buildPrivacyOptionsEntryPoint(context),
           const SizedBox(height: 24),
           _buildSection(
             context,
@@ -766,6 +771,57 @@ class PrivacyScreen extends StatelessWidget {
             height: 1.4,
             fontWeight: emphasized ? FontWeight.w700 : FontWeight.w400,
           ),
+    );
+  }
+
+  Widget _buildPrivacyOptionsEntryPoint(BuildContext context) {
+    return FutureBuilder<bool>(
+      future: _adConsentService.isPrivacyOptionsRequired(),
+      builder: (BuildContext context, AsyncSnapshot<bool> snapshot) {
+        if (snapshot.data != true) {
+          return const SizedBox.shrink();
+        }
+
+        return Padding(
+          padding: const EdgeInsets.only(top: 4, bottom: 4),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: () async {
+                final ScaffoldMessengerState? messenger =
+                    ScaffoldMessenger.maybeOf(context);
+                final bool shown =
+                    await _adConsentService.showPrivacyOptionsForm();
+
+                if (!shown) {
+                  messenger?.showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Unable to open ad privacy options right now. Please try again.',
+                      ),
+                    ),
+                  );
+                }
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFE11D48),
+                padding: EdgeInsets.zero,
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Text(
+                'Manage ad privacy choices',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: const Color(0xFFE11D48),
+                      height: 1.4,
+                      fontWeight: FontWeight.w600,
+                      decoration: TextDecoration.underline,
+                    ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

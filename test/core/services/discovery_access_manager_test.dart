@@ -135,7 +135,7 @@ void main() {
     expect(success, isTrue);
     expect(
       discoveryAccessApi.lastDurationMinutes,
-      AdService.tempAccessMinutes,
+      manager.tempAccessMinutes,
     );
     expect(manager.hasTemporaryAccess, isTrue);
     expect(manager.remainingTime, isNotNull);

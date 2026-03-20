@@ -49,6 +49,23 @@ const hasRewardedAccess =
 const hasDiscoveryAccess = hasActiveSubscription || hasRewardedAccess;
 ```
 
+### Discovery Ad Provider Selection
+
+Rewarded discovery ads are provider-key driven:
+
+- Server sends provider key only (for example `admob`, future providers).
+- Client bundles all provider-specific ad settings (SDK initialization, app ids, ad unit ids).
+- App-level provider comes from `GET /app/config`.
+- Optional user-level override can come from `GET /users/me` as `ads.provider`.
+- Effective precedence: user override -> app config -> local fallback (`admob`).
+
+Current bundled AdMob IDs:
+
+- Android App ID: `ca-app-pub-9528764047064163~1263439453`
+- Android Rewarded Unit: `ca-app-pub-9528764047064163/6787228876`
+- iOS App ID: `ca-app-pub-9528764047064163~3442880231`
+- iOS Rewarded Unit: `ca-app-pub-9528764047064163/6292404859`
+
 ---
 
 ## Product IDs Used in This App

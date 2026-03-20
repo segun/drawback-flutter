@@ -43,6 +43,7 @@ class DiscoveryAccessManager extends ChangeNotifier {
   bool get isPurchasing => _isPurchasing;
   bool get isShowingAd => _isShowingAd;
   String? get error => _error;
+  int get tempAccessMinutes => _adService.tempAccessMinutes;
 
   /// Check if user has any form of access (subscription or temporary ad-based)
   bool hasAccess(bool hasActiveSubscription) {
@@ -85,7 +86,7 @@ class DiscoveryAccessManager extends ChangeNotifier {
   void grantTemporaryAccess() {
     grantTemporaryAccessUntil(
       DateTime.now().add(
-        Duration(minutes: AdService.tempAccessMinutes),
+        Duration(minutes: _adService.tempAccessMinutes),
       ),
     );
   }
@@ -129,6 +130,17 @@ class DiscoveryAccessManager extends ChangeNotifier {
       _stopCountdownTimer();
     }
     _accessOwnerUserId = profile.id;
+
+    final String? providerOverride = profile.discoveryAdsProvider;
+    if (providerOverride != null && providerOverride.trim().isNotEmpty) {
+      unawaited(
+        _adService.setProviderFromServer(providerOverride).catchError(
+          (Object error) {
+            debugPrint('Failed to apply profile ad provider override: $error');
+          },
+        ),
+      );
+    }
 
     final DateTime? serverExpiry = profile.temporaryDiscoveryAccessExpiresAt;
     if (serverExpiry != null && DateTime.now().isBefore(serverExpiry)) {
@@ -260,8 +272,8 @@ class DiscoveryAccessManager extends ChangeNotifier {
         try {
           final RewardedDiscoveryAccessGrant grant =
               await _discoveryAccessApi.claimRewardedAdAccess(
-            durationMinutes: AdService.tempAccessMinutes,
-          );          
+            durationMinutes: _adService.tempAccessMinutes,
+          );
 
           if (!grant.isGranted) {
             _error =
@@ -273,7 +285,7 @@ class DiscoveryAccessManager extends ChangeNotifier {
             grant.temporaryAccessExpiresAt ??
                 grant.profile?.temporaryDiscoveryAccessExpiresAt ??
                 DateTime.now().add(
-                  Duration(minutes: AdService.tempAccessMinutes),
+                  Duration(minutes: _adService.tempAccessMinutes),
                 ),
           );
         } catch (e) {

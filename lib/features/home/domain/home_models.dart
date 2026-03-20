@@ -77,6 +77,7 @@ class UserProfile {
     required this.updatedAt,
     this.temporaryDiscoveryAccessExpiresAt,
     this.subscription,
+    this.discoveryAdsProvider,
   });
 
   final String id;
@@ -90,6 +91,7 @@ class UserProfile {
   final DateTime updatedAt;
   final DateTime? temporaryDiscoveryAccessExpiresAt;
   final Subscription? subscription;
+  final String? discoveryAdsProvider;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
@@ -111,7 +113,20 @@ class UserProfile {
       subscription: json['subscription'] != null
           ? Subscription.fromJson(json['subscription'] as Map<String, dynamic>)
           : null,
+      discoveryAdsProvider: _readDiscoveryAdsProvider(json),
     );
+  }
+
+  static String? _readDiscoveryAdsProvider(Map<String, dynamic> json) {
+    final dynamic ads = json['ads'];
+    if (ads is Map<String, dynamic>) {
+      final dynamic nestedProvider = ads['provider'];
+      if (nestedProvider is String && nestedProvider.trim().isNotEmpty) {
+        return nestedProvider;
+      }
+    }
+
+    return null;
   }
 
   Map<String, dynamic> toJson() {
@@ -129,6 +144,8 @@ class UserProfile {
         'temporaryDiscoveryAccessExpiresAt':
             temporaryDiscoveryAccessExpiresAt!.toIso8601String(),
       if (subscription != null) 'subscription': subscription!.toJson(),
+      if (discoveryAdsProvider != null)
+        'ads': <String, dynamic>{'provider': discoveryAdsProvider},
     };
   }
 
@@ -144,6 +161,7 @@ class UserProfile {
     DateTime? updatedAt,
     DateTime? temporaryDiscoveryAccessExpiresAt,
     Subscription? subscription,
+    String? discoveryAdsProvider,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -159,6 +177,7 @@ class UserProfile {
       temporaryDiscoveryAccessExpiresAt: temporaryDiscoveryAccessExpiresAt ??
           this.temporaryDiscoveryAccessExpiresAt,
       subscription: subscription ?? this.subscription,
+      discoveryAdsProvider: discoveryAdsProvider ?? this.discoveryAdsProvider,
     );
   }
 }

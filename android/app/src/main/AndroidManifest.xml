@@ -12,10 +12,9 @@
     <application
         android:label="@string/app_name"
         android:icon="@mipmap/ic_launcher">
-        <!-- Disable the use of child's personal data for app monetization.  -->
         <meta-data
-          android:name="@string/yandex_mobileads_age_restricted_user"
-          android:value="true" />
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-9528764047064163~1263439453" />
         <meta-data
             android:name="asset_statements"
             android:resource="@string/asset_statements" />

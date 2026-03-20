@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'core/config/app_config.dart';
 import 'core/network/api_client.dart';
 import 'core/services/ad_service.dart';
+import 'core/services/app_settings_api.dart';
 import 'core/services/discovery_access_api.dart';
 import 'core/services/discovery_access_manager.dart';
 import 'core/services/purchase_service.dart';
@@ -62,7 +63,9 @@ class _DrawbackAppState extends State<DrawbackApp> {
       client: client,
       tokenStore: tokenStore,
     );
-    final adService = AdService();
+    final adService = AdService(initializeOnCreate: false);
+    final appSettingsApi = AppSettingsApi(client: client);
+    unawaited(_configureAdsProvider(adService, appSettingsApi));
 
     // Create discovery access manager
     _discoveryAccessManager = DiscoveryAccessManager(
@@ -198,6 +201,24 @@ class _DrawbackAppState extends State<DrawbackApp> {
       }
     } finally {
       _isHandlingUnauthorized = false;
+    }
+  }
+
+  Future<void> _configureAdsProvider(
+    AdService adService,
+    AppSettingsApi appSettingsApi,
+  ) async {
+    try {
+      final config = await appSettingsApi.fetchDiscoveryAdProviderConfig();
+      await adService.setProviderFromServer(config.providerKey);
+      debugPrint(
+        'Configured discovery ad provider from /app/config: ${config.providerKey}',
+      );
+    } catch (error) {
+      debugPrint(
+        'Failed to fetch /app/config for discovery ad provider; using fallback: $error',
+      );
+      await adService.loadRewardedAd();
     }
   }
 

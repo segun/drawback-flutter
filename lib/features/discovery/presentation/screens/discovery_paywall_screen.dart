@@ -285,7 +285,9 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
                       child: OutlinedButton.icon(
                         onPressed: _isProcessing ? null : _handleWatchAd,
                         icon: const Icon(Icons.play_circle_outline),
-                        label: const Text('Watch Ad — 5 min access'),
+                        label: Text(
+                          'Watch Ad — ${widget.accessManager.tempAccessMinutes} min access',
+                        ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF9F1239),
                           side: const BorderSide(

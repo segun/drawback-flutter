@@ -19,7 +19,7 @@ dependencies:
   in_app_purchase_android: ^0.4.0+8
   passkeys: ^2.18.0
   device_info_plus: ^11.0.0
-  yandex_mobileads: ^7.18.0
+  google_mobile_ads: ^5.2.0
 
 dev_dependencies:
   flutter_test:

@@ -78,6 +78,9 @@ Get current user profile and effective discovery access.
   "displayName": "John Doe",
   "hasDiscoveryAccess": true,
   "temporaryDiscoveryAccessExpiresAt": "2026-03-19T10:35:00.000Z",
+  "ads": {
+    "provider": "admob"
+  },
   "subscription": {
     "tier": "monthly",
     "platform": "ios",
@@ -103,6 +106,31 @@ hasDiscoveryAccess = hasActiveSubscription || hasRewardedAccess;
 ```
 
 Access is platform-independent. A user subscribed on Android should still have access when logged in on iOS, and vice versa. Rewarded access is also account-based and should be enforced by the backend, not only by local frontend state.
+
+`ads.provider` in `/users/me` is optional. When present, it overrides app-level ad-provider config for that user.
+
+---
+
+## GET /app/config
+
+Get app-level runtime settings used before user profile is loaded.
+
+### Response example
+
+```json
+{
+  "ads": {
+    "provider": "admob"
+  }
+}
+```
+
+### Notes
+
+- Server sends provider key only (`admob`, future providers).
+- Client bundles all SDK-specific values (app ids, ad unit ids, SDK setup).
+- Unknown/missing provider should be treated as `admob` fallback by clients.
+- If `/users/me` includes `ads.provider`, that user value overrides `/app/config`.
 
 ---
 
