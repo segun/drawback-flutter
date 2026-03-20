@@ -1,6 +1,6 @@
-# API Reference - Subscription Endpoints
+# API Reference - Discovery Access Endpoints
 
-Quick reference for request/response formats for Android and iOS subscription flows.
+Quick reference for request/response formats for paid subscriptions and rewarded discovery access.
 
 ---
 
@@ -67,7 +67,7 @@ Verify a store receipt/token and activate or update user subscription.
 
 ## GET /users/me
 
-Get current user profile and effective subscription access.
+Get current user profile and effective discovery access.
 
 ### Response example
 
@@ -77,6 +77,7 @@ Get current user profile and effective subscription access.
   "email": "user@example.com",
   "displayName": "John Doe",
   "hasDiscoveryAccess": true,
+  "temporaryDiscoveryAccessExpiresAt": "2026-03-19T10:35:00.000Z",
   "subscription": {
     "tier": "monthly",
     "platform": "ios",
@@ -89,12 +90,59 @@ Get current user profile and effective subscription access.
 ### Access computation
 
 ```javascript
-hasDiscoveryAccess =
-  (now < subscription_end_date) &&
-  (subscription_status === 'active');
+const hasActiveSubscription =
+  user.subscription_end_date &&
+  now < user.subscription_end_date &&
+  user.subscription_status === 'active';
+
+const hasRewardedAccess =
+  user.temporary_discovery_access_expires_at &&
+  now < user.temporary_discovery_access_expires_at;
+
+hasDiscoveryAccess = hasActiveSubscription || hasRewardedAccess;
 ```
 
-Access is platform-independent. A user subscribed on Android should still have access when logged in on iOS, and vice versa.
+Access is platform-independent. A user subscribed on Android should still have access when logged in on iOS, and vice versa. Rewarded access is also account-based and should be enforced by the backend, not only by local frontend state.
+
+---
+
+## POST /users/me/discovery-access/rewarded-ad
+
+Grant temporary discovery access after the client receives a rewarded-ad completion callback.
+
+### Request from Flutter
+
+```json
+{
+  "grantType": "rewarded_ad",
+  "durationMinutes": 5
+}
+```
+
+### Success response
+
+```json
+{
+  "granted": true,
+  "temporaryDiscoveryAccessExpiresAt": "2026-03-19T10:35:00.000Z",
+  "user": {
+    "id": "user123",
+    "email": "user@example.com",
+    "displayName": "John Doe",
+    "hasDiscoveryAccess": true,
+    "temporaryDiscoveryAccessExpiresAt": "2026-03-19T10:35:00.000Z"
+  }
+}
+```
+
+### Notes
+
+- Backend should persist the rewarded-access expiry on the user account.
+- `/users/discovery/random` and any other discovery-gated endpoints should honor the same temporary expiry.
+- `/users/me` should return the same `temporaryDiscoveryAccessExpiresAt` field so the client can restore the countdown after refresh or relaunch.
+- `temporaryDiscoveryAccessExpiresAt` should always be an ISO 8601 / RFC 3339 timestamp with timezone information, preferably UTC with a trailing `Z`.
+- Do not send naive local timestamps such as `2026-03-19T10:35:00.000` without `Z` or an explicit offset.
+- Server-side access checks should use the server's own clock. The client should treat the timestamp as UI state for countdown and refresh behavior, not as the source of truth for authorization.
 
 ---
 

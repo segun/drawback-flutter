@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'core/config/app_config.dart';
 import 'core/network/api_client.dart';
 import 'core/services/ad_service.dart';
+import 'core/services/discovery_access_api.dart';
 import 'core/services/discovery_access_manager.dart';
 import 'core/services/purchase_service.dart';
 import 'features/auth/data/auth_api.dart';
@@ -51,6 +52,10 @@ class _DrawbackAppState extends State<DrawbackApp> {
     );
     final authApi = AuthApi(client: client, tokenStore: tokenStore);
     final socialApi = SocialApi(client: client, tokenStore: tokenStore);
+    final discoveryAccessApi = DiscoveryAccessApi(
+      client: client,
+      tokenStore: tokenStore,
+    );
 
     // Create purchase and ad services
     final purchaseService = PurchaseService(
@@ -63,6 +68,7 @@ class _DrawbackAppState extends State<DrawbackApp> {
     _discoveryAccessManager = DiscoveryAccessManager(
       purchaseService: purchaseService,
       adService: adService,
+      discoveryAccessApi: discoveryAccessApi,
     );
 
     _authController = AuthController(authApi: authApi, tokenStore: tokenStore)
@@ -203,12 +209,14 @@ class _DrawbackAppState extends State<DrawbackApp> {
     } else {
       // Disconnect socket when user logs out
       _homeController.disconnectSocket();
+      _discoveryAccessManager.clearTemporaryAccess();
     }
   }
 
   void _handleHomeControllerChange() {
     // Sync discovery game status from profile to discovery controller
     _discoveryController.setInitialStatus(_homeController.isInDiscoveryGame);
+    _discoveryAccessManager.syncWithProfile(_homeController.profile);
   }
 
   @override

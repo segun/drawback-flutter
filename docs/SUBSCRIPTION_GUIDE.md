@@ -34,13 +34,19 @@ Users still manage billing in the original store:
 | Android | Google Play |
 | iOS | App Store |
 
-Backend access should always be computed from subscription dates/status, not current platform:
+Backend access should always be computed from authoritative entitlement state, not current platform. Paid subscriptions and rewarded discovery access should both feed the same `hasDiscoveryAccess` flag:
 
 ```javascript
-const hasDiscoveryAccess =
+const hasActiveSubscription =
   user.subscription_end_date &&
   now < user.subscription_end_date &&
   user.subscription_status === 'active';
+
+const hasRewardedAccess =
+  user.temporary_discovery_access_expires_at &&
+  now < user.temporary_discovery_access_expires_at;
+
+const hasDiscoveryAccess = hasActiveSubscription || hasRewardedAccess;
 ```
 
 ---

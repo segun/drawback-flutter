@@ -24,8 +24,10 @@ class AdService {
     return kDebugMode ? _demoRewardedAdUnitId : _productionRewardedAdUnitId;
   }
 
-  AdService() {
-    if (useMockAds) {
+  AdService({
+    bool initializeOnCreate = true,
+  }) {
+    if (useMockAds || !initializeOnCreate) {
       return;
     }
     _mobileAdsInitFuture = _initializeMobileAds();
@@ -156,7 +158,6 @@ class AdService {
         _isAdReady = true;
         _isAdLoading = false;
         _completeLoadSuccessfully();
-        debugPrint('Rewarded ad loaded successfully');
       },
       onAdFailedToLoad: (AdRequestError error) {
         _isAdReady = false;

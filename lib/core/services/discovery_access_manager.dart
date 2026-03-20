@@ -2,7 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../features/home/domain/home_models.dart';
+import '../network/api_exception.dart';
 import 'ad_service.dart';
+import 'discovery_access_api.dart';
 import 'purchase_service.dart';
 
 /// Manages discovery game access combining subscription purchases and temporary ad access
@@ -10,11 +13,14 @@ class DiscoveryAccessManager extends ChangeNotifier {
   DiscoveryAccessManager({
     required PurchaseService purchaseService,
     required AdService adService,
+    required DiscoveryAccessApi discoveryAccessApi,
   })  : _purchaseService = purchaseService,
-        _adService = adService;
+        _adService = adService,
+        _discoveryAccessApi = discoveryAccessApi;
 
   final PurchaseService _purchaseService;
   final AdService _adService;
+  final DiscoveryAccessApi _discoveryAccessApi;
 
   /// Timestamp when temporary (ad-based) access expires
   DateTime? _tempAccessExpiry;
@@ -30,6 +36,8 @@ class DiscoveryAccessManager extends ChangeNotifier {
 
   /// Error message if something went wrong
   String? _error;
+
+  String? _accessOwnerUserId;
 
   // Getters
   bool get isPurchasing => _isPurchasing;
@@ -75,21 +83,62 @@ class DiscoveryAccessManager extends ChangeNotifier {
 
   /// Grant temporary access after watching an ad
   void grantTemporaryAccess() {
-    _tempAccessExpiry = DateTime.now().add(
-      Duration(minutes: AdService.tempAccessMinutes),
+    grantTemporaryAccessUntil(
+      DateTime.now().add(
+        Duration(minutes: AdService.tempAccessMinutes),
+      ),
     );
+  }
+
+  void grantTemporaryAccessUntil(DateTime expiresAt) {
+    final DateTime normalizedExpiry = expiresAt.toLocal();
+    if (!DateTime.now().isBefore(normalizedExpiry)) {
+      clearTemporaryAccess();
+      return;
+    }
+
+    if (_tempAccessExpiry?.isAtSameMomentAs(normalizedExpiry) == true) {
+      _startCountdownTimer();
+      return;
+    }
+
+    _tempAccessExpiry = normalizedExpiry;
     _startCountdownTimer();
     notifyListeners();
-    debugPrint(
-      'Temporary access granted until: $_tempAccessExpiry',
-    );
   }
 
   /// Clear temporary access (e.g., when it expires)
   void clearTemporaryAccess() {
+    if (_tempAccessExpiry == null) {
+      return;
+    }
     _tempAccessExpiry = null;
     _stopCountdownTimer();
     notifyListeners();
+  }
+
+  void syncWithProfile(UserProfile? profile) {
+    if (profile == null) {
+      _accessOwnerUserId = null;
+      clearTemporaryAccess();
+      return;
+    }
+
+    if (_accessOwnerUserId != null && _accessOwnerUserId != profile.id) {
+      _tempAccessExpiry = null;
+      _stopCountdownTimer();
+    }
+    _accessOwnerUserId = profile.id;
+
+    final DateTime? serverExpiry = profile.temporaryDiscoveryAccessExpiresAt;
+    if (serverExpiry != null && DateTime.now().isBefore(serverExpiry)) {
+      grantTemporaryAccessUntil(serverExpiry);
+      return;
+    }
+
+    if (!profile.hasDiscoveryAccess) {
+      clearTemporaryAccess();
+    }
   }
 
   /// Purchase discovery subscription
@@ -161,6 +210,33 @@ class DiscoveryAccessManager extends ChangeNotifier {
     return 'Could not load the ad right now. Please try again shortly.';
   }
 
+  String _mapAccessSyncError(Object error) {
+    if (error is ApiException) {
+      if (error.statusCode == 404) {
+        return 'Rewarded discovery access is not available on the server yet.';
+      }
+
+      if (error.statusCode == 401) {
+        return 'Your session expired. Please sign in again and try once more.';
+      }
+
+      if (error.statusCode >= 500) {
+        return 'The server could not activate discovery access right now. Please try again.';
+      }
+
+      if (error.message.trim().isNotEmpty) {
+        return error.message;
+      }
+    }
+
+    final String lower = error.toString().toLowerCase();
+    if (lower.contains('timeout') || lower.contains('network')) {
+      return 'Could not activate discovery access due to a network issue. Please try again.';
+    }
+
+    return 'Could not activate discovery access right now. Please try again.';
+  }
+
   /// Watch a rewarded ad for temporary access
   /// Returns true if user earned access
   Future<bool> watchAdForAccess() async {
@@ -169,21 +245,48 @@ class DiscoveryAccessManager extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final bool earned = await _adService
-          .showRewardedAdForAccess()
-          .timeout(const Duration(seconds: 120));
+      final bool earned;
+      try {
+        earned = await _adService
+            .showRewardedAdForAccess()
+            .timeout(const Duration(seconds: 120));
+      } catch (e) {
+        debugPrint('Ad failed with platform error: $e');
+        _error = _mapAdError(e);
+        return false;
+      }
 
       if (earned) {
-        grantTemporaryAccess();
+        try {
+          final RewardedDiscoveryAccessGrant grant =
+              await _discoveryAccessApi.claimRewardedAdAccess(
+            durationMinutes: AdService.tempAccessMinutes,
+          );          
+
+          if (!grant.isGranted) {
+            _error =
+                'The server did not confirm temporary discovery access. Please try again.';
+            return false;
+          }
+
+          grantTemporaryAccessUntil(
+            grant.temporaryAccessExpiresAt ??
+                grant.profile?.temporaryDiscoveryAccessExpiresAt ??
+                DateTime.now().add(
+                  Duration(minutes: AdService.tempAccessMinutes),
+                ),
+          );
+        } catch (e) {
+          debugPrint('Discovery access claim failed: $e');
+          _error = _mapAccessSyncError(e);
+          return false;
+        }
+
         return true;
       } else {
         _error = 'Ad was not completed. Please try again.';
         return false;
       }
-    } catch (e) {
-      debugPrint('Ad failed with platform error: $e');
-      _error = _mapAdError(e);
-      return false;
     } finally {
       _isShowingAd = false;
       notifyListeners();

@@ -75,6 +75,7 @@ class UserProfile {
     required this.hasDiscoveryAccess,
     required this.createdAt,
     required this.updatedAt,
+    this.temporaryDiscoveryAccessExpiresAt,
     this.subscription,
   });
 
@@ -87,6 +88,7 @@ class UserProfile {
   final bool hasDiscoveryAccess;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final DateTime? temporaryDiscoveryAccessExpiresAt;
   final Subscription? subscription;
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -100,6 +102,12 @@ class UserProfile {
       hasDiscoveryAccess: (json['hasDiscoveryAccess'] as bool?) ?? false,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      temporaryDiscoveryAccessExpiresAt:
+          json['temporaryDiscoveryAccessExpiresAt'] != null
+              ? DateTime.tryParse(
+                  json['temporaryDiscoveryAccessExpiresAt'] as String,
+                )
+              : null,
       subscription: json['subscription'] != null
           ? Subscription.fromJson(json['subscription'] as Map<String, dynamic>)
           : null,
@@ -117,6 +125,9 @@ class UserProfile {
       'hasDiscoveryAccess': hasDiscoveryAccess,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      if (temporaryDiscoveryAccessExpiresAt != null)
+        'temporaryDiscoveryAccessExpiresAt':
+            temporaryDiscoveryAccessExpiresAt!.toIso8601String(),
       if (subscription != null) 'subscription': subscription!.toJson(),
     };
   }
@@ -131,6 +142,7 @@ class UserProfile {
     bool? hasDiscoveryAccess,
     DateTime? createdAt,
     DateTime? updatedAt,
+    DateTime? temporaryDiscoveryAccessExpiresAt,
     Subscription? subscription,
   }) {
     return UserProfile(
@@ -139,10 +151,13 @@ class UserProfile {
       displayName: displayName ?? this.displayName,
       mode: mode ?? this.mode,
       appearInSearches: appearInSearches ?? this.appearInSearches,
-      appearInDiscoveryGame: appearInDiscoveryGame ?? this.appearInDiscoveryGame,
+      appearInDiscoveryGame:
+          appearInDiscoveryGame ?? this.appearInDiscoveryGame,
       hasDiscoveryAccess: hasDiscoveryAccess ?? this.hasDiscoveryAccess,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      temporaryDiscoveryAccessExpiresAt: temporaryDiscoveryAccessExpiresAt ??
+          this.temporaryDiscoveryAccessExpiresAt,
       subscription: subscription ?? this.subscription,
     );
   }
@@ -190,16 +205,20 @@ class ChatRequest {
     final dynamic toUserData = json['toUser'];
 
     if (fromUserData == null) {
-      throw FormatException('ChatRequest.fromJson: fromUser is null in response: $json');
+      throw FormatException(
+          'ChatRequest.fromJson: fromUser is null in response: $json');
     }
     if (toUserData == null) {
-      throw FormatException('ChatRequest.fromJson: toUser is null in response: $json');
+      throw FormatException(
+          'ChatRequest.fromJson: toUser is null in response: $json');
     }
     if (fromUserData is! Map<String, dynamic>) {
-      throw FormatException('ChatRequest.fromJson: fromUser is not a Map: $fromUserData');
+      throw FormatException(
+          'ChatRequest.fromJson: fromUser is not a Map: $fromUserData');
     }
     if (toUserData is! Map<String, dynamic>) {
-      throw FormatException('ChatRequest.fromJson: toUser is not a Map: $toUserData');
+      throw FormatException(
+          'ChatRequest.fromJson: toUser is not a Map: $toUserData');
     }
 
     return ChatRequest(
@@ -250,7 +269,8 @@ class SavedChat {
       id: json['id'] as String,
       chatRequestId: json['chatRequestId'] as String,
       savedByUserId: json['savedByUserId'] as String,
-      chatRequest: ChatRequest.fromJson(json['chatRequest'] as Map<String, dynamic>),
+      chatRequest:
+          ChatRequest.fromJson(json['chatRequest'] as Map<String, dynamic>),
       savedBy: UserProfile.fromJson(json['savedBy'] as Map<String, dynamic>),
       savedAt: DateTime.parse(json['savedAt'] as String),
     );

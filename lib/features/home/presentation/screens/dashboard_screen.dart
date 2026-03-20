@@ -188,13 +188,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-  bool _hasActivePaidSubscription() {
-    final subscription = widget.controller.profile?.subscription;
-    if (subscription == null) {
-      return false;
-    }
-
-    return subscription.endDate.isAfter(DateTime.now());
+  bool _hasBackendDiscoveryAccess() {
+    return widget.controller.profile?.hasDiscoveryAccess ?? false;
   }
 
   Future<void> _handleDiscoveryGameClick() async {
@@ -205,7 +200,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await widget.controller.loadDashboardData(showLoading: false);
 
     // Check if user has access (active subscription or temporary ad access)
-    final bool hasActiveSubscription = _hasActivePaidSubscription();
+    final bool hasActiveSubscription = _hasBackendDiscoveryAccess();
+
     final bool hasAccess =
         widget.discoveryAccessManager.hasAccess(hasActiveSubscription);
 
@@ -586,7 +582,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         return DiscoverySwipeScreen(
           controller: widget.discoveryController,
           accessManager: widget.discoveryAccessManager,
-          hasActiveSubscription: _hasActivePaidSubscription(),
+          hasBackendAccess: _hasBackendDiscoveryAccess(),
           onBackToDashboard: () {
             setState(() {
               _currentView = DashboardView.chat;
@@ -596,7 +592,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           },
           onExitGame: _handleExitDiscoveryGame,
           onAccessExpired: () {
-            final bool hasActiveSubscription = _hasActivePaidSubscription();
+            final bool hasActiveSubscription = _hasBackendDiscoveryAccess();
             final bool hasAccess =
                 widget.discoveryAccessManager.hasAccess(hasActiveSubscription);
             if (hasAccess) {

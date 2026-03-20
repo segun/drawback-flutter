@@ -22,7 +22,7 @@ class DiscoverySwipeScreen extends StatefulWidget {
     required this.pendingOutgoingUserIds,
     required this.acceptedChatByUserId,
     required this.incomingChatRequests,
-    required this.hasActiveSubscription,
+    required this.hasBackendAccess,
     super.key,
   });
 
@@ -38,7 +38,7 @@ class DiscoverySwipeScreen extends StatefulWidget {
   final Set<String> pendingOutgoingUserIds;
   final Map<String, String> acceptedChatByUserId;
   final List<ChatRequest> incomingChatRequests;
-  final bool hasActiveSubscription;
+  final bool hasBackendAccess;
 
   @override
   State<DiscoverySwipeScreen> createState() => _DiscoverySwipeScreenState();
@@ -59,7 +59,7 @@ class _DiscoverySwipeScreenState extends State<DiscoverySwipeScreen> {
     SocketService().emitDrawLeave();
 
     final bool hasAccess =
-        widget.accessManager.hasAccess(widget.hasActiveSubscription);
+        widget.accessManager.hasAccess(widget.hasBackendAccess);
     if (!hasAccess) {
       if (!mounted) {
         return;
@@ -95,7 +95,7 @@ class _DiscoverySwipeScreenState extends State<DiscoverySwipeScreen> {
 
         if (widget.controller.lastDiscoveryFetchAccessDenied) {
           final bool stillHasAccess =
-              widget.accessManager.hasAccess(widget.hasActiveSubscription);
+              widget.accessManager.hasAccess(widget.hasBackendAccess);
           if (!stillHasAccess) {
             widget.onAccessExpired();
           }

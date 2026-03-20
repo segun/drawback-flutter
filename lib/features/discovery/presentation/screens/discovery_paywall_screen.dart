@@ -85,6 +85,8 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
       final bool success = await widget.accessManager.watchAdForAccess();
 
       if (success) {
+        await widget.onProfileRefresh();
+
         if (mounted) {
           setState(() {
             _statusMessage = 'Access granted!';

@@ -21,7 +21,7 @@ class PurchaseService {
 
   final ApiClient _client;
   final TokenStore _tokenStore;
-  final InAppPurchase _inAppPurchase = InAppPurchase.instance;
+  late final InAppPurchase _inAppPurchase = InAppPurchase.instance;
 
   // Timeout values used during the purchase flow.
   static const Duration _purchaseStreamFallbackDuration = Duration(seconds: 12);
@@ -71,9 +71,9 @@ class PurchaseService {
       return null;
     }
 
-    final InAppPurchaseAndroidPlatformAddition androidAddition =
-        InAppPurchase.instance
-            .getPlatformAddition<InAppPurchaseAndroidPlatformAddition>();
+    final InAppPurchaseAndroidPlatformAddition androidAddition = InAppPurchase
+        .instance
+        .getPlatformAddition<InAppPurchaseAndroidPlatformAddition>();
 
     final QueryPurchaseDetailsResponse pastPurchases =
         await androidAddition.queryPastPurchases();
@@ -164,7 +164,8 @@ class PurchaseService {
     subscription = _inAppPurchase.purchaseStream.listen(
       (List<PurchaseDetails> purchases) async {
         for (final PurchaseDetails purchase in purchases) {
-          debugPrint('Received purchase update: ${purchase.productID} (${purchase.status}) [${purchase.verificationData}]');
+          debugPrint(
+              'Received purchase update: ${purchase.productID} (${purchase.status}) [${purchase.verificationData}]');
           if (purchase.productID != productId) {
             continue;
           }
@@ -228,7 +229,8 @@ class PurchaseService {
         final PurchaseDetails? owned =
             await _findPurchasedSubscriptionInPastPurchases(productId);
         if (owned != null) {
-          final bool verified = await _verifyPurchase(owned, productId: productId);
+          final bool verified =
+              await _verifyPurchase(owned, productId: productId);
           if (!resultCompleter.isCompleted) {
             resultCompleter.complete(verified);
           }
@@ -280,7 +282,8 @@ class PurchaseService {
       subscription = _inAppPurchase.purchaseStream.listen(
         (List<PurchaseDetails> purchases) async {
           for (final PurchaseDetails purchase in purchases) {
-            debugPrint('Received purchase update: ${purchase.productID} (${purchase.status}) [${purchase.verificationData}]');
+            debugPrint(
+                'Received purchase update: ${purchase.productID} (${purchase.status}) [${purchase.verificationData}]');
             if (purchase.status != PurchaseStatus.restored) {
               continue;
             }
@@ -289,7 +292,8 @@ class PurchaseService {
             final bool verified = await _verifyPurchase(purchase);
 
             if (verified) {
-              completeOnce('Restore completed. Your subscription has been restored.');
+              completeOnce(
+                  'Restore completed. Your subscription has been restored.');
               break;
             }
           }
@@ -309,8 +313,8 @@ class PurchaseService {
 
           if (defaultTargetPlatform == TargetPlatform.android) {
             final InAppPurchaseAndroidPlatformAddition androidAddition =
-                InAppPurchase.instance
-                    .getPlatformAddition<InAppPurchaseAndroidPlatformAddition>();
+                InAppPurchase.instance.getPlatformAddition<
+                    InAppPurchaseAndroidPlatformAddition>();
 
             final QueryPurchaseDetailsResponse pastPurchases =
                 await androidAddition.queryPastPurchases();
@@ -337,7 +341,8 @@ class PurchaseService {
                 );
 
                 if (verified) {
-                  completeOnce('Restore completed. Your subscription has been restored.');
+                  completeOnce(
+                      'Restore completed. Your subscription has been restored.');
                   return;
                 }
               }
@@ -429,21 +434,21 @@ class PurchaseService {
     try {
       final Map<String, dynamic> response = await _client
           .postJson(
-            '/purchases/verify',
-            body: <String, dynamic>{
-              'platform': platform,
-              'receipt': receipt,
-              'productId': productId,
-            },
-            headers: await _authHeaders(),
-          )
+        '/purchases/verify',
+        body: <String, dynamic>{
+          'platform': platform,
+          'receipt': receipt,
+          'productId': productId,
+        },
+        headers: await _authHeaders(),
+      )
           .timeout(
-            _receiptVerificationTimeout,
-            onTimeout: () {
-              debugPrint('Receipt verification timed out');
-              return <String, dynamic>{'success': false};
-            },
-          );
+        _receiptVerificationTimeout,
+        onTimeout: () {
+          debugPrint('Receipt verification timed out');
+          return <String, dynamic>{'success': false};
+        },
+      );
 
       return response['success'] == true;
     } catch (e) {
