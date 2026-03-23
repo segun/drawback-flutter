@@ -1,7 +1,7 @@
 name: drawback_flutter
 description: DrawBack
 publish_to: 'none'
-version: 1.4.2+18
+version: 1.4.3+19
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
@@ -20,6 +20,7 @@ dependencies:
   passkeys: ^2.18.0
   device_info_plus: ^11.0.0
   google_mobile_ads: ^5.2.0
+  yandex_mobileads: ^7.18.0
 
 dev_dependencies:
   flutter_test:
@@ -30,6 +31,10 @@ dev_dependencies:
   coverage: ^1.15.0
   mockito: ^5.4.4
   build_runner: ^2.4.13
+
+dependency_overrides:
+  passkeys_doctor:
+    path: third_party/passkeys_doctor
 
 flutter:
   uses-material-design: true

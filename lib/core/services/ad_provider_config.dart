@@ -1,7 +1,8 @@
 import 'package:flutter/foundation.dart';
 
 enum DiscoveryAdProvider {
-  admob('admob');
+  admob('admob'),
+  yandex('yandex');
 
   const DiscoveryAdProvider(this.key);
   final String key;
@@ -10,6 +11,9 @@ enum DiscoveryAdProvider {
     final String normalized = raw?.trim().toLowerCase() ?? '';
     switch (normalized) {
       case 'admob':
+        return DiscoveryAdProvider.admob;
+      case 'yandex':
+        return DiscoveryAdProvider.yandex;
       default:
         return DiscoveryAdProvider.admob;
     }

@@ -16,6 +16,9 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-9528764047064163~1263439453" />
         <meta-data
+            android:name="@string/yandex_mobileads_age_restricted_user"
+            android:value="true" />
+        <meta-data
             android:name="asset_statements"
             android:resource="@string/asset_statements" />
         <meta-data

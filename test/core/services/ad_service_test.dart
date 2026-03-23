@@ -23,6 +23,16 @@ void main() {
     adService.dispose();
   });
 
+  test('switches to Yandex when server sends yandex provider', () async {
+    final AdService adService = AdService(initializeOnCreate: false);
+
+    await adService.setProviderFromServer('yandex');
+
+    expect(adService.providerKey, 'yandex');
+
+    adService.dispose();
+  });
+
   test('falls back to AdMob for unknown provider', () async {
     final AdService adService = AdService(initializeOnCreate: false);
 

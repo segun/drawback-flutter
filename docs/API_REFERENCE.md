@@ -79,7 +79,7 @@ Get current user profile and effective discovery access.
   "hasDiscoveryAccess": true,
   "temporaryDiscoveryAccessExpiresAt": "2026-03-19T10:35:00.000Z",
   "ads": {
-    "provider": "admob"
+    "provider": "yandex"
   },
   "subscription": {
     "tier": "monthly",
@@ -120,14 +120,14 @@ Get app-level runtime settings used before user profile is loaded.
 ```json
 {
   "ads": {
-    "provider": "admob"
+    "provider": "yandex"
   }
 }
 ```
 
 ### Notes
 
-- Server sends provider key only (`admob`, future providers).
+- Server sends provider key only (`admob`, `yandex`, future providers).
 - Client bundles all SDK-specific values (app ids, ad unit ids, SDK setup).
 - Unknown/missing provider should be treated as `admob` fallback by clients.
 - If `/users/me` includes `ads.provider`, that user value overrides `/app/config`.

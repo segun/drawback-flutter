@@ -36,12 +36,6 @@
 @import integration_test;
 #endif
 
-#if __has_include(<package_info_plus/FPPPackageInfoPlusPlugin.h>)
-#import <package_info_plus/FPPPackageInfoPlusPlugin.h>
-#else
-@import package_info_plus;
-#endif
-
 #if __has_include(<passkeys_darwin/PasskeysPlugin.h>)
 #import <passkeys_darwin/PasskeysPlugin.h>
 #else
@@ -60,6 +54,12 @@
 @import webview_flutter_wkwebview;
 #endif
 
+#if __has_include(<yandex_mobileads/YandexMobileAdsPlugin.h>)
+#import <yandex_mobileads/YandexMobileAdsPlugin.h>
+#else
+@import yandex_mobileads;
+#endif
+
 @implementation GeneratedPluginRegistrant
 
 + (void)registerWithRegistry:(NSObject<FlutterPluginRegistry>*)registry {
@@ -68,10 +68,10 @@
   [FLTGoogleMobileAdsPlugin registerWithRegistrar:[registry registrarForPlugin:@"FLTGoogleMobileAdsPlugin"]];
   [InAppPurchasePlugin registerWithRegistrar:[registry registrarForPlugin:@"InAppPurchasePlugin"]];
   [IntegrationTestPlugin registerWithRegistrar:[registry registrarForPlugin:@"IntegrationTestPlugin"]];
-  [FPPPackageInfoPlusPlugin registerWithRegistrar:[registry registrarForPlugin:@"FPPPackageInfoPlusPlugin"]];
   [PasskeysPlugin registerWithRegistrar:[registry registrarForPlugin:@"PasskeysPlugin"]];
   [UAClientHintsPlugin registerWithRegistrar:[registry registrarForPlugin:@"UAClientHintsPlugin"]];
   [WebViewFlutterPlugin registerWithRegistrar:[registry registrarForPlugin:@"WebViewFlutterPlugin"]];
+  [YandexMobileAdsPlugin registerWithRegistrar:[registry registrarForPlugin:@"YandexMobileAdsPlugin"]];
 }
 
 @end
