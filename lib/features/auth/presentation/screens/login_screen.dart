@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/widgets/legal_links_footer.dart';
 import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../core/widgets/status_banner.dart';
 import '../auth_controller.dart';
@@ -167,11 +168,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: <Widget>[
-                      Image.asset(
-                        'assets/images/logo_main.png',
-                        width: 160,
-                        height: 160,
-                        fit: BoxFit.contain,
+                      GestureDetector(
+                        onTap: () => context.go('/'),
+                        child: Image.asset(
+                          'assets/images/logo_main.png',
+                          width: 160,
+                          height: 160,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                       Text(
                         'Login',
@@ -351,6 +355,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                 'Need an account? Register',
                                 style: AuthTextStyles.link(),
                               ),
+                            ),
+                            const SizedBox(height: 10),
+                            const LegalLinksFooter(
+                              fontSize: 11,
+                              linkColor: Color(0xFFBE185D),
                             ),
                           ],
                         ),

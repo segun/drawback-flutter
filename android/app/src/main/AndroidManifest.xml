@@ -5,6 +5,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="com.android.vending.BILLING" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
     
     <!-- Optional/future permissions -->
     <uses-permission android:name="com.google.android.gms.permission.AD_ID" />
@@ -15,6 +17,9 @@
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-9528764047064163~1263439453" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="request_alerts" />
         <meta-data
             android:name="@string/yandex_mobileads_age_restricted_user"
             android:value="true" />

@@ -10,10 +10,11 @@ class AppSettingsApi {
     final Map<String, dynamic> response = await _client.getJson('/app/config');
 
     final String? providerRaw = _readProviderValue(response);
+    final int tempAccessMinutes = _readTempAccessMinutes(response);
 
     return DiscoveryAdProviderConfig(
       provider: DiscoveryAdProvider.fromServerValue(providerRaw),
-      tempAccessMinutes: DiscoveryAdProviderConfig.defaultTempAccessMinutes,
+      tempAccessMinutes: tempAccessMinutes,
     );
   }
 
@@ -27,5 +28,9 @@ class AppSettingsApi {
     }
 
     return null;
+  }
+
+  int _readTempAccessMinutes(Map<String, dynamic> json) {
+    return json['temporaryDiscoveryAccessDurationMinutes'] as int;
   }
 }

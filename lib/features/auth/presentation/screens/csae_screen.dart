@@ -20,7 +20,13 @@ class CsaeScreen extends StatelessWidget {
           AuthTopBar(
             leftChildren: <Widget>[
               IconButton(
-                onPressed: () => context.go('/privacy'),
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                    return;
+                  }
+                  context.goNamed('privacy');
+                },
                 tooltip: 'Back to privacy policy',
                 icon: const Icon(
                   Icons.arrow_back_rounded,

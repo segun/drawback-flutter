@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../../../../core/services/discovery_access_manager.dart';
+import '../../../../core/widgets/legal_links_footer.dart';
 
 /// Paywall screen shown when user doesn't have discovery access
 /// Offers subscription tiers (monthly/quarterly/yearly) or temporary ad-based access
@@ -358,6 +359,8 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    const LegalLinksFooter(),
                   ],
                 ),
               ),

@@ -23,7 +23,13 @@ class PrivacyScreen extends StatelessWidget {
           AuthTopBar(
             leftChildren: <Widget>[
               IconButton(
-                onPressed: () => context.go('/'),
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                    return;
+                  }
+                  context.go('/');
+                },
                 tooltip: 'Back to main page',
                 icon: const Icon(
                   Icons.arrow_back_rounded,
@@ -453,7 +459,7 @@ class PrivacyScreen extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: TextButton(
-              onPressed: () => context.go('/csae'),
+              onPressed: () => context.pushNamed('csae'),
               style: TextButton.styleFrom(
                 foregroundColor: const Color(0xFFE11D48),
                 padding: EdgeInsets.zero,

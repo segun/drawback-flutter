@@ -83,21 +83,6 @@ class SocialApi {
         .toList();
   }
 
-  Future<List<UserProfile>> searchPublicUsers(String query) async {
-    final dynamic response = await _client.get(
-      '/users/search?q=${Uri.encodeQueryComponent(query.trim())}',
-      headers: await _authHeaders(),
-    );
-
-    if (response is! List) {
-      return <UserProfile>[];
-    }
-
-    return response
-        .map((dynamic item) => UserProfile.fromJson(item as Map<String, dynamic>))
-        .toList();
-  }
-
   // Chat Request Management
 
   Future<List<ChatRequest>> listSentChatRequests() async {

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "676973776322",
+    "project_id": "drawback-ede24",
+    "storage_bucket": "drawback-ede24.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:676973776322:android:67f86ed069f08d36ee5a5b",
+        "android_client_info": {
+          "package_name": "chat.drawback.flutter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBFECvCNMvxfdy9vIWEwlHBqRwDvNvCboQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

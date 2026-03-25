@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -5,6 +6,7 @@ import 'package:flutter/widgets.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/realtime/socket_service.dart';
+import '../../../core/services/push_token_sync_service.dart';
 import '../data/auth_api.dart';
 import '../data/device_helper.dart';
 import '../data/login_hint_store.dart';
@@ -20,15 +22,18 @@ class AuthController extends ChangeNotifier with WidgetsBindingObserver {
     required TokenStore tokenStore,
     LoginHintStore? loginHintStore,
     PasskeyAuthService? passkeyAuthService,
+    PushTokenSyncService? pushTokenSyncService,
   })  : _authApi = authApi,
         _tokenStore = tokenStore,
         _loginHintStore = loginHintStore ?? SecureLoginHintStore(),
-        _passkeyAuthService = passkeyAuthService ?? PasskeyAuthService();
+        _passkeyAuthService = passkeyAuthService ?? PasskeyAuthService(),
+        _pushTokenSyncService = pushTokenSyncService;
 
   final AuthApi _authApi;
   final TokenStore _tokenStore;
   final LoginHintStore _loginHintStore;
   final PasskeyAuthService _passkeyAuthService;
+  final PushTokenSyncService? _pushTokenSyncService;
 
   bool _isBootstrapping = true;
   bool _isBusy = false;
@@ -84,6 +89,10 @@ class AuthController extends ChangeNotifier with WidgetsBindingObserver {
     try {
       _accessToken = token;
       _currentUser = await _authApi.me(token);
+      final pushTokenSyncService = _pushTokenSyncService;
+      if (pushTokenSyncService != null) {
+        unawaited(pushTokenSyncService.syncTokenForCurrentSession());
+      }
     } catch (_) {
       await _tokenStore.clearToken();
       _accessToken = null;
@@ -118,6 +127,10 @@ class AuthController extends ChangeNotifier with WidgetsBindingObserver {
         // Storage failures should not block successful authentication.
       }
       _notice = 'Welcome back, ${_currentUser?.displayName ?? 'friend'}.';
+      final pushTokenSyncService = _pushTokenSyncService;
+      if (pushTokenSyncService != null) {
+        unawaited(pushTokenSyncService.syncTokenForCurrentSession());
+      }
       return true;
     } on ApiException catch (error) {
       _error = error.message;
@@ -252,6 +265,10 @@ class AuthController extends ChangeNotifier with WidgetsBindingObserver {
         // Storage failures should not block successful authentication.
       }
       _notice = 'Welcome back, ${_currentUser?.displayName ?? 'friend'}.';
+      final pushTokenSyncService = _pushTokenSyncService;
+      if (pushTokenSyncService != null) {
+        unawaited(pushTokenSyncService.syncTokenForCurrentSession());
+      }
       return true;
     } on ApiException catch (error) {
       // Check for network errors and provide helpful context
@@ -397,6 +414,10 @@ class AuthController extends ChangeNotifier with WidgetsBindingObserver {
 
   Future<void> logout() async {
     SocketService().emitDrawLeave();
+    final pushTokenSyncService = _pushTokenSyncService;
+    if (pushTokenSyncService != null) {
+      unawaited(pushTokenSyncService.deactivateCurrentTokenBinding());
+    }
     await _tokenStore.clearToken();
     _accessToken = null;
     _currentUser = null;

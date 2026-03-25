@@ -24,6 +24,7 @@ void main() {
       client: _FakeApiClient(
         payload: <String, dynamic>{
           'ads': <String, dynamic>{'provider': 'admob'},
+          'temporaryDiscoveryAccessDurationMinutes': 12,
         },
       ),
     );
@@ -31,6 +32,7 @@ void main() {
     final config = await api.fetchDiscoveryAdProviderConfig();
 
     expect(config.providerKey, 'admob');
+    expect(config.tempAccessMinutes, 12);
   });
 
   test('falls back to admob when app config provider is unknown', () async {
@@ -38,6 +40,7 @@ void main() {
       client: _FakeApiClient(
         payload: <String, dynamic>{
           'ads': <String, dynamic>{'provider': 'liftoff'},
+          'temporaryDiscoveryAccessDurationMinutes': 7,
         },
       ),
     );
@@ -45,5 +48,6 @@ void main() {
     final config = await api.fetchDiscoveryAdProviderConfig();
 
     expect(config.providerKey, 'admob');
+    expect(config.tempAccessMinutes, 7);
   });
 }

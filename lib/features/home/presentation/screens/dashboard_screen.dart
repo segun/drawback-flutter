@@ -17,7 +17,6 @@ import '../widgets/blocked_users_widget.dart';
 import '../widgets/chat_requests_widget.dart';
 import '../widgets/recent_chats_widget.dart';
 import '../widgets/saved_chats_widget.dart';
-import '../widgets/user_search_widget.dart';
 import 'profile_screen.dart';
 
 enum DashboardView {
@@ -496,13 +495,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
             ),
-          ),
-
-          const SizedBox(height: 16),
-
-          UserSearchWidget(
-            controller: widget.controller,
-            onChatRequest: _handleChatOpen,
           ),
 
           const SizedBox(height: 16),

@@ -368,6 +368,16 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
         setState(() {
           _isReconnecting = false;
         });
+        // Override any short timer started by _onChatJoined during the reconnect
+        // flow: the button must not reappear for 60 seconds after the user tapped it.
+        _reconnectButtonTimer?.cancel();
+        _reconnectButtonTimer = Timer(const Duration(seconds: 60), () {
+          if (mounted && !_peerPresent && _roomJoined) {
+            setState(() {
+              _showReconnectButton = true;
+            });
+          }
+        });
       }
     }
   }

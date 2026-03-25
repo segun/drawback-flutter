@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../core/widgets/display_name_text_field.dart';
+import '../../../../core/widgets/legal_links_footer.dart';
 import '../../../../core/widgets/status_banner.dart';
 import '../../validation_constants.dart';
 import '../auth_controller.dart';
@@ -217,11 +218,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: <Widget>[
-                      Image.asset(
-                        'assets/images/logo_main.png',
-                        width: 160,
-                        height: 160,
-                        fit: BoxFit.contain,
+                      GestureDetector(
+                        onTap: () => context.go('/'),
+                        child: Image.asset(
+                          'assets/images/logo_main.png',
+                          width: 160,
+                          height: 160,
+                          fit: BoxFit.contain,
+                        ),
                       ),
                       Text(
                         'Create Account',
@@ -412,6 +416,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 'Already have an account? Login',
                                 style: AuthTextStyles.link(),
                               ),
+                            ),
+                            const SizedBox(height: 10),
+                            const LegalLinksFooter(
+                              fontSize: 11,
+                              linkColor: Color(0xFFBE185D),
                             ),
                           ],
                         ),

@@ -83,6 +83,14 @@ class AdService {
       provider: provider,
     );
 
+    await _applyConfig(nextConfig);
+  }
+
+  Future<void> setConfigFromServer(DiscoveryAdProviderConfig config) async {
+    await _applyConfig(config);
+  }
+
+  Future<void> _applyConfig(DiscoveryAdProviderConfig nextConfig) async {
     if (nextConfig.provider == _config.provider &&
         nextConfig.tempAccessMinutes == _config.tempAccessMinutes) {
       return;

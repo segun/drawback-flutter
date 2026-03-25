@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/realtime/socket_service.dart';
+import '../../../core/services/push_notification_service.dart';
 import '../data/social_api.dart';
 import '../domain/home_models.dart';
 
@@ -12,21 +13,23 @@ class HomeController extends ChangeNotifier {
     required SocialApi socialApi,
     required String backendUrl,
     void Function()? onUnauthorized,
+    PushNotificationService? pushNotificationService,
   })  : _socialApi = socialApi,
         _backendUrl = backendUrl,
-        _onUnauthorized = onUnauthorized;
+        _onUnauthorized = onUnauthorized,
+        _pushNotificationService = pushNotificationService;
 
   final SocialApi _socialApi;
   final String _backendUrl;
   final void Function()? _onUnauthorized;
   final SocketService _socketService = SocketService();
+  final PushNotificationService? _pushNotificationService;
 
   bool _socketInitialized = false;
 
   bool _isBusy = false;
   bool _isLoadingDashboard = false;
   bool _isLoadingDashboardInProgress = false;
-  bool _isSearching = false;
   String? _notice;
   String? _error;
 
@@ -35,10 +38,6 @@ class HomeController extends ChangeNotifier {
   String _profileDisplayName = '@';
   UserMode _profileMode = UserMode.private;
   bool _appearInSearches = false;
-
-  // Search
-  String _searchQuery = '';
-  List<UserProfile> _searchResults = <UserProfile>[];
 
   // Chat requests
   List<ChatRequest> _chatRequests = <ChatRequest>[];
@@ -66,7 +65,6 @@ class HomeController extends ChangeNotifier {
   // Getters
   bool get isBusy => _isBusy;
   bool get isLoadingDashboard => _isLoadingDashboard;
-  bool get isSearching => _isSearching;
   String? get notice => _notice;
   String? get error => _error;
 
@@ -75,9 +73,6 @@ class HomeController extends ChangeNotifier {
   UserMode get profileMode => _profileMode;
   bool get appearInSearches => _appearInSearches;
   bool get isInDiscoveryGame => _profile?.appearInDiscoveryGame ?? false;
-
-  String get searchQuery => _searchQuery;
-  List<UserProfile> get searchResults => _searchResults;
 
   List<ChatRequest> get chatRequests => _chatRequests;
   List<ChatRequest> get sentChatRequests => _sentChatRequests;
@@ -162,8 +157,9 @@ class HomeController extends ChangeNotifier {
 
           for (final ChatRequest req in _chatRequests) {
             if (req.status == ChatRequestStatus.accepted) {
-              final String otherId =
-                  req.fromUserId == _profile!.id ? req.toUserId : req.fromUserId;
+              final String otherId = req.fromUserId == _profile!.id
+                  ? req.toUserId
+                  : req.fromUserId;
               _connectedUserIds.add(otherId);
               _acceptedChatByUserId[otherId] = req.id;
             } else if (req.status == ChatRequestStatus.pending &&
@@ -244,6 +240,17 @@ class HomeController extends ChangeNotifier {
     loadDashboardData(showLoading: false);
   }
 
+  Future<void> handleNotificationOpen(String requestId) async {
+    if (requestId.trim().isEmpty) {
+      return;
+    }
+
+    _pushNotificationService?.markRequestAsHandled(requestId);
+    _notice = 'Opened request from notification.';
+    notifyListeners();
+    await loadDashboardData(showLoading: false);
+  }
+
   void _onChatResponse(dynamic data) {
     if (data is! Map<String, dynamic>) {
       return;
@@ -264,7 +271,8 @@ class HomeController extends ChangeNotifier {
     }
 
     try {
-      final DrawPeerWaitingPayload payload = DrawPeerWaitingPayload.fromJson(data);
+      final DrawPeerWaitingPayload payload =
+          DrawPeerWaitingPayload.fromJson(data);
       if (payload.requestId.isNotEmpty) {
         _waitingPeerRequestIds.add(payload.requestId);
         notifyListeners();
@@ -302,34 +310,6 @@ class HomeController extends ChangeNotifier {
     super.dispose();
   }
 
-  /// Search for public users
-  Future<void> searchUsers(String query) async {
-    _searchQuery = query;
-    notifyListeners();
-
-    if (query.trim().isEmpty) {
-      _searchResults = <UserProfile>[];
-      notifyListeners();
-      return;
-    }
-
-    await _runGuarded<void>(
-      () async {
-        _isSearching = true;
-        notifyListeners();
-
-        _searchResults = await _socialApi.searchPublicUsers(query);
-      },
-      fallback: null,
-      mutateBusyState: false,
-      clearMessagesBefore: false,
-      customBusyFlag: () {
-        _isSearching = false;
-        notifyListeners();
-      },
-    );
-  }
-
   /// Send a chat request to another user
   Future<bool> sendChatRequest(String toDisplayName) async {
     return _runGuarded<bool>(
@@ -361,7 +341,8 @@ class HomeController extends ChangeNotifier {
         );
 
         // Update the request in our local state
-        final int index = _chatRequests.indexWhere((ChatRequest r) => r.id == chatRequestId);
+        final int index =
+            _chatRequests.indexWhere((ChatRequest r) => r.id == chatRequestId);
         if (index != -1) {
           _chatRequests[index] = response.request;
         }
@@ -416,9 +397,7 @@ class HomeController extends ChangeNotifier {
     return _runGuarded<bool>(
       () async {
         // Find the saved chat to get its chatRequestId before removing
-        final SavedChat? savedChat = _savedChats
-            .cast<SavedChat?>()
-            .firstWhere(
+        final SavedChat? savedChat = _savedChats.cast<SavedChat?>().firstWhere(
               (SavedChat? s) => s?.id == savedChatId,
               orElse: () => null,
             );
@@ -426,7 +405,8 @@ class HomeController extends ChangeNotifier {
         await _socialApi.deleteSavedChat(savedChatId: savedChatId);
 
         // Clear selected chat if it matches the deleted saved chat
-        if (savedChat != null && _selectedChatRequestId == savedChat.chatRequestId) {
+        if (savedChat != null &&
+            _selectedChatRequestId == savedChat.chatRequestId) {
           _selectedChatRequestId = null;
         }
 
@@ -446,12 +426,11 @@ class HomeController extends ChangeNotifier {
       () async {
         // Clear selected chat if it involves the blocked user
         if (_selectedChatRequestId != null) {
-          final ChatRequest? selectedChat = _chatRequests
-              .cast<ChatRequest?>()
-              .firstWhere(
-                (ChatRequest? r) => r?.id == _selectedChatRequestId,
-                orElse: () => null,
-              );
+          final ChatRequest? selectedChat =
+              _chatRequests.cast<ChatRequest?>().firstWhere(
+                    (ChatRequest? r) => r?.id == _selectedChatRequestId,
+                    orElse: () => null,
+                  );
           if (selectedChat != null &&
               (selectedChat.fromUserId == blockedUserId ||
                   selectedChat.toUserId == blockedUserId)) {
@@ -476,11 +455,11 @@ class HomeController extends ChangeNotifier {
     return _runGuarded<bool>(
       () async {
         await _socialApi.unblockUser(blockedUserId: blockedUserId);
-        
+
         // Reload dashboard to sync with backend state
         // This rebuilds _connectedUserIds and _acceptedChatByUserId maps
         await loadDashboardData(showLoading: false);
-        
+
         _notice = 'User unblocked';
         return true;
       },
@@ -548,8 +527,8 @@ class HomeController extends ChangeNotifier {
   Future<bool> updateAppearInSearches(bool appearInSearches) async {
     return _runGuarded<bool>(
       () async {
-        final UserProfile updated =
-            await _socialApi.updateAppearInSearches(appearInSearches: appearInSearches);
+        final UserProfile updated = await _socialApi.updateAppearInSearches(
+            appearInSearches: appearInSearches);
         _profile = updated;
         _appearInSearches = updated.appearInSearches;
         _notice = 'Search visibility updated';
@@ -564,7 +543,8 @@ class HomeController extends ChangeNotifier {
     return _runGuarded<bool>(
       () async {
         await _socialApi.deleteMyAccount();
-        _notice = 'Please check your email to confirm account deletion. If you do not receive an email, please contact support.';
+        _notice =
+            'Please check your email to confirm account deletion. If you do not receive an email, please contact support.';
         return true;
       },
       fallback: false,
@@ -593,14 +573,14 @@ class HomeController extends ChangeNotifier {
 
         // Clear waiting state
         _waitingPeerRequestIds.remove(chatRequestId);
-        
+
         if (_selectedChatRequestId == chatRequestId) {
           _selectedChatRequestId = null;
         }
 
         // Reload dashboard to sync with backend state
         await loadDashboardData(showLoading: false);
-        
+
         return true;
       },
       fallback: false,
@@ -612,7 +592,9 @@ class HomeController extends ChangeNotifier {
     if (_profile == null) {
       return null;
     }
-    return request.fromUserId == _profile!.id ? request.toUser : request.fromUser;
+    return request.fromUserId == _profile!.id
+        ? request.toUser
+        : request.fromUser;
   }
 
   /// Clear messages

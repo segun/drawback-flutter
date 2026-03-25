@@ -1,4 +1,4 @@
-library passkeys_doctor;
+library;
 
 export 'src/passkeys_doctor.dart';
 export 'src/types/checkpoint.dart';

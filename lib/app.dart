@@ -7,15 +7,20 @@ import 'core/config/app_config.dart';
 import 'core/network/api_client.dart';
 import 'core/services/ad_service.dart';
 import 'core/services/app_settings_api.dart';
+import 'core/services/app_badge_service.dart';
 import 'core/services/discovery_access_api.dart';
 import 'core/services/discovery_access_manager.dart';
 import 'core/services/purchase_service.dart';
+import 'core/services/push_notification_service.dart';
+import 'core/services/push_token_registration_api.dart';
+import 'core/services/push_token_sync_service.dart';
 import 'features/auth/data/auth_api.dart';
 import 'features/auth/data/secure_token_store.dart';
 import 'features/auth/presentation/auth_controller.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/auth/presentation/screens/main_screen.dart';
 import 'features/auth/presentation/screens/csae_screen.dart';
+import 'features/auth/presentation/screens/eula_screen.dart';
 import 'features/auth/presentation/screens/privacy_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
 import 'features/auth/presentation/screens/reset_password_screen.dart';
@@ -36,7 +41,11 @@ class _DrawbackAppState extends State<DrawbackApp> {
   late final HomeController _homeController;
   late final DiscoveryController _discoveryController;
   late final DiscoveryAccessManager _discoveryAccessManager;
+  late final AppBadgeService _appBadgeService;
+  late final PushNotificationService _pushNotificationService;
+  late final PushTokenSyncService _pushTokenSyncService;
   late final GoRouter _router;
+  StreamSubscription<String>? _notificationOpenSubscription;
   bool _isHandlingUnauthorized = false;
   bool _isRouterReady = false;
 
@@ -57,6 +66,16 @@ class _DrawbackAppState extends State<DrawbackApp> {
       client: client,
       tokenStore: tokenStore,
     );
+    _pushNotificationService = PushNotificationService();
+    _appBadgeService = AppBadgeService();
+    final pushTokenRegistrationApi = PushTokenRegistrationApi(
+      client: client,
+      tokenStore: tokenStore,
+    );
+    _pushTokenSyncService = PushTokenSyncService(
+      notificationService: _pushNotificationService,
+      registrationApi: pushTokenRegistrationApi,
+    );
 
     // Create purchase and ad services
     final purchaseService = PurchaseService(
@@ -74,12 +93,16 @@ class _DrawbackAppState extends State<DrawbackApp> {
       discoveryAccessApi: discoveryAccessApi,
     );
 
-    _authController = AuthController(authApi: authApi, tokenStore: tokenStore)
-      ..bootstrap();
+    _authController = AuthController(
+      authApi: authApi,
+      tokenStore: tokenStore,
+      pushTokenSyncService: _pushTokenSyncService,
+    )..bootstrap();
 
     _homeController = HomeController(
       socialApi: socialApi,
       backendUrl: AppConfig.backendUrl,
+      pushNotificationService: _pushNotificationService,
       onUnauthorized: () {
         unawaited(_handleUnauthorizedSession());
       },
@@ -129,11 +152,19 @@ class _DrawbackAppState extends State<DrawbackApp> {
           ),
         ),
         GoRoute(
+          name: 'eula',
+          path: '/eula',
+          builder: (BuildContext context, GoRouterState state) =>
+              const EulaScreen(),
+        ),
+        GoRoute(
+          name: 'privacy',
           path: '/privacy',
           builder: (BuildContext context, GoRouterState state) =>
               const PrivacyScreen(),
         ),
         GoRoute(
+          name: 'csae',
           path: '/csae',
           builder: (BuildContext context, GoRouterState state) =>
               const CsaeScreen(),
@@ -158,10 +189,9 @@ class _DrawbackAppState extends State<DrawbackApp> {
         ),
       ],
       redirect: (BuildContext context, GoRouterState state) {
-        final bool isAuthRoute = state.fullPath == '/login' ||
+        final bool isAuthEntryRoute = state.fullPath == '/login' ||
             state.fullPath == '/register' ||
             state.fullPath == '/reset-password' ||
-            state.fullPath == '/privacy' ||
             state.fullPath == '/';
 
         if (_authController.isBootstrapping) {
@@ -169,7 +199,7 @@ class _DrawbackAppState extends State<DrawbackApp> {
         }
 
         if (_authController.isAuthenticated &&
-            isAuthRoute &&
+            isAuthEntryRoute &&
             state.fullPath != '/login') {
           return '/home';
         }
@@ -182,6 +212,25 @@ class _DrawbackAppState extends State<DrawbackApp> {
       },
     );
     _isRouterReady = true;
+    _router.routerDelegate.addListener(_handleRouteChange);
+
+    _notificationOpenSubscription = _pushNotificationService
+        .onRequestNotificationOpened
+        .listen((requestId) {
+      unawaited(_handleNotificationOpen(requestId));
+    });
+  }
+
+  Future<void> _handleNotificationOpen(String requestId) async {
+    if (!_authController.isAuthenticated) {
+      return;
+    }
+
+    await _homeController.handleNotificationOpen(requestId);
+
+    if (mounted && _isRouterReady) {
+      _router.go('/home');
+    }
   }
 
   Future<void> _handleUnauthorizedSession() async {
@@ -210,9 +259,9 @@ class _DrawbackAppState extends State<DrawbackApp> {
   ) async {
     try {
       final config = await appSettingsApi.fetchDiscoveryAdProviderConfig();
-      await adService.setProviderFromServer(config.providerKey);
+      await adService.setConfigFromServer(config);
       debugPrint(
-        'Configured discovery ad provider from /app/config: ${config.providerKey}',
+        'Configured discovery ad settings from /app/config: provider=${config.providerKey}, tempAccessMinutes=${config.tempAccessMinutes}',
       );
     } catch (error) {
       debugPrint(
@@ -220,6 +269,19 @@ class _DrawbackAppState extends State<DrawbackApp> {
       );
       await adService.loadRewardedAd();
     }
+  }
+
+  void _handleRouteChange() {
+    try {
+      final String path = _router.routerDelegate.currentConfiguration.uri.path;
+      if (path == '/home') {
+        unawaited(
+          _appBadgeService.markSeen(
+            _homeController.incomingChatRequests.map((r) => r.id),
+          ),
+        );
+      }
+    } catch (_) {}
   }
 
   void _handleAuthStateChange() {
@@ -231,6 +293,8 @@ class _DrawbackAppState extends State<DrawbackApp> {
       // Disconnect socket when user logs out
       _homeController.disconnectSocket();
       _discoveryAccessManager.clearTemporaryAccess();
+      unawaited(_appBadgeService.clearSeen());
+      unawaited(_appBadgeService.clear());
     }
   }
 
@@ -238,16 +302,34 @@ class _DrawbackAppState extends State<DrawbackApp> {
     // Sync discovery game status from profile to discovery controller
     _discoveryController.setInitialStatus(_homeController.isInDiscoveryGame);
     _discoveryAccessManager.syncWithProfile(_homeController.profile);
+    unawaited(_syncAppBadge());
+  }
+
+  Future<void> _syncAppBadge() async {
+    if (!_authController.isAuthenticated) {
+      await _appBadgeService.clear();
+      return;
+    }
+
+    await _appBadgeService.syncBadge(
+      incomingRequestIds:
+          _homeController.incomingChatRequests.map((r) => r.id).toList(),
+      waitingPeersCount: _homeController.waitingPeerRequestIds.length,
+    );
   }
 
   @override
   void dispose() {
     _authController.removeListener(_handleAuthStateChange);
     _homeController.removeListener(_handleHomeControllerChange);
+    _router.routerDelegate.removeListener(_handleRouteChange);
     _authController.dispose();
     _homeController.dispose();
     _discoveryController.dispose();
     _discoveryAccessManager.dispose();
+    unawaited(_appBadgeService.clear());
+    unawaited(_notificationOpenSubscription?.cancel());
+    unawaited(_pushTokenSyncService.dispose());
     _router.dispose();
     super.dispose();
   }
