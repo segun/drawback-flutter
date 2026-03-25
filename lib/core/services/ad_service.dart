@@ -13,11 +13,8 @@ class AdService {
   /// Set to true to bypass ad SDK calls while testing paywall flow
   static const bool useMockAds = false;
 
-  static const String admobAndroidAppId =
-      'ca-app-pub-9528764047064163~1263439453';
   static const String admobAndroidRewardedAdUnitId =
       'ca-app-pub-9528764047064163/6787228876';
-  static const String admobIosAppId = 'ca-app-pub-9528764047064163~3442880231';
   static const String admobIosRewardedAdUnitId =
       'ca-app-pub-9528764047064163/6292404859';
   static const String yandexAndroidRewardedAdUnitId = String.fromEnvironment(
@@ -276,6 +273,10 @@ class _AdmobRewardedAdProvider implements RewardedAdProviderClient {
 
   Future<void> _initializeMobileAds() async {
     await gma.MobileAds.instance.initialize();
+    await gma.MobileAds.instance.updateRequestConfiguration(
+      gma.RequestConfiguration(
+          testDeviceIds: ["686ABEF8F2D34D1F7A5F3B5AC5CB005E"]),
+    );
     debugPrint('Google Mobile Ads initialized');
   }
 

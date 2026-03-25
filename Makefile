@@ -4,10 +4,10 @@ prepare-android:
 	adb -s $(DEVICE) reverse tcp:3000 tcp:3000
 
 run-dev:
-	flutter run --dart-define=BACKEND_URL=https://local.drawback.chat/api -d $(DEVICE)
+	flutter run --dart-define=ADMOB_TEST_DEVICE_IDS=686ABEF8F2D34D1F7A5F3B5AC5CB005E --dart-define=BACKEND_URL=https://local.drawback.chat/api -d $(DEVICE)
 
 run-prod:	
-	flutter run --dart-define=BACKEND_URL=https://drawback.chat/api -d $(DEVICE)
+	flutter run --dart-define=ADMOB_TEST_DEVICE_IDS=686ABEF8F2D34D1F7A5F3B5AC5CB005E --dart-define=BACKEND_URL=https://drawback.chat/api -d $(DEVICE)
 
 run-web-prod:
 	flutter run -d chrome --web-port=28080 --dart-define=BACKEND_URL=https://drawback.chat/api
