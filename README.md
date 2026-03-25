@@ -31,6 +31,15 @@ Example:
 flutter run -d chrome --dart-define=BACKEND_URL=http://localhost:3000/api
 ```
 
+## Firebase config files
+
+Firebase service config files contain app identifiers and API keys and must not be committed.
+
+- Android local path: `android/app/google-services.json`
+- iOS local path: `ios/Runner/GoogleService-Info.plist`
+
+Download fresh copies from Firebase project settings when onboarding a new machine.
+
 ## Auth persistence
 
 Access token persistence uses `flutter_secure_storage` (`drawkcab-access-token`).

@@ -1299,14 +1299,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
                     },
             ),
           if (!widget.isChatSaved) const SizedBox(width: 8),
-          if (_showReconnectButton || _isReconnecting)
+          if (!_peerPresent && (_showReconnectButton || _isReconnecting))
             _buildQuickActionButton(
               icon: Icons.sync,
               backgroundColor: const Color(0xFFF59E0B),
               onPressed: _isReconnecting ? null : () => unawaited(_handleReconnectToRoom()),
               isLoading: _isReconnecting,
             ),
-          if (_showReconnectButton || _isReconnecting) const SizedBox(width: 8),
+          if (!_peerPresent && (_showReconnectButton || _isReconnecting)) const SizedBox(width: 8),
           _buildQuickActionButton(
             icon: Icons.emoji_emotions_outlined,
             backgroundColor: const Color(0xFFFBCFE8),
