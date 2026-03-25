@@ -202,7 +202,7 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
                         ),
                         child: const Icon(
                           Icons.palette,
-                          size: 44,
+                          size: 40,
                           color: Color(0xFF9F1239),
                         ),
                       ),
@@ -211,9 +211,9 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
 
                       // Title
                       const Text(
-                        'Unlock Discovery Game',
+                        'Discovery Premium Subscription',
                         style: TextStyle(
-                          fontSize: 24,
+                          fontSize: 19,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF9F1239),
                         ),
