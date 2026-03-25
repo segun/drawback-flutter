@@ -18,7 +18,7 @@ class AuthTextStyles {
   // Link style for navigation links (Forgot password?, Need an account?, etc.)
   static TextStyle link() {
     return const TextStyle(
-      fontSize: 12,
+      fontSize: 13,
       color: Color(0xFFBE185D), // rose-700      
     );
   }
@@ -42,7 +42,7 @@ class AuthTextStyles {
           color: const Color(0xFF9F1239), // rose-800
         ) ??
         const TextStyle(
-          fontSize: 11,
+          fontSize: 13,
           color: Color(0xFF9F1239),
         );
   }

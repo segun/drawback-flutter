@@ -142,233 +142,240 @@ class _LoginScreenState extends State<LoginScreen> {
         _prefillRememberedEmailIfNeeded(widget.controller.rememberedEmail);
 
         return AuthPageScaffold(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFCE7F3), // rose-100
-                    border: Border.all(
-                      color: const Color(0xFFFBE7EB), // rose-300
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFFBE7EB).withValues(
-                          alpha: 0.3,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFCE7F3), // rose-100
+                        border: Border.all(
+                          color: const Color(0xFFFBE7EB), // rose-300
                         ),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      GestureDetector(
-                        onTap: () => context.go('/'),
-                        child: Image.asset(
-                          'assets/images/logo_main.png',
-                          width: 160,
-                          height: 160,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                      Text(
-                        'Login',
-                        style: AuthTextStyles.header(context),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 12),
-                      if (error != null || notice != null) ...<Widget>[
-                        const SizedBox(height: 12),
-                        StatusBanner(
-                          text: error ?? notice ?? '',
-                          kind: error != null
-                              ? BannerKind.error
-                              : BannerKind.success,
-                          key: ValueKey('${error ?? notice}'),
-                          onDismiss: () {
-                            widget.controller.clearMessages();
-                          },
-                        ),
-                        if (error != null &&
-                            widget.controller
-                                .canResendActivationEmail) ...<Widget>[
-                          const SizedBox(height: 8),
-                          TextButton(
-                            onPressed: widget.controller.isBusy
-                                ? null
-                                : () async {
-                                    await widget.controller
-                                        .resendActivationEmail(
-                                      _emailController.text,
-                                    );
-                                  },
-                            style: AuthTextStyles.linkButtonStyle(),
-                            child: Text(
-                              'Resend activation email',
-                              style: AuthTextStyles.link(),
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFBE7EB).withValues(
+                              alpha: 0.3,
                             ),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
                           ),
                         ],
-                      ],
-                      Form(
-                        key: _formKey,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: <Widget>[
-                            CustomTextField(
-                              key: const Key('emailField'),
-                              controller: _emailController,
-                              labelText: 'Email',
-                              keyboardType: TextInputType.emailAddress,
-                              maxLength: 254,
-                              validator: (String? value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Email is required.';
-                                }
-                                return null;
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: <Widget>[
+                          GestureDetector(
+                            onTap: () => context.go('/'),
+                            child: Image.asset(
+                              'assets/images/logo_main.png',
+                              width: 160,
+                              height: 160,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                          Text(
+                            'Login',
+                            style: AuthTextStyles.header(context),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          if (error != null || notice != null) ...<Widget>[
+                            const SizedBox(height: 12),
+                            StatusBanner(
+                              text: error ?? notice ?? '',
+                              kind: error != null
+                                  ? BannerKind.error
+                                  : BannerKind.success,
+                              key: ValueKey('${error ?? notice}'),
+                              onDismiss: () {
+                                widget.controller.clearMessages();
                               },
                             ),
-                            const SizedBox(height: 10),
-                            CustomTextField(
-                              key: const Key('passwordField'),
-                              controller: _passwordController,
-                              labelText: 'Password',
-                              obscureText: true,
-                              maxLength: 72,
-                              validator: (String? value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Password is required.';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 16),
-                            ValueListenableBuilder<TextEditingValue>(
-                              valueListenable: _emailController,
-                              builder: (BuildContext context,
-                                  TextEditingValue value, _) {
-                                final bool hasEnteredEmail =
-                                    value.text.trim().isNotEmpty;
-                                final bool hasRememberedEmail = widget
-                                    .controller.rememberedEmail
-                                    .trim()
-                                    .isNotEmpty;
-                                final bool canUsePasswordLogin =
-                                    !widget.controller.isBusy &&
-                                        hasEnteredEmail;
-                                final bool canUsePasskey =
-                                    widget.controller.isPasskeyAvailable &&
+                            if (error != null &&
+                                widget.controller
+                                    .canResendActivationEmail) ...<Widget>[
+                              const SizedBox(height: 8),
+                              TextButton(
+                                onPressed: widget.controller.isBusy
+                                    ? null
+                                    : () async {
+                                        await widget.controller
+                                            .resendActivationEmail(
+                                          _emailController.text,
+                                        );
+                                      },
+                                style: AuthTextStyles.linkButtonStyle(),
+                                child: Text(
+                                  'Resend activation email',
+                                  style: AuthTextStyles.link(),
+                                ),
+                              ),
+                            ],
+                          ],
+                          Form(
+                            key: _formKey,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: <Widget>[
+                                CustomTextField(
+                                  key: const Key('emailField'),
+                                  controller: _emailController,
+                                  labelText: 'Email',
+                                  keyboardType: TextInputType.emailAddress,
+                                  maxLength: 254,
+                                  validator: (String? value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Email is required.';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 10),
+                                CustomTextField(
+                                  key: const Key('passwordField'),
+                                  controller: _passwordController,
+                                  labelText: 'Password',
+                                  obscureText: true,
+                                  maxLength: 72,
+                                  validator: (String? value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Password is required.';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 16),
+                                ValueListenableBuilder<TextEditingValue>(
+                                  valueListenable: _emailController,
+                                  builder: (BuildContext context,
+                                      TextEditingValue value, _) {
+                                    final bool hasEnteredEmail =
+                                        value.text.trim().isNotEmpty;
+                                    final bool hasRememberedEmail = widget
+                                        .controller.rememberedEmail
+                                        .trim()
+                                        .isNotEmpty;
+                                    final bool canUsePasswordLogin =
+                                        !widget.controller.isBusy &&
+                                            hasEnteredEmail;
+                                    final bool canUsePasskey = widget
+                                            .controller.isPasskeyAvailable &&
                                         !widget.controller.isBusy &&
                                         (hasEnteredEmail || hasRememberedEmail);
 
-                                return Row(
-                                  children: <Widget>[
-                                    Expanded(
-                                      child: FilledButton(
-                                        onPressed: canUsePasswordLogin
-                                            ? _submit
-                                            : null,
-                                        style: FilledButton.styleFrom(
-                                          backgroundColor: const Color(
-                                              0xFFBE185D), // rose-700
-                                          foregroundColor: const Color(
-                                              0xFFFCE7F3), // rose-100
-                                          padding: const EdgeInsets.all(16),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(1),
-                                          ),
-                                        ),
-                                        child: widget.controller.isBusy
-                                            ? const SizedBox(
-                                                width: 18,
-                                                height: 18,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                  strokeWidth: 2,
-                                                ),
-                                              )
-                                            : const Text(
-                                                'Login',
-                                                style: TextStyle(fontSize: 13),
+                                    return Row(
+                                      children: <Widget>[
+                                        Expanded(
+                                          child: FilledButton(
+                                            onPressed: canUsePasswordLogin
+                                                ? _submit
+                                                : null,
+                                            style: FilledButton.styleFrom(
+                                              backgroundColor: const Color(
+                                                  0xFFBE185D), // rose-700
+                                              foregroundColor: const Color(
+                                                  0xFFFCE7F3), // rose-100
+                                              padding: const EdgeInsets.all(16),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(1),
                                               ),
-                                      ),
-                                    ),
-                                    if (widget.controller
-                                        .isPasskeyAvailable) ...<Widget>[
-                                      const SizedBox(width: 8),
-                                      OutlinedButton.icon(
-                                        onPressed: canUsePasskey
-                                            ? _submitPasskey
-                                            : null,
-                                        icon: const Icon(Icons.fingerprint),
-                                        label: const Text('Biometric'),
-                                        style: OutlinedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 16,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(1),
+                                            ),
+                                            child: widget.controller.isBusy
+                                                ? const SizedBox(
+                                                    width: 18,
+                                                    height: 18,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                    ),
+                                                  )
+                                                : const Text(
+                                                    'Login',
+                                                    style:
+                                                        TextStyle(fontSize: 13),
+                                                  ),
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  ],
-                                );
-                              },
+                                        if (widget.controller
+                                            .isPasskeyAvailable) ...<Widget>[
+                                          const SizedBox(width: 8),
+                                          OutlinedButton.icon(
+                                            onPressed: canUsePasskey
+                                                ? _submitPasskey
+                                                : null,
+                                            icon: const Icon(Icons.fingerprint),
+                                            label: const Text('Biometric'),
+                                            style: OutlinedButton.styleFrom(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 12,
+                                                vertical: 16,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(1),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
+                                    );
+                                  },
+                                ),
+                                const SizedBox(height: 12),
+                                TextButton(
+                                  onPressed: widget.controller.isBusy
+                                      ? null
+                                      : _openForgotPasswordDialog,
+                                  style: AuthTextStyles.linkButtonStyle(),
+                                  child: Text(
+                                    'Forgot password?',
+                                    style: AuthTextStyles.link(),
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 4),
+                                  child: Divider(
+                                    height: 8,
+                                    thickness: 1,
+                                    color: Color.fromARGB(
+                                        255, 234, 12, 57), // rose-300
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                TextButton(
+                                  onPressed: () => context.go('/register'),
+                                  style: AuthTextStyles.linkButtonStyle(),
+                                  child: Text(
+                                    'Need an account? Register',
+                                    style: AuthTextStyles.link(),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 12),
-                            TextButton(
-                              onPressed: widget.controller.isBusy
-                                  ? null
-                                  : _openForgotPasswordDialog,
-                              style: AuthTextStyles.linkButtonStyle(),
-                              child: Text(
-                                'Forgot password?',
-                                style: AuthTextStyles.link(),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 4),
-                              child: Divider(
-                                height: 8,
-                                thickness: 1,
-                                color: Color.fromARGB(
-                                    255, 234, 12, 57), // rose-300
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            TextButton(
-                              onPressed: () => context.go('/register'),
-                              style: AuthTextStyles.linkButtonStyle(),
-                              child: Text(
-                                'Need an account? Register',
-                                style: AuthTextStyles.link(),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            const LegalLinksFooter(
-                              fontSize: 11,
-                              linkColor: Color(0xFFBE185D),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
-              ],
-            ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: const LegalLinksFooter(
+                  fontSize: 13,
+                  linkColor: Color(0xFFBE185D),
+                ),
+              ),
+            ],
           ),
         );
       },

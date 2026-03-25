@@ -186,184 +186,189 @@ class _DiscoveryPaywallScreenState extends State<DiscoveryPaywallScreen> {
 
             // Content
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 1, 24, 1),
-                child: Column(
-                  children: <Widget>[
-                    const SizedBox(height: 1),
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 1, 24, 1),
+                  child: Column(
+                    children: <Widget>[
+                      const SizedBox(height: 1),
 
-                    // Icon
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withAlpha(51),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.palette,
-                        size: 44,
-                        color: Color(0xFF9F1239),
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Title
-                    const Text(
-                      'Unlock Discovery Game',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF9F1239),
-                      ),
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Description
-                    const Text(
-                      'Find random users and start drawing together! '
-                      'Connect with artists from around the world.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Color(0xFF881337),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Purchase button
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed: _isProcessing ? null : _handlePurchase,
-                        icon: const Icon(Icons.diamond),
-                        label: const Text('Subscribe — \$1.49/month'),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFFE11D48),
-                          disabledBackgroundColor:
-                              const Color(0xFFE11D48).withAlpha(128),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 20,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
+                      // Icon
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withAlpha(51),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.palette,
+                          size: 44,
+                          color: Color(0xFF9F1239),
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    // Or divider
-                    Row(
-                      children: <Widget>[
-                        const Expanded(
-                          child: Divider(color: Color(0xFF9F1239)),
+                      // Title
+                      const Text(
+                        'Unlock Discovery Game',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF9F1239),
                         ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Text(
-                            'or',
-                            style: TextStyle(
-                              color: const Color(0xFF9F1239).withAlpha(179),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Description
+                      const Text(
+                        'Find random users and start drawing together! '
+                        'Connect with artists from around the world.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFF881337),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Purchase button
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton.icon(
+                          onPressed: _isProcessing ? null : _handlePurchase,
+                          icon: const Icon(Icons.diamond),
+                          label: const Text('Subscribe — \$1.49/month'),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFFE11D48),
+                            disabledBackgroundColor:
+                                const Color(0xFFE11D48).withAlpha(128),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32,
+                              vertical: 20,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
                             ),
                           ),
                         ),
-                        const Expanded(
-                          child: Divider(color: Color(0xFF9F1239)),
-                        ),
-                      ],
-                    ),
+                      ),
 
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    // Watch ad button
-                    SizedBox(
-                      width: double.infinity,
-                      child: OutlinedButton.icon(
-                        onPressed: _isProcessing ? null : _handleWatchAd,
-                        icon: const Icon(Icons.play_circle_outline),
-                        label: Text(
-                          'Watch Ad — ${widget.accessManager.tempAccessMinutes} min access',
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: const Color(0xFF9F1239),
-                          side: const BorderSide(
-                            color: Color(0xFF9F1239),
-                            width: 2,
+                      // Or divider
+                      Row(
+                        children: <Widget>[
+                          const Expanded(
+                            child: Divider(color: Color(0xFF9F1239)),
                           ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 20,
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              'or',
+                              style: TextStyle(
+                                color: const Color(0xFF9F1239).withAlpha(179),
+                              ),
+                            ),
                           ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                          const Expanded(
+                            child: Divider(color: Color(0xFF9F1239)),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Watch ad button
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _isProcessing ? null : _handleWatchAd,
+                          icon: const Icon(Icons.play_circle_outline),
+                          label: Text(
+                            'Watch Ad — ${widget.accessManager.tempAccessMinutes} min access',
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF9F1239),
+                            side: const BorderSide(
+                              color: Color(0xFF9F1239),
+                              width: 2,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32,
+                              vertical: 20,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                         ),
                       ),
-                    ),
 
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
 
-                    // Status message
-                    if (_statusMessage != null)
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withAlpha(128),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            if (_isProcessing)
-                              const Padding(
-                                padding: EdgeInsets.only(right: 12),
-                                child: SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Color(0xFFE11D48),
+                      // Status message
+                      if (_statusMessage != null)
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withAlpha(128),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: <Widget>[
+                              if (_isProcessing)
+                                const Padding(
+                                  padding: EdgeInsets.only(right: 12),
+                                  child: SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Color(0xFFE11D48),
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                            Flexible(
-                              child: Text(
-                                _statusMessage!,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Color(0xFF881337),
+                              Flexible(
+                                child: Text(
+                                  _statusMessage!,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Color(0xFF881337),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                        ),
+
+                      SizedBox(height: _statusMessage != null ? 20 : 8),
+
+                      // Restore purchases link
+                      TextButton(
+                        onPressed:
+                            _isProcessing ? null : _handleRestorePurchases,
+                        child: const Text(
+                          'Already purchased? Restore Purchases',
+                          style: TextStyle(
+                            color: Color(0xFF9F1239),
+                            decoration: TextDecoration.underline,
+                          ),
                         ),
                       ),
-
-                    SizedBox(height: _statusMessage != null ? 20 : 8),
-
-                    // Restore purchases link
-                    TextButton(
-                      onPressed: _isProcessing ? null : _handleRestorePurchases,
-                      child: const Text(
-                        'Already purchased? Restore Purchases',
-                        style: TextStyle(
-                          color: Color(0xFF9F1239),
-                          decoration: TextDecoration.underline,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const LegalLinksFooter(),
-                  ],
+                    ],
+                  ),
                 ),
               ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: const LegalLinksFooter(),
             ),
           ],
         ),

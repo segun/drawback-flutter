@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/widgets/custom_text_field.dart';
 import '../../../../core/widgets/display_name_text_field.dart';
 import '../../../../core/widgets/legal_links_footer.dart';
-import '../../../../core/widgets/status_banner.dart';
 import '../../validation_constants.dart';
 import '../auth_controller.dart';
 import '../widgets/auth_page_scaffold.dart';
@@ -188,259 +187,256 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return ListenableBuilder(
       listenable: widget.controller,
       builder: (BuildContext context, _) {
-        final String? error = widget.controller.error;
-        final String? notice = widget.controller.notice;
-
         return AuthPageScaffold(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFCE7F3), // rose-100
-                    border: Border.all(
-                      color: const Color(0xFFFBE7EB), // rose-300
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFFBE7EB).withValues(
-                          alpha: 0.3,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Expanded(
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFCE7F3), // rose-100
+                        border: Border.all(
+                          color: const Color(0xFFFBE7EB), // rose-300
                         ),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: <Widget>[
-                      GestureDetector(
-                        onTap: () => context.go('/'),
-                        child: Image.asset(
-                          'assets/images/logo_main.png',
-                          width: 160,
-                          height: 160,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                      Text(
-                        'Create Account',
-                        style: AuthTextStyles.header(context),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        'Register with email, password, and display name. Login is allowed only after email confirmation.',
-                        style: AuthTextStyles.bodyText(context),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 12),
-                      Form(
-                        key: _formKey,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: <Widget>[
-                            CustomTextField(
-                              controller: _emailController,
-                              labelText: 'Email',
-                              focusNode: _emailFocus,
-                              keyboardType: TextInputType.emailAddress,
-                              maxLength: 254,
-                              validator: (String? value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'Email is required.';
-                                }
-                                if (!ValidationPatterns.emailPattern
-                                    .hasMatch(value.trim())) {
-                                  return 'Please enter a valid email address.';
-                                }
-                                return null;
-                              },
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFFBE7EB).withValues(
+                              alpha: 0.3,
                             ),
-                            const SizedBox(height: 10),
-                            DisplayNameTextField(
-                              controller: _displayNameController,
-                              hintText: '@alice',
-                              focusNode: _displayNameFocus,
-                              enabled: !widget.controller.isBusy,
-                              validator: (String? value) {
-                                if (value == null ||
-                                    value.trim().isEmpty ||
-                                    value.trim() == '@') {
-                                  return 'Display name is required.';
-                                }
-                                if (!_isValidDisplayName(value.trim())) {
-                                  return 'Must start with @ followed by 2–29 letters, numbers or underscores';
-                                }
-                                return null;
-                              },
-                              onChanged: (String value) {
-                                setState(() {
-                                  if (_isDisplayNameAvailable != null) {
-                                    _isDisplayNameAvailable = null;
-                                  }
-                                });
-                                if (_blurredFields.contains('displayName')) {
-                                  _autoCheckAvailability(value);
-                                }
-                              },
-                              suffixIcon: _blurredFields.contains('displayName')
-                                  ? _isDisplayNameAvailable == true
-                                      ? Icon(Icons.check_circle_rounded,
-                                          size: 20,
-                                          color: Colors.green.shade600)
-                                      : _isDisplayNameAvailable == false
-                                          ? Icon(Icons.cancel_rounded,
-                                              size: 20,
-                                              color: Colors.red.shade600)
-                                          : _checkingAvailability
-                                              ? const SizedBox(
-                                                  width: 20,
-                                                  height: 20,
-                                                  child:
-                                                      CircularProgressIndicator(
-                                                          strokeWidth: 2),
-                                                )
-                                              : null
-                                  : null,
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: <Widget>[
+                          GestureDetector(
+                            onTap: () => context.go('/'),
+                            child: Image.asset(
+                              'assets/images/logo_main.png',
+                              width: 160,
+                              height: 160,
+                              fit: BoxFit.contain,
                             ),
-                            if (_blurredFields.contains('displayName') &&
-                                _isDisplayNameAvailable == false) ...<Widget>[
-                              const SizedBox(height: 4),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
-                                child: Row(
-                                  children: <Widget>[
-                                    Icon(
-                                      Icons.close_rounded,
-                                      size: 14,
-                                      color: Colors.red.shade600,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'Display name is not available',
-                                      style: TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.red.shade700),
-                                    ),
-                                  ],
+                          ),
+                          Text(
+                            'Create Account',
+                            style: AuthTextStyles.header(context),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'Register with email, password, and display name. Login is allowed only after email confirmation.',
+                            style: AuthTextStyles.bodyText(context),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 12),
+                          Form(
+                            key: _formKey,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: <Widget>[
+                                CustomTextField(
+                                  controller: _emailController,
+                                  labelText: 'Email',
+                                  focusNode: _emailFocus,
+                                  keyboardType: TextInputType.emailAddress,
+                                  maxLength: 254,
+                                  validator: (String? value) {
+                                    if (value == null || value.trim().isEmpty) {
+                                      return 'Email is required.';
+                                    }
+                                    if (!ValidationPatterns.emailPattern
+                                        .hasMatch(value.trim())) {
+                                      return 'Please enter a valid email address.';
+                                    }
+                                    return null;
+                                  },
                                 ),
-                              ),
-                            ],
-                            const SizedBox(height: 12),
-                            CustomTextField(
-                              controller: _passwordController,
-                              labelText: 'Password',
-                              focusNode: _passwordFocus,
-                              obscureText: true,
-                              maxLength: 72,
-                              validator: (String? value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Password is required.';
-                                }
-                                if (value.length < 8) {
-                                  return 'Password must be at least 8 characters.';
-                                }
-                                return null;
-                              },
-                            ),
-                            const SizedBox(height: 10),
-                            CustomTextField(
-                              controller: _confirmPasswordController,
-                              labelText: 'Confirm password',
-                              focusNode: _confirmPasswordFocus,
-                              obscureText: true,
-                              maxLength: 72,
-                              errorText: _passwordController.text.isNotEmpty &&
-                                      _confirmPasswordController
-                                          .text.isNotEmpty &&
-                                      _passwordController.text !=
-                                          _confirmPasswordController.text
-                                  ? 'Passwords do not match'
-                                  : null,
-                              validator: (String? value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Confirm password is required.';
-                                }
-                                if (value.length < 8) {
-                                  return 'Password must be at least 8 characters.';
-                                }
-                                return null;
-                              },
-                              onChanged: (_) {
-                                setState(() {});
-                              },
-                            ),
-                            const SizedBox(height: 12),
-                            FilledButton(
-                              onPressed: widget.controller.isBusy ||
-                                      (_passwordController.text.isNotEmpty &&
+                                const SizedBox(height: 10),
+                                DisplayNameTextField(
+                                  controller: _displayNameController,
+                                  hintText: '@alice',
+                                  focusNode: _displayNameFocus,
+                                  enabled: !widget.controller.isBusy,
+                                  validator: (String? value) {
+                                    if (value == null ||
+                                        value.trim().isEmpty ||
+                                        value.trim() == '@') {
+                                      return 'Display name is required.';
+                                    }
+                                    if (!_isValidDisplayName(value.trim())) {
+                                      return 'Must start with @ followed by 2–29 letters, numbers or underscores';
+                                    }
+                                    return null;
+                                  },
+                                  onChanged: (String value) {
+                                    setState(() {
+                                      if (_isDisplayNameAvailable != null) {
+                                        _isDisplayNameAvailable = null;
+                                      }
+                                    });
+                                    if (_blurredFields
+                                        .contains('displayName')) {
+                                      _autoCheckAvailability(value);
+                                    }
+                                  },
+                                  suffixIcon: _blurredFields
+                                          .contains('displayName')
+                                      ? _isDisplayNameAvailable == true
+                                          ? Icon(Icons.check_circle_rounded,
+                                              size: 20,
+                                              color: Colors.green.shade600)
+                                          : _isDisplayNameAvailable == false
+                                              ? Icon(Icons.cancel_rounded,
+                                                  size: 20,
+                                                  color: Colors.red.shade600)
+                                              : _checkingAvailability
+                                                  ? const SizedBox(
+                                                      width: 20,
+                                                      height: 20,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                              strokeWidth: 2),
+                                                    )
+                                                  : null
+                                      : null,
+                                ),
+                                if (_blurredFields.contains('displayName') &&
+                                    _isDisplayNameAvailable ==
+                                        false) ...<Widget>[
+                                  const SizedBox(height: 4),
+                                  Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12),
+                                    child: Row(
+                                      children: <Widget>[
+                                        Icon(
+                                          Icons.close_rounded,
+                                          size: 14,
+                                          color: Colors.red.shade600,
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          'Display name is not available',
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.red.shade700),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                                const SizedBox(height: 12),
+                                CustomTextField(
+                                  controller: _passwordController,
+                                  labelText: 'Password',
+                                  focusNode: _passwordFocus,
+                                  obscureText: true,
+                                  maxLength: 72,
+                                  validator: (String? value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Password is required.';
+                                    }
+                                    if (value.length < 8) {
+                                      return 'Password must be at least 8 characters.';
+                                    }
+                                    return null;
+                                  },
+                                ),
+                                const SizedBox(height: 10),
+                                CustomTextField(
+                                  controller: _confirmPasswordController,
+                                  labelText: 'Confirm password',
+                                  focusNode: _confirmPasswordFocus,
+                                  obscureText: true,
+                                  maxLength: 72,
+                                  errorText: _passwordController
+                                              .text.isNotEmpty &&
                                           _confirmPasswordController
                                               .text.isNotEmpty &&
                                           _passwordController.text !=
-                                              _confirmPasswordController.text)
-                                  ? null
-                                  : _submit,
-                              style: FilledButton.styleFrom(
-                                backgroundColor:
-                                    const Color(0xFFBE185D), // rose-700
-                                foregroundColor:
-                                    const Color(0xFFFCE7F3), // rose-100
-                                padding: const EdgeInsets.all(16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(1),
+                                              _confirmPasswordController.text
+                                      ? 'Passwords do not match'
+                                      : null,
+                                  validator: (String? value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Confirm password is required.';
+                                    }
+                                    if (value.length < 8) {
+                                      return 'Password must be at least 8 characters.';
+                                    }
+                                    return null;
+                                  },
+                                  onChanged: (_) {
+                                    setState(() {});
+                                  },
                                 ),
-                              ),
-                              child: widget.controller.isBusy
-                                  ? const SizedBox(
-                                      width: 18,
-                                      height: 18,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Text('Create Account',
-                                      style: TextStyle(fontSize: 13)),
+                                const SizedBox(height: 12),
+                                FilledButton(
+                                  onPressed: widget.controller.isBusy ||
+                                          (_passwordController
+                                                  .text.isNotEmpty &&
+                                              _confirmPasswordController
+                                                  .text.isNotEmpty &&
+                                              _passwordController.text !=
+                                                  _confirmPasswordController
+                                                      .text)
+                                      ? null
+                                      : _submit,
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor:
+                                        const Color(0xFFBE185D), // rose-700
+                                    foregroundColor:
+                                        const Color(0xFFFCE7F3), // rose-100
+                                    padding: const EdgeInsets.all(16),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(1),
+                                    ),
+                                  ),
+                                  child: widget.controller.isBusy
+                                      ? const SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : const Text('Create Account',
+                                          style: TextStyle(fontSize: 13)),
+                                ),
+                                const SizedBox(height: 12),
+                                TextButton(
+                                  onPressed: () => context.go('/login'),
+                                  style: AuthTextStyles.linkButtonStyle(),
+                                  child: Text(
+                                    'Already have an account? Login',
+                                    style: AuthTextStyles.link(),
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 12),
-                            TextButton(
-                              onPressed: () => context.go('/login'),
-                              style: AuthTextStyles.linkButtonStyle(),
-                              child: Text(
-                                'Already have an account? Login',
-                                style: AuthTextStyles.link(),
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            const LegalLinksFooter(
-                              fontSize: 11,
-                              linkColor: Color(0xFFBE185D),
-                            ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
-                if (error != null || notice != null) ...<Widget>[
-                  const SizedBox(height: 12),
-                  StatusBanner(
-                    text: error ?? notice ?? '',
-                    kind: error != null ? BannerKind.error : BannerKind.success,
-                    key: ValueKey('${error ?? notice}'),
-                    onDismiss: () {
-                      widget.controller.clearMessages();
-                    },
-                  ),
-                ],
-              ],
-            ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: const LegalLinksFooter(
+                  fontSize: 13,
+                  linkColor: Color(0xFFBE185D),
+                ),
+              ),
+            ],
           ),
         );
       },

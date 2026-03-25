@@ -252,7 +252,7 @@ class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
                       const SizedBox(height: 8),
                       Text(
                         validationMsg,
-                        style: const TextStyle(fontSize: 11, color: Color(0xFFDC2626)),
+                        style: const TextStyle(fontSize: 13, color: Color(0xFFDC2626)),
                       ),
                     ],
                   ],

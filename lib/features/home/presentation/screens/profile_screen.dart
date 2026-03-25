@@ -197,7 +197,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     style: TextStyle(fontSize: 13)),
                                 subtitle: const Text(
                                   'Visible in public user lists',
-                                  style: TextStyle(fontSize: 11),
+                                  style: TextStyle(fontSize: 13),
                                 ),
                                 value: UserMode.public,
                                 dense: true,
@@ -208,7 +208,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     style: TextStyle(fontSize: 13)),
                                 subtitle: const Text(
                                   'Only findable by search',
-                                  style: TextStyle(fontSize: 11),
+                                  style: TextStyle(fontSize: 13),
                                 ),
                                 value: UserMode.private,
                                 dense: true,
@@ -233,7 +233,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           style: TextStyle(fontSize: 13)),
                       subtitle: const Text(
                         'Allow others to find you via search',
-                        style: TextStyle(fontSize: 11),
+                        style: TextStyle(fontSize: 13),
                       ),
                       value: _appearInSearches,
                       onChanged: (bool value) {

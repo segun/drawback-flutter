@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 class LegalLinksFooter extends StatelessWidget {
   const LegalLinksFooter({
     super.key,
-    this.fontSize = 11,
+    this.fontSize = 13,
     this.linkColor = const Color(0xFF9F1239),
   });
 
