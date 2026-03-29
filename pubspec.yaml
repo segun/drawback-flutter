@@ -1,7 +1,7 @@
 name: drawback_flutter
 description: DrawBack
 publish_to: 'none'
-version: 1.5.0+24
+version: 1.5.1+26
 
 environment:
   sdk: '>=3.5.0 <4.0.0'

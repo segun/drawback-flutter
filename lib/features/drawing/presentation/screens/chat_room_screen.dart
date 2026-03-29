@@ -74,6 +74,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
   bool _isSavingChat = false;
   bool _isReconnecting = false;
   bool _showReconnectButton = false;
+  bool _hasHandledNotInRoomState = false;
   final Set<String> _submittedReportFingerprints = <String>{};
   Timer? _reconnectButtonTimer;
   Timer? _emoteAnimationTimer;
@@ -85,14 +86,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
     _peerDisplayName = widget.profile.id == widget.chatRequest.fromUserId
         ? widget.chatRequest.toUser.displayName
         : widget.chatRequest.fromUser.displayName;
-    debugPrint('Initializing chat room for ${widget.chatRequest.id} with peer $_peerDisplayName');
-    
+    debugPrint(
+        'Initializing chat room for ${widget.chatRequest.id} with peer $_peerDisplayName');
+
     // Initialize sync animation controller
     _syncAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    
+
     _setupSocketListeners();
     _joinChatRoom();
   }
@@ -261,12 +263,12 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
     }
 
     final DrawPeerLeftPayload payload = DrawPeerLeftPayload.fromJson(data);
-    
+
     // Determine who the peer is
     final String peerId = widget.profile.id == widget.chatRequest.fromUserId
         ? widget.chatRequest.toUserId
         : widget.chatRequest.fromUserId;
-    
+
     // Only process if the user who left is our peer
     if (payload.userId != peerId) {
       return;
@@ -283,6 +285,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
   }
 
   void _onSocketError(dynamic data) {
+    if (_hasHandledNotInRoomState) {
+      return;
+    }
+
     if (_socketService.isConnectivityError(data)) {
       widget.onNotice(SocketService.offlineConnectionMessage, 'error');
       return;
@@ -293,15 +299,21 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
     }
 
     final SocketErrorPayload payload = SocketErrorPayload.fromJson(data);
-    
-    // If we get "Not in a room" error, close the chat
-    if (payload.status == 403 && 
+
+    // If we get "Not in a room" error, treat it like peer left
+    if (payload.status == 403 &&
         payload.message.toLowerCase().contains('not in a room')) {
-      widget.onCloseChat();
-      widget.onNotice('The other user has left the room.', 'error');
+      _hasHandledNotInRoomState = true;
+      setState(() {
+        _peerPresent = false;
+        _localStrokes = <DrawSegmentStroke>[];
+        _remoteStrokes = <DrawSegmentStroke>[];
+      });
+      _startReconnectButtonTimer();
+      widget.onNotice('The other user has left the room.', 'info');
       return;
     }
-    
+
     widget.onNotice(payload.message, 'error');
   }
 
@@ -413,10 +425,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
     required ReportType reportType,
     required String description,
   }) {
-    final String normalizedDescription = description
-        .toLowerCase()
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
+    final String normalizedDescription =
+        description.toLowerCase().replaceAll(RegExp(r'\s+'), ' ').trim();
     return '$reportedUserId:${widget.chatRequestId}:${reportType.value}:$normalizedDescription';
   }
 
@@ -504,8 +514,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
                 reportType: selectedType,
                 description: trimmedDescription,
                 chatRequestId: widget.chatRequestId,
-                sessionContext:
-                    trimmedSessionContext.isEmpty ? null : trimmedSessionContext,
+                sessionContext: trimmedSessionContext.isEmpty
+                    ? null
+                    : trimmedSessionContext,
               );
 
               if (!dialogContext.mounted) {
@@ -520,7 +531,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
               }
 
               setDialogState(() {
-                formError = 'Unable to submit report right now. Please try again.';
+                formError =
+                    'Unable to submit report right now. Please try again.';
                 isSubmitting = false;
               });
             }
@@ -586,7 +598,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
                         },
                         decoration: const InputDecoration(
                           labelText: 'Description',
-                          hintText: 'Describe what happened with specific details.',
+                          hintText:
+                              'Describe what happened with specific details.',
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -601,7 +614,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
                         },
                         decoration: const InputDecoration(
                           labelText: 'Session context (optional)',
-                          hintText: 'Add any useful context for this drawing session.',
+                          hintText:
+                              'Add any useful context for this drawing session.',
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -630,11 +644,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
               ),
               actions: <Widget>[
                 TextButton(
-                  onPressed: isSubmitting ? null : () => Navigator.of(context).pop(),
+                  onPressed:
+                      isSubmitting ? null : () => Navigator.of(context).pop(),
                   child: const Text('Cancel'),
                 ),
                 FilledButton(
-                  onPressed: isSubmitting ? null : () => unawaited(handleSubmit()),
+                  onPressed:
+                      isSubmitting ? null : () => unawaited(handleSubmit()),
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFFE11D48),
                   ),
@@ -659,7 +675,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
       return;
     }
 
-    _socketService.emitDrawEmote(widget.chatRequestId, emoji, widget.profile.id);
+    _socketService.emitDrawEmote(
+        widget.chatRequestId, emoji, widget.profile.id);
 
     // Show locally
     final AnimatedEmote emote = AnimatedEmote(
@@ -751,7 +768,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
             ),
             FilledButton(
               onPressed: () {
-                final String hex = '#${selectedColor.toARGB32().toRadixString(16).substring(2).toUpperCase().padLeft(6, '0')}';
+                final String hex =
+                    '#${selectedColor.toARGB32().toRadixString(16).substring(2).toUpperCase().padLeft(6, '0')}';
                 Navigator.of(context).pop(hex.toLowerCase());
               },
               style: FilledButton.styleFrom(
@@ -832,7 +850,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
               ),
               child: SingleChildScrollView(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -861,9 +880,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
                                 label: const Text('Pen'),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: const Color(0xFF9F1239),
-                                  backgroundColor: _drawStyle == DrawStrokeStyle.normal
-                                      ? const Color(0xFFFBCFE8)
-                                      : const Color(0xFFFFF1F2),
+                                  backgroundColor:
+                                      _drawStyle == DrawStrokeStyle.normal
+                                          ? const Color(0xFFFBCFE8)
+                                          : const Color(0xFFFFF1F2),
                                   side: BorderSide(
                                     color: _drawStyle == DrawStrokeStyle.normal
                                         ? const Color(0xFFE11D48)
@@ -888,13 +908,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
                                     }
                                   });
                                 },
-                                icon: const Icon(Icons.brush_outlined, size: 16),
+                                icon:
+                                    const Icon(Icons.brush_outlined, size: 16),
                                 label: const Text('Brush'),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: const Color(0xFF9F1239),
-                                  backgroundColor: _drawStyle == DrawStrokeStyle.brush
-                                      ? const Color(0xFFFBCFE8)
-                                      : const Color(0xFFFFF1F2),
+                                  backgroundColor:
+                                      _drawStyle == DrawStrokeStyle.brush
+                                          ? const Color(0xFFFBCFE8)
+                                          : const Color(0xFFFFF1F2),
                                   side: BorderSide(
                                     color: _drawStyle == DrawStrokeStyle.brush
                                         ? const Color(0xFFE11D48)
@@ -964,7 +986,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
                                     _drawColor = 'eraser';
                                   });
                                 },
-                                icon: const Icon(Icons.auto_fix_high_outlined, size: 16),
+                                icon: const Icon(Icons.auto_fix_high_outlined,
+                                    size: 16),
                                 label: const Text('Use eraser'),
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: const Color(0xFF166534),
@@ -1031,13 +1054,15 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
                         isOpen: _customColorAccordionOpen,
                         onToggle: () {
                           updateTools(() {
-                            _customColorAccordionOpen = !_customColorAccordionOpen;
+                            _customColorAccordionOpen =
+                                !_customColorAccordionOpen;
                           });
                         },
                         child: InkWell(
                           borderRadius: BorderRadius.circular(8),
                           onTap: () async {
-                            final String? selectedColor = await _showColorPaletteDialog();
+                            final String? selectedColor =
+                                await _showColorPaletteDialog();
                             if (!mounted || selectedColor == null) {
                               return;
                             }
@@ -1046,11 +1071,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
                             });
                           },
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 8),
                             decoration: BoxDecoration(
                               color: const Color(0xFFFFF1F2),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0xFFFDA4AF)),
+                              border:
+                                  Border.all(color: const Color(0xFFFDA4AF)),
                             ),
                             child: Row(
                               children: <Widget>[
@@ -1114,7 +1141,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
             children: <Widget>[
               Icon(
                 _peerPresent ? Icons.check_circle : Icons.pending,
-                color: _peerPresent ? const Color(0xFF059669) : const Color(0xFF9F1239),
+                color: _peerPresent
+                    ? const Color(0xFF059669)
+                    : const Color(0xFF9F1239),
                 size: 16,
               ),
               const SizedBox(width: 8),
@@ -1125,7 +1154,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: _peerPresent ? const Color(0xFF059669) : const Color(0xFF9F1239),
+                  color: _peerPresent
+                      ? const Color(0xFF059669)
+                      : const Color(0xFF9F1239),
                 ),
               ),
             ],
@@ -1197,7 +1228,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
 
   void _startEmoteAnimationTimer() {
     _emoteAnimationTimer?.cancel();
-    _emoteAnimationTimer = Timer.periodic(const Duration(milliseconds: 16), (_) {
+    _emoteAnimationTimer =
+        Timer.periodic(const Duration(milliseconds: 16), (_) {
       if (_localEmotes.isEmpty && _remoteEmotes.isEmpty) {
         _emoteAnimationTimer?.cancel();
         _emoteAnimationTimer = null;
@@ -1230,13 +1262,17 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
 
               return Stack(
                 children: emotes.map((AnimatedEmote emote) {
-                  final Duration elapsed = DateTime.now().difference(emote.startTime);
-                  final double progress = (elapsed.inMilliseconds / 4200).clamp(0.0, 1.0);
+                  final Duration elapsed =
+                      DateTime.now().difference(emote.startTime);
+                  final double progress =
+                      (elapsed.inMilliseconds / 4200).clamp(0.0, 1.0);
 
-                  final double opacity = progress < 0.8 ? 1.0 : (1.0 - (progress - 0.8) / 0.2);
+                  final double opacity =
+                      progress < 0.8 ? 1.0 : (1.0 - (progress - 0.8) / 0.2);
                   final double offsetY = (1.0 - progress) * 80.0;
-                  final double left = ((emote.x.clamp(10.0, 85.0) / 100.0) * canvasWidth)
-                      .clamp(10.0, maxLeft);
+                  final double left =
+                      ((emote.x.clamp(10.0, 85.0) / 100.0) * canvasWidth)
+                          .clamp(10.0, maxLeft);
 
                   return Positioned(
                     left: left,
@@ -1303,10 +1339,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
             _buildQuickActionButton(
               icon: Icons.sync,
               backgroundColor: const Color(0xFFF59E0B),
-              onPressed: _isReconnecting ? null : () => unawaited(_handleReconnectToRoom()),
+              onPressed: _isReconnecting
+                  ? null
+                  : () => unawaited(_handleReconnectToRoom()),
               isLoading: _isReconnecting,
             ),
-          if (!_peerPresent && (_showReconnectButton || _isReconnecting)) const SizedBox(width: 8),
+          if (!_peerPresent && (_showReconnectButton || _isReconnecting))
+            const SizedBox(width: 8),
           _buildQuickActionButton(
             icon: Icons.emoji_emotions_outlined,
             backgroundColor: const Color(0xFFFBCFE8),
@@ -1339,8 +1378,9 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
     Color iconColor = Colors.white,
     bool isLoading = false,
   }) {
-    final Color resolvedBackgroundColor =
-        onPressed == null ? backgroundColor.withValues(alpha: 0.45) : backgroundColor;
+    final Color resolvedBackgroundColor = onPressed == null
+        ? backgroundColor.withValues(alpha: 0.45)
+        : backgroundColor;
 
     return SizedBox(
       width: 34,
@@ -1370,7 +1410,8 @@ class _ChatRoomScreenState extends State<ChatRoomScreen>
     showDialog<void>(
       context: context,
       builder: (BuildContext context) {
-        final double dialogWidth = math.min(MediaQuery.of(context).size.width * 0.86, 360);
+        final double dialogWidth =
+            math.min(MediaQuery.of(context).size.width * 0.86, 360);
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),

@@ -53,6 +53,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   DashboardView _currentView = DashboardView.chat;
   bool _isSidebarOpen = false;
+  int _lastSidebarOpenRequestNonce = 0;
   bool _hasHandledPasskeyPrompt = false;
   String? _passkeyNotice;
   String? _passkeyError;
@@ -277,6 +278,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return ListenableBuilder(
       listenable: widget.controller,
       builder: (BuildContext context, _) {
+        final int sidebarOpenRequestNonce =
+            widget.controller.sidebarOpenRequestNonce;
+        if (sidebarOpenRequestNonce != _lastSidebarOpenRequestNonce) {
+          _lastSidebarOpenRequestNonce = sidebarOpenRequestNonce;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) {
+              return;
+            }
+
+            if (MediaQuery.of(context).size.width < 1024 && !_isSidebarOpen) {
+              setState(() {
+                _isSidebarOpen = true;
+              });
+            }
+          });
+        }
+
         final String? error = widget.controller.error;
         final String? notice = widget.controller.notice;
         final String? bannerError = _passkeyError ?? error;

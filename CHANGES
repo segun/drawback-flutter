@@ -1,0 +1,7 @@
+1.5.1
+======
+1. Fix error where if user stays too long on an ad, reward is not granted.
+2. Removed opened request from notification
+3. Open the sidebar automatically when request from notification is opened.
+4. Fix bug where the error "The other user has left the room" shows indefinitely. 
+5. Do not close the chat window when the error shows.

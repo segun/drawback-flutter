@@ -30,6 +30,7 @@ class HomeController extends ChangeNotifier {
   bool _isBusy = false;
   bool _isLoadingDashboard = false;
   bool _isLoadingDashboardInProgress = false;
+  int _sidebarOpenRequestNonce = 0;
   String? _notice;
   String? _error;
 
@@ -65,6 +66,7 @@ class HomeController extends ChangeNotifier {
   // Getters
   bool get isBusy => _isBusy;
   bool get isLoadingDashboard => _isLoadingDashboard;
+  int get sidebarOpenRequestNonce => _sidebarOpenRequestNonce;
   String? get notice => _notice;
   String? get error => _error;
 
@@ -246,7 +248,7 @@ class HomeController extends ChangeNotifier {
     }
 
     _pushNotificationService?.markRequestAsHandled(requestId);
-    _notice = 'Opened request from notification.';
+    _sidebarOpenRequestNonce++;
     notifyListeners();
     await loadDashboardData(showLoading: false);
   }

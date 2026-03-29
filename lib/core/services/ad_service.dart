@@ -171,7 +171,7 @@ class _AdmobRewardedAdProvider implements RewardedAdProviderClient {
         _consentService = consentService;
 
   static const Duration _loadWaitTimeout = Duration(seconds: 15);
-  static const Duration _showFlowTimeout = Duration(seconds: 90);
+  static const Duration _showFlowTimeout = Duration(minutes: 10);
 
   final String _rewardedAdUnitId;
   final AdConsentService _consentService;
@@ -357,7 +357,7 @@ class _AdmobRewardedAdProvider implements RewardedAdProviderClient {
       return await showCompleter.future.timeout(_showFlowTimeout);
     } on TimeoutException {
       debugPrint('AdMob rewarded ad show timed out after $_showFlowTimeout');
-      return false;
+      return rewarded;
     } catch (e) {
       debugPrint('AdMob rewarded ad show failed: $e');
       return false;
@@ -393,7 +393,7 @@ class _YandexRewardedAdProvider implements RewardedAdProviderClient {
   }) : _rewardedAdUnitId = rewardedAdUnitId;
 
   static const Duration _loadWaitTimeout = Duration(seconds: 15);
-  static const Duration _showFlowTimeout = Duration(seconds: 90);
+  static const Duration _showFlowTimeout = Duration(minutes: 10);
 
   final String _rewardedAdUnitId;
 
@@ -571,7 +571,7 @@ class _YandexRewardedAdProvider implements RewardedAdProviderClient {
       return await showCompleter.future.timeout(_showFlowTimeout);
     } on TimeoutException {
       debugPrint('Yandex rewarded ad show timed out after $_showFlowTimeout');
-      return false;
+      return rewarded;
     } catch (error) {
       debugPrint('Yandex rewarded ad show failed: $error');
       return false;

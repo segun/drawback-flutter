@@ -259,9 +259,7 @@ class DiscoveryAccessManager extends ChangeNotifier {
     try {
       final bool earned;
       try {
-        earned = await _adService
-            .showRewardedAdForAccess()
-            .timeout(const Duration(seconds: 120));
+        earned = await _adService.showRewardedAdForAccess();
       } catch (e) {
         debugPrint('Ad failed with platform error: $e');
         _error = _mapAdError(e);
