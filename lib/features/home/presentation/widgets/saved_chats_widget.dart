@@ -4,8 +4,8 @@ import '../../domain/home_models.dart';
 import '../home_controller.dart';
 import 'refresh_icon_button.dart';
 
-/// Saved chats widget for the sidebar
-class SavedChatsWidget extends StatelessWidget {
+/// Saved drawings widget for the sidebar
+class SavedChatsWidget extends StatefulWidget {
   const SavedChatsWidget({
     required this.controller,
     required this.onChatOpen,
@@ -16,8 +16,15 @@ class SavedChatsWidget extends StatelessWidget {
   final void Function(String chatRequestId) onChatOpen;
 
   @override
+  State<SavedChatsWidget> createState() => _SavedChatsWidgetState();
+}
+
+class _SavedChatsWidgetState extends State<SavedChatsWidget> {
+  bool _isCollapsed = true;
+
+  @override
   Widget build(BuildContext context) {
-    final List<SavedChat> savedChats = controller.savedChats;
+    final List<SavedChat> savedChats = widget.controller.savedChats;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -26,33 +33,66 @@ class SavedChatsWidget extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             Expanded(
-              child: Text(
-                'Saved Chats',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: const Color(0xFF9F1239),
-                      fontWeight: FontWeight.w600,
+              child: GestureDetector(
+                onTap: () => setState(() => _isCollapsed = !_isCollapsed),
+                behavior: HitTestBehavior.opaque,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'Saved Drawings',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: const Color(0xFF9F1239),
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  if (_isCollapsed && savedChats.isNotEmpty)
+                    Transform.translate(
+                      offset: const Offset(3, -4),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFBE123C),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '${savedChats.length}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
                     ),
+                  ],
+                ),
               ),
             ),
             RefreshIconButton(
-              onRefresh: () => controller.loadDashboardData(showLoading: false),
-              tooltip: 'Refresh saved chats',
+              onRefresh: () => widget.controller.loadDashboardData(showLoading: false),
+              tooltip: 'Refresh saved drawings',
+            ),
+            IconButton(
+              icon: Icon(
+                _isCollapsed ? Icons.expand_more : Icons.expand_less,
+                size: 18,
+                color: const Color(0xFF9F1239),
+              ),
+              onPressed: () => setState(() => _isCollapsed = !_isCollapsed),
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(),
+              visualDensity: VisualDensity.compact,
+              tooltip: _isCollapsed ? 'Expand' : 'Collapse',
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        if (savedChats.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text(
-              'No saved chats.',
-              style: TextStyle(fontSize: 12, color: Color(0xFF9F1239)),
-            ),
-          )
-        else
+        if (!_isCollapsed) ...<Widget>[
+          const SizedBox(height: 8),
           ...savedChats.map((SavedChat saved) {
             final ChatRequest chat = saved.chatRequest;
-            final UserProfile? other = controller.getOtherUser(chat);
+            final UserProfile? other = widget.controller.getOtherUser(chat);
             if (other == null) {
               return const SizedBox.shrink();
             }
@@ -78,9 +118,20 @@ class SavedChatsWidget extends StatelessWidget {
                       context: context,
                       builder: (BuildContext context) {
                         return AlertDialog(
-                          title: const Text('Delete Saved Chat'),
-                          content: Text(
-                            'Are you sure you want to delete your saved chat with ${other.displayName}?',
+                          title: const Text('Delete Saved Drawing'),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                'Are you sure you want to delete your saved Drawing with ${other.displayName}?',
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'If you delete your Drawing with ${other.displayName}, you can still continue to Draw with them by selecting their name from Recent Drawings',
+                                style: const TextStyle(color: Color(0xFF6B7280)),
+                              ),
+                            ],
                           ),
                           actions: <Widget>[
                             TextButton(
@@ -104,17 +155,18 @@ class SavedChatsWidget extends StatelessWidget {
                     );
 
                     if (confirmed == true) {
-                      await controller.removeSavedChat(saved.id);
+                      await widget.controller.removeSavedChat(saved.id);
                     }
                   },
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   visualDensity: VisualDensity.compact,
                 ),
-                onTap: () => onChatOpen(chat.id),
+                onTap: () => widget.onChatOpen(chat.id),
               ),
             );
           }),
+        ],
       ],
     );
   }

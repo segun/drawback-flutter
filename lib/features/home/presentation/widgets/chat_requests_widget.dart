@@ -5,7 +5,7 @@ import '../../domain/home_models.dart';
 import '../home_controller.dart';
 import 'refresh_icon_button.dart';
 
-/// Incoming chat requests widget for the sidebar
+/// Incoming draw requests widget for the sidebar
 class ChatRequestsWidget extends StatefulWidget {
   const ChatRequestsWidget({
     required this.controller,
@@ -19,6 +19,7 @@ class ChatRequestsWidget extends StatefulWidget {
 }
 
 class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
+  bool _isCollapsed = true;
   bool _showNewRequestForm = false;
   final TextEditingController _displayNameController = TextEditingController(text: '@');
   bool _isSubmitting = false;
@@ -70,7 +71,7 @@ class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
 
     final String? currentDisplayName = widget.controller.profile?.displayName.toLowerCase();
     if (currentDisplayName != null && displayName == currentDisplayName) {
-      return 'You cannot send a chat request to yourself.';
+      return 'You cannot send a Draw request to yourself.';
     }
 
     final bool alreadyConnected = widget.controller.recentChats.any((ChatRequest chat) {
@@ -130,12 +131,41 @@ class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 Expanded(
-                  child: Text(
-                    'Chat Requests',
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: const Color(0xFF9F1239),
-                          fontWeight: FontWeight.w600,
+                  child: GestureDetector(
+                    onTap: () => setState(() => _isCollapsed = !_isCollapsed),
+                    behavior: HitTestBehavior.opaque,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          'Draw Requests',
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              color: const Color(0xFF9F1239),
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                      if (_isCollapsed && allRequests.isNotEmpty)
+                        Transform.translate(
+                          offset: const Offset(3, -4),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFBE123C),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '${allRequests.length}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
                         ),
+                      ],
+                    ),
                   ),
                 ),
                 Row(
@@ -143,7 +173,7 @@ class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
                   children: <Widget>[
                     RefreshIconButton(
                       onRefresh: () => widget.controller.loadDashboardData(showLoading: false),
-                      tooltip: 'Refresh chat requests',
+                      tooltip: 'Refresh draw requests',
                     ),
                     const SizedBox(width: 8),
                     IconButton(
@@ -165,12 +195,26 @@ class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
                           side: const BorderSide(color: Color(0xFFFDA4AF)),
                         ),
                       ),
-                      tooltip: 'Send a new chat request',
+                      tooltip: 'Send a new draw request',
+                    ),
+                    const SizedBox(width: 4),
+                    IconButton(
+                      icon: Icon(
+                        _isCollapsed ? Icons.expand_more : Icons.expand_less,
+                        size: 18,
+                        color: const Color(0xFF9F1239),
+                      ),
+                      onPressed: () => setState(() => _isCollapsed = !_isCollapsed),
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(),
+                      visualDensity: VisualDensity.compact,
+                      tooltip: _isCollapsed ? 'Expand' : 'Collapse',
                     ),
                   ],
                 ),
               ],
             ),
+            if (!_isCollapsed) ...<Widget>[
             const SizedBox(height: 8),
             
             // New request form
@@ -244,7 +288,7 @@ class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
                               borderRadius: BorderRadius.circular(1),
                             ),
                           ),
-                          tooltip: 'Send chat request',
+                          tooltip: 'Send draw request',
                         ),
                       ],
                     ),
@@ -260,17 +304,8 @@ class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
               ),
             ],
             
-            // Chat requests list (both incoming and outgoing)
-            if (allRequests.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(8.0),
-                child: Text(
-                  'No chat requests.',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF9F1239)),
-                ),
-              )
-            else
-              ...allRequests.map((ChatRequest request) {
+            // Draw requests list (both incoming and outgoing)
+            ...allRequests.map((ChatRequest request) {
                 final UserProfile? other = widget.controller.getOtherUser(request);
                 if (other == null) {
                   return const SizedBox.shrink();
@@ -369,6 +404,7 @@ class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
                   ),
                 );
               }),
+            ],
           ],
         );
       },

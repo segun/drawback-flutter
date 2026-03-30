@@ -5,7 +5,7 @@ import '../home_controller.dart';
 import 'refresh_icon_button.dart';
 
 /// Blocked users widget for the sidebar
-class BlockedUsersWidget extends StatelessWidget {
+class BlockedUsersWidget extends StatefulWidget {
   const BlockedUsersWidget({
     required this.controller,
     super.key,
@@ -14,8 +14,15 @@ class BlockedUsersWidget extends StatelessWidget {
   final HomeController controller;
 
   @override
+  State<BlockedUsersWidget> createState() => _BlockedUsersWidgetState();
+}
+
+class _BlockedUsersWidgetState extends State<BlockedUsersWidget> {
+  bool _isCollapsed = true;
+
+  @override
   Widget build(BuildContext context) {
-    final List<UserProfile> blockedUsers = controller.blockedUsers;
+    final List<UserProfile> blockedUsers = widget.controller.blockedUsers;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -24,30 +31,63 @@ class BlockedUsersWidget extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
             Expanded(
-              child: Text(
-                'Blocked Users',
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: const Color(0xFF9F1239),
-                      fontWeight: FontWeight.w600,
+              child: GestureDetector(
+                onTap: () => setState(() => _isCollapsed = !_isCollapsed),
+                behavior: HitTestBehavior.opaque,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      'Blocked Users',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: const Color(0xFF9F1239),
+                          fontWeight: FontWeight.w600,
+                        ),
+                  ),
+                  if (_isCollapsed && blockedUsers.isNotEmpty)
+                    Transform.translate(
+                      offset: const Offset(3, -4),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFBE123C),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '${blockedUsers.length}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
                     ),
+                  ],
+                ),
               ),
             ),
             RefreshIconButton(
-              onRefresh: () => controller.loadDashboardData(showLoading: false),
+              onRefresh: () => widget.controller.loadDashboardData(showLoading: false),
               tooltip: 'Refresh blocked users',
+            ),
+            IconButton(
+              icon: Icon(
+                _isCollapsed ? Icons.expand_more : Icons.expand_less,
+                size: 18,
+                color: const Color(0xFF9F1239),
+              ),
+              onPressed: () => setState(() => _isCollapsed = !_isCollapsed),
+              padding: const EdgeInsets.all(4),
+              constraints: const BoxConstraints(),
+              visualDensity: VisualDensity.compact,
+              tooltip: _isCollapsed ? 'Expand' : 'Collapse',
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        if (blockedUsers.isEmpty)
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text(
-              'No blocked users.',
-              style: TextStyle(fontSize: 12, color: Color(0xFF9F1239)),
-            ),
-          )
-        else
+        if (!_isCollapsed) ...<Widget>[
+          const SizedBox(height: 8),
           ...blockedUsers.map((UserProfile user) {
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
@@ -71,8 +111,19 @@ class BlockedUsersWidget extends StatelessWidget {
                       builder: (BuildContext context) {
                         return AlertDialog(
                           title: const Text('Unblock User'),
-                          content: Text(
-                            'Are you sure you want to unblock ${user.displayName}?',
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Text(
+                                'Are you sure you want to unblock ${user.displayName}?',
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'If you unblock ${user.displayName}, they will be able to send you Draw requests and Draw with you',
+                                style: const TextStyle(color: Color(0xFF6B7280)),
+                              ),
+                            ],
                           ),
                           actions: <Widget>[
                             TextButton(
@@ -96,7 +147,7 @@ class BlockedUsersWidget extends StatelessWidget {
                     );
 
                     if (confirmed == true) {
-                      await controller.unblockUser(user.id);
+                      await widget.controller.unblockUser(user.id);
                     }
                   },
                   padding: EdgeInsets.zero,
@@ -107,6 +158,7 @@ class BlockedUsersWidget extends StatelessWidget {
               ),
             );
           }),
+        ],
       ],
     );
   }
