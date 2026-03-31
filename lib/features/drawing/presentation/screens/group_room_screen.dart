@@ -38,7 +38,7 @@ class GroupRoomScreen extends StatefulWidget {
 }
 
 class _GroupRoomScreenState extends State<GroupRoomScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   final SocketService _socketService = SocketService();
   final ScrollController _emotePickerScrollController = ScrollController();
 
@@ -83,6 +83,11 @@ class _GroupRoomScreenState extends State<GroupRoomScreen>
   bool _customColorAccordionOpen = false;
 
   late AnimationController _syncAnimationController;
+  late AnimationController _chevronAnimationController;
+  late Animation<double> _chevronAnimation;
+  final ScrollController _gridScrollController = ScrollController();
+  bool _showScrollDown = false;
+  bool _showScrollUp = false;
   Timer? _emoteAnimationTimer;
 
   @override
@@ -92,6 +97,15 @@ class _GroupRoomScreenState extends State<GroupRoomScreen>
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
+    _chevronAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 700),
+      vsync: this,
+    )..repeat(reverse: true);
+    _chevronAnimation = CurvedAnimation(
+      parent: _chevronAnimationController,
+      curve: Curves.easeInOut,
+    );
+    _gridScrollController.addListener(_onGridScroll);
     _setupSocketListeners();
     _joinGroupRoom();
   }
@@ -102,6 +116,8 @@ class _GroupRoomScreenState extends State<GroupRoomScreen>
     _reconnectButtonTimer?.cancel();
     _emotePickerScrollController.dispose();
     _syncAnimationController.dispose();
+    _chevronAnimationController.dispose();
+    _gridScrollController.dispose();
     _removeSocketListeners();
     super.dispose();
   }
@@ -169,6 +185,7 @@ class _GroupRoomScreenState extends State<GroupRoomScreen>
     }
     widget.onNotice('Joined group room', 'success');
     _refreshIfMembersStale(peers);
+    _scheduleScrollCheck();
   }
 
   void _onGroupMemberJoined(dynamic data) {
@@ -182,6 +199,7 @@ class _GroupRoomScreenState extends State<GroupRoomScreen>
     });
     _refreshIfMembersStale(<String>{payload.userId});
     _reconnectButtonTimer?.cancel();
+    _scheduleScrollCheck();
   }
 
   void _onGroupMemberLeft(dynamic data) {
@@ -199,6 +217,7 @@ class _GroupRoomScreenState extends State<GroupRoomScreen>
     if (_activePeerIds.isEmpty) {
       _startReconnectButtonTimer();
     }
+    _scheduleScrollCheck();
   }
 
   void _onDrawPeerLeft(dynamic data) {
@@ -387,6 +406,25 @@ class _GroupRoomScreenState extends State<GroupRoomScreen>
     if (peerIds.any((String id) => !knownIds.contains(id))) {
       unawaited(widget.onRefreshGroupChat());
     }
+  }
+
+  void _onGridScroll() {
+    if (!_gridScrollController.hasClients) return;
+    final ScrollPosition pos = _gridScrollController.position;
+    final bool canScrollDown = pos.pixels < pos.maxScrollExtent - 4;
+    final bool canScrollUp = pos.pixels > 4;
+    if (canScrollDown != _showScrollDown || canScrollUp != _showScrollUp) {
+      setState(() {
+        _showScrollDown = canScrollDown;
+        _showScrollUp = canScrollUp;
+      });
+    }
+  }
+
+  void _scheduleScrollCheck() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _onGridScroll();
+    });
   }
 
   // ─── Local drawing ─────────────────────────────────────────────────────────
@@ -1022,12 +1060,15 @@ class _GroupRoomScreenState extends State<GroupRoomScreen>
       );
     }
 
-    return LayoutBuilder(
+    return Stack(
+      children: <Widget>[
+        LayoutBuilder(
       builder: (BuildContext context, BoxConstraints constraints) {
         // 2×2 grid: each tile is half the available height
         final double tileHeight = constraints.maxHeight / 2;
 
         return GridView.builder(
+          controller: _gridScrollController,
           physics: const ClampingScrollPhysics(),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
@@ -1105,6 +1146,49 @@ class _GroupRoomScreenState extends State<GroupRoomScreen>
           },
         );
       },
+    ),
+        if (_showScrollUp)
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: _buildScrollChevron(up: true),
+          ),
+        if (_showScrollDown)
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: _buildScrollChevron(up: false),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildScrollChevron({required bool up}) {
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: _chevronAnimation,
+        builder: (BuildContext context, Widget? child) {
+          final double offsetY = up
+              ? -(4.0 * _chevronAnimation.value)
+              : 4.0 * _chevronAnimation.value;
+          return Transform.translate(
+            offset: Offset(0, offsetY),
+            child: child,
+          );
+        },
+        child: Container(
+          height: 28,
+          child: Center(
+            child: Icon(
+              up ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+              color: const Color(0xFF9F1239).withValues(alpha: 0.99),
+              size: 32,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -1126,7 +1210,10 @@ class _GroupRoomScreenState extends State<GroupRoomScreen>
               IconButton(
                 icon: const Icon(Icons.grid_view,
                     size: 20, color: Color(0xFF9F1239)),
-                onPressed: () => setState(() => _focusedPeerId = null),
+                onPressed: () {
+                  setState(() => _focusedPeerId = null);
+                  _scheduleScrollCheck();
+                },
                 tooltip: 'Back to all canvases',
                 padding: const EdgeInsets.all(4),
                 constraints: const BoxConstraints(),
