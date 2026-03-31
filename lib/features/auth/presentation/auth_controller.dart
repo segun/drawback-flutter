@@ -392,17 +392,6 @@ class AuthController extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
-  Future<bool> resetPassword(
-      {required String token, required String password}) async {
-    return _runGuarded<bool>(() async {
-      _clearMessages();
-      final ResetPasswordResult result =
-          await _authApi.resetPassword(token: token, password: password);
-      _notice = result.message;
-      return result.status == 'success';
-    }, fallback: false);
-  }
-
   Future<bool> checkDisplayNameAvailability(String name) async {
     return _runGuarded<bool>(
       () => _authApi.checkDisplayNameAvailability(name),

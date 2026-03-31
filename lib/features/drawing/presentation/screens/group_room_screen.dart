@@ -1178,7 +1178,7 @@ class _GroupRoomScreenState extends State<GroupRoomScreen>
             child: child,
           );
         },
-        child: Container(
+        child: SizedBox(
           height: 28,
           child: Center(
             child: Icon(

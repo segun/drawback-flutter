@@ -1,5 +1,7 @@
 1.6.0
 Add group chat feature
+Remove deeplinking as it's not used
+Remove reset password feature as it's not used and adds complexity to the codebase
 
 1.5.2
 1. Dialog extra text + "Chat → Draw" renames in titles/content

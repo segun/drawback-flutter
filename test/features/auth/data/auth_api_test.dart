@@ -362,53 +362,6 @@ void main() {
       );
     });
   });
-
-  group('AuthApi.resetPassword', () {
-    test('should return ResetPasswordResult on successful password reset', () async {
-      // Arrange
-      const token = 'reset-token-123';
-      const password = 'newpassword123';
-
-      fakeApiClient.postJsonFn = (path, {body, headers}) async {
-        return <String, dynamic>{
-          'status': 'success',
-          'message': 'Password reset successfully.',
-          'email': 'user@example.com',
-        };
-      };
-
-      // Act
-      final result = await authApi.resetPassword(
-        token: token,
-        password: password,
-      );
-
-      // Assert
-      expect(result.status, 'success');
-      expect(result.message, 'Password reset successfully.');
-      expect(result.email, 'user@example.com');
-    });
-
-    test('should handle null email in response', () async {
-      // Arrange
-      fakeApiClient.postJsonFn = (path, {body, headers}) async {
-        return <String, dynamic>{
-          'status': 'success',
-          'message': 'Done',
-        };
-      };
-
-      // Act
-      final result = await authApi.resetPassword(
-        token: 'token',
-        password: 'password',
-      );
-
-      // Assert
-      expect(result.email, null);
-    });
-  });
-
   group('AuthApi.me', () {
     test('should return AuthUser with valid token', () async {
       // Arrange

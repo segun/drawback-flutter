@@ -87,15 +87,6 @@ class FakeAuthApi implements AuthApi {
   }
 
   @override
-  Future<ResetPasswordResult> resetPassword({
-    required String token,
-    required String password,
-  }) async {
-    return ResetPasswordResult(
-        status: 'success', message: 'Password reset successfully');
-  }
-
-  @override
   Future<AuthUser> me(String accessToken) async {
     return AuthUser(
       id: 'user123',

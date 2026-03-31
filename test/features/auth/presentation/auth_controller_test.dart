@@ -128,16 +128,6 @@ class FakeAuthApi implements AuthApi {
   }
 
   @override
-  Future<ResetPasswordResult> resetPassword({
-    required String token,
-    required String password,
-  }) async {
-    if (resetPasswordException != null) throw resetPasswordException!;
-    return resetPasswordResult ??
-        ResetPasswordResult(status: 'success', message: 'Done');
-  }
-
-  @override
   Future<AuthUser> me(String accessToken) async {
     if (meException != null) throw meException!;
     return meResult ??
@@ -411,53 +401,6 @@ void main() {
 
       expect(result, false);
       expect(authController.error, 'User not found');
-    });
-  });
-
-  group('AuthController.resetPassword', () {
-    test('should return true when status is success', () async {
-      const token = 'reset-token-123';
-      const password = 'newpassword123';
-
-      fakeAuthApi.resetPasswordResult = ResetPasswordResult(
-        status: 'success',
-        message: 'Password reset successfully.',
-      );
-
-      final result = await authController.resetPassword(
-        token: token,
-        password: password,
-      );
-
-      expect(result, true);
-      expect(authController.notice, 'Password reset successfully.');
-    });
-
-    test('should return false when status is not success', () async {
-      fakeAuthApi.resetPasswordResult = ResetPasswordResult(
-        status: 'failed',
-        message: 'Invalid or expired token.',
-      );
-
-      final result = await authController.resetPassword(
-        token: 'expired-token',
-        password: 'newpassword',
-      );
-
-      expect(result, false);
-      expect(authController.notice, 'Invalid or expired token.');
-    });
-
-    test('should return false and set error on exception', () async {
-      fakeAuthApi.resetPasswordException = ApiException(500, 'Server error');
-
-      final result = await authController.resetPassword(
-        token: 'token',
-        password: 'password',
-      );
-
-      expect(result, false);
-      expect(authController.error, 'Server error');
     });
   });
 

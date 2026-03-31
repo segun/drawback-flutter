@@ -224,37 +224,6 @@ class MockAuthApi implements AuthApi {
     return 'If that email exists and is unactivated, a new confirmation link has been sent.';
   }
 
-  @override
-  Future<ResetPasswordResult> resetPassword({
-    required String token,
-    required String password,
-  }) async {
-    if (shouldFailNextRequest) {
-      shouldFailNextRequest = false;
-      throw ApiException(
-        nextFailureStatusCode ?? 400,
-        nextFailureMessage ?? 'Reset failed',
-      );
-    }
-
-    if (!_resetTokens.containsKey(token)) {
-      return ResetPasswordResult(
-        status: 'error',
-        message: 'Invalid or expired reset token',
-      );
-    }
-
-    final email = _resetTokens[token]!;
-    _registeredUsers[email] = password;
-    _resetTokens.remove(token);
-
-    return ResetPasswordResult(
-      status: 'success',
-      message:
-          'Password reset successful. You can now log in with your new password.',
-    );
-  }
-
   /// Helper method to pre-register a user for testing
   void preRegisterUser(String email, String password, String displayName) {
     _registeredUsers[email] = password;

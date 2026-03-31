@@ -147,20 +147,6 @@ class AuthApi {
     return response['message'] as String;
   }
 
-  Future<ResetPasswordResult> resetPassword({
-    required String token,
-    required String password,
-  }) async {
-    final Map<String, dynamic> response = await _client.postJson(
-      '/auth/reset-password',
-      body: <String, dynamic>{
-        'token': token,
-        'password': password,
-      },
-    );
-    return ResetPasswordResult.fromJson(response);
-  }
-
   Future<AuthUser> me(String accessToken) async {
     final Map<String, dynamic> response = await _client.getJson(
       '/users/me',

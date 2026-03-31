@@ -44,30 +44,6 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
-            <!-- Deep linking for custom scheme: drawback:// -->
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="drawback"
-                    android:host="reset-password" />
-                <data
-                    android:scheme="drawback"
-                    android:host="confirm" />
-            </intent-filter>
-
-            <!-- Deep linking for HTTPS (if using Universal Links fallback) -->
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data
-                    android:scheme="https"
-                    android:host="drawback.chat"
-                    android:pathPrefix="/reset-password" />
-            </intent-filter>
         </activity>
     </application>
     <queries>

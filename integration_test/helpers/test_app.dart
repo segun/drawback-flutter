@@ -6,7 +6,6 @@ import 'package:drawback_flutter/features/auth/presentation/screens/login_screen
 import 'package:drawback_flutter/features/auth/presentation/screens/main_screen.dart';
 import 'package:drawback_flutter/features/auth/presentation/screens/privacy_screen.dart';
 import 'package:drawback_flutter/features/auth/presentation/screens/register_screen.dart';
-import 'package:drawback_flutter/features/auth/presentation/screens/reset_password_screen.dart';
 
 import 'mock_auth_api.dart';
 import 'mock_token_store.dart';
@@ -67,14 +66,6 @@ class _TestAppState extends State<TestApp> {
           builder: (BuildContext context, GoRouterState state) =>
               RegisterScreen(
             controller: _authController,
-          ),
-        ),
-        GoRoute(
-          path: '/reset-password',
-          builder: (BuildContext context, GoRouterState state) =>
-              ResetPasswordScreen(
-            controller: _authController,
-            tokenFromQuery: state.uri.queryParameters['token'],
           ),
         ),
         GoRoute(

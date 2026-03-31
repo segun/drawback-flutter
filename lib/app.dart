@@ -23,7 +23,6 @@ import 'features/auth/presentation/screens/csae_screen.dart';
 import 'features/auth/presentation/screens/eula_screen.dart';
 import 'features/auth/presentation/screens/privacy_screen.dart';
 import 'features/auth/presentation/screens/register_screen.dart';
-import 'features/auth/presentation/screens/reset_password_screen.dart';
 import 'features/discovery/presentation/discovery_controller.dart';
 import 'features/home/data/social_api.dart';
 import 'features/home/data/group_api.dart';
@@ -146,14 +145,6 @@ class _DrawbackAppState extends State<DrawbackApp> {
           builder: (BuildContext context, GoRouterState state) =>
               RegisterScreen(
             controller: _authController,
-          ),
-        ),
-        GoRoute(
-          path: '/reset-password',
-          builder: (BuildContext context, GoRouterState state) =>
-              ResetPasswordScreen(
-            controller: _authController,
-            tokenFromQuery: state.uri.queryParameters['token'],
           ),
         ),
         GoRoute(

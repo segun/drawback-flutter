@@ -20,8 +20,6 @@ Complete guide for deploying DrawkcaB Flutter app to the Google Play Store.
 
 ✅ Application ID: `chat.drawback.flutter`  
 ✅ App display name: "DrawkcaB"  
-✅ Deep linking configured: `drawback://` scheme  
-✅ Universal links configured: `https://drawback.chat`  
 ✅ Target SDK: Auto (latest via Flutter)  
 ✅ Automated build script: `make archive-android`  
 ✅ Release signing configuration (requires key.properties)
