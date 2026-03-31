@@ -26,6 +26,7 @@ import 'features/auth/presentation/screens/register_screen.dart';
 import 'features/auth/presentation/screens/reset_password_screen.dart';
 import 'features/discovery/presentation/discovery_controller.dart';
 import 'features/home/data/social_api.dart';
+import 'features/home/data/group_api.dart';
 import 'features/home/presentation/home_controller.dart';
 import 'features/home/presentation/screens/dashboard_screen.dart';
 
@@ -46,6 +47,8 @@ class _DrawbackAppState extends State<DrawbackApp> {
   late final PushTokenSyncService _pushTokenSyncService;
   late final GoRouter _router;
   StreamSubscription<String>? _notificationOpenSubscription;
+  StreamSubscription<String>? _groupAddedNotificationSubscription;
+  StreamSubscription<String>? _groupInviteNotificationSubscription;
   bool _isHandlingUnauthorized = false;
   bool _isRouterReady = false;
 
@@ -62,6 +65,7 @@ class _DrawbackAppState extends State<DrawbackApp> {
     );
     final authApi = AuthApi(client: client, tokenStore: tokenStore);
     final socialApi = SocialApi(client: client, tokenStore: tokenStore);
+    final groupApi = GroupApi(client: client, tokenStore: tokenStore);
     final discoveryAccessApi = DiscoveryAccessApi(
       client: client,
       tokenStore: tokenStore,
@@ -101,6 +105,7 @@ class _DrawbackAppState extends State<DrawbackApp> {
 
     _homeController = HomeController(
       socialApi: socialApi,
+      groupApi: groupApi,
       backendUrl: AppConfig.backendUrl,
       pushNotificationService: _pushNotificationService,
       onUnauthorized: () {
@@ -219,6 +224,22 @@ class _DrawbackAppState extends State<DrawbackApp> {
         .listen((requestId) {
       unawaited(_handleNotificationOpen(requestId));
     });
+
+    _groupAddedNotificationSubscription = _pushNotificationService
+        .onGroupAddedNotificationOpened
+        .listen((groupId) {
+      unawaited(_handleGroupAddedNotificationOpen(groupId));
+    });
+
+    _groupInviteNotificationSubscription = _pushNotificationService
+        .onGroupInviteNotificationOpened
+        .listen((_) {
+      // Navigate home so the invitations badge in the sidebar becomes visible
+      if (_authController.isAuthenticated && mounted && _isRouterReady) {
+        unawaited(_homeController.loadDashboardData(showLoading: false));
+        _router.go('/home');
+      }
+    });
   }
 
   Future<void> _handleNotificationOpen(String requestId) async {
@@ -227,6 +248,18 @@ class _DrawbackAppState extends State<DrawbackApp> {
     }
 
     await _homeController.handleNotificationOpen(requestId);
+
+    if (mounted && _isRouterReady) {
+      _router.go('/home');
+    }
+  }
+
+  Future<void> _handleGroupAddedNotificationOpen(String groupId) async {
+    if (!_authController.isAuthenticated) {
+      return;
+    }
+
+    await _homeController.handleGroupAddedNotificationOpen(groupId);
 
     if (mounted && _isRouterReady) {
       _router.go('/home');
@@ -329,6 +362,8 @@ class _DrawbackAppState extends State<DrawbackApp> {
     _discoveryAccessManager.dispose();
     unawaited(_appBadgeService.clear());
     unawaited(_notificationOpenSubscription?.cancel());
+    unawaited(_groupAddedNotificationSubscription?.cancel());
+    unawaited(_groupInviteNotificationSubscription?.cancel());
     unawaited(_pushTokenSyncService.dispose());
     _router.dispose();
     super.dispose();

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/widgets/display_name_text_field.dart';
+import '../../domain/group_chat_models.dart';
 import '../../domain/home_models.dart';
 import '../home_controller.dart';
 import 'refresh_icon_button.dart';
@@ -115,12 +116,36 @@ class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
     }
   }
 
+  Future<bool?> _confirmDialog(String title, String body) {
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        title: Text(title),
+        content: Text(body),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFE11D48),
+            ),
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: widget.controller,
       builder: (BuildContext context, _) {
         final List<ChatRequest> allRequests = widget.controller.filteredChatRequests;
+        final List<GroupChatInvitation> pendingGroupInvitations = widget.controller.pendingGroupInvitations;
         final String? validationMsg = _validationMessage;
         final String? currentUserId = widget.controller.profile?.id;
 
@@ -145,7 +170,7 @@ class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
                               fontWeight: FontWeight.w600,
                             ),
                       ),
-                      if (_isCollapsed && allRequests.isNotEmpty)
+                      if (_isCollapsed && (allRequests.isNotEmpty || pendingGroupInvitations.isNotEmpty))
                         Transform.translate(
                           offset: const Offset(3, -4),
                           child: Container(
@@ -155,7 +180,7 @@ class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              '${allRequests.length}',
+                              '${allRequests.length + pendingGroupInvitations.length}',
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Colors.white,
@@ -180,6 +205,7 @@ class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
                       icon: const Icon(Icons.add, size: 18),
                       onPressed: () {
                         setState(() {
+                          _isCollapsed = false;
                           _showNewRequestForm = !_showNewRequestForm;
                           _displayNameController.text = '@';
                         });
@@ -373,6 +399,11 @@ class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
                         IconButton(
                           icon: const Icon(Icons.check, size: 20, color: Color(0xFF15803D)),
                           onPressed: () async {
+                            final bool? confirmed = await _confirmDialog(
+                              'Accept Draw Request',
+                              'Accept draw request from ${other.displayName}?',
+                            );
+                            if (confirmed != true) return;
                             await widget.controller.respondToChatRequest(
                               chatRequestId: request.id,
                               accept: true,
@@ -388,6 +419,11 @@ class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
                         IconButton(
                           icon: const Icon(Icons.delete_outline, size: 20, color: Color(0xFFBE123C)),
                           onPressed: () async {
+                            final bool? confirmed = await _confirmDialog(
+                              'Reject Draw Request',
+                              'Reject draw request from ${other.displayName}?',
+                            );
+                            if (confirmed != true) return;
                             await widget.controller.respondToChatRequest(
                               chatRequestId: request.id,
                               accept: false,
@@ -398,6 +434,71 @@ class _ChatRequestsWidgetState extends State<ChatRequestsWidget> {
                           constraints: const BoxConstraints(),
                           visualDensity: VisualDensity.compact,
                           tooltip: 'Reject',
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ...pendingGroupInvitations.map((GroupChatInvitation invitation) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    border: Border.all(color: const Color(0xFF93C5FD)),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: ListTile(
+                    dense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    leading: const Icon(Icons.group, size: 18, color: Color(0xFF1D4ED8)),
+                    title: Text(
+                      '${invitation.groupChat.displayName} by ${invitation.inviter.displayName}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1D4ED8),
+                      ),
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        IconButton(
+                          icon: const Icon(Icons.check, size: 20, color: Color(0xFF15803D)),
+                          onPressed: () async {
+                            final bool? confirmed = await _confirmDialog(
+                              'Join Group',
+                              'Join "${invitation.groupChat.displayName}"?',
+                            );
+                            if (confirmed != true) return;
+                            await widget.controller.respondToGroupInvitation(
+                              invitationId: invitation.id,
+                              accept: true,
+                            );
+                          },
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          visualDensity: VisualDensity.compact,
+                          tooltip: 'Accept invitation',
+                        ),
+                        const SizedBox(width: 4),
+                        IconButton(
+                          icon: const Icon(Icons.delete_outline, size: 20, color: Color(0xFF1D4ED8)),
+                          onPressed: () async {
+                            final bool? confirmed = await _confirmDialog(
+                              'Decline Invitation',
+                              'Decline invitation to "${invitation.groupChat.displayName}"?',
+                            );
+                            if (confirmed != true) return;
+                            await widget.controller.respondToGroupInvitation(
+                              invitationId: invitation.id,
+                              accept: false,
+                            );
+                          },
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          visualDensity: VisualDensity.compact,
+                          tooltip: 'Decline invitation',
                         ),
                       ],
                     ),

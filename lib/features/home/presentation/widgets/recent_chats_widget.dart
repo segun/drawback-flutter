@@ -93,16 +93,7 @@ class _RecentChatsWidgetState extends State<RecentChatsWidget> {
         ),
         if (!_isCollapsed) ...<Widget>[
           const SizedBox(height: 8),
-          if (recentChats.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text(
-                'No recent drawings.',
-                style: TextStyle(fontSize: 12, color: Color(0xFF9F1239)),
-              ),
-            )
-          else
-            ...recentChats.map((ChatRequest chat) {
+          ...recentChats.map((ChatRequest chat) {
               final UserProfile? other = widget.controller.getOtherUser(chat);
               if (other == null) {
                 return const SizedBox.shrink();

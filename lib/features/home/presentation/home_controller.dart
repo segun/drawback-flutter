@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../core/realtime/socket_service.dart';
 import '../../../core/services/push_notification_service.dart';
+import '../data/group_api.dart';
 import '../data/social_api.dart';
+import '../domain/group_chat_models.dart';
 import '../domain/home_models.dart';
 
 /// State controller for home/dashboard functionality
@@ -11,15 +13,18 @@ import '../domain/home_models.dart';
 class HomeController extends ChangeNotifier {
   HomeController({
     required SocialApi socialApi,
+    required GroupApi groupApi,
     required String backendUrl,
     void Function()? onUnauthorized,
     PushNotificationService? pushNotificationService,
   })  : _socialApi = socialApi,
+        _groupApi = groupApi,
         _backendUrl = backendUrl,
         _onUnauthorized = onUnauthorized,
         _pushNotificationService = pushNotificationService;
 
   final SocialApi _socialApi;
+  final GroupApi _groupApi;
   final String _backendUrl;
   final void Function()? _onUnauthorized;
   final SocketService _socketService = SocketService();
@@ -49,6 +54,11 @@ class HomeController extends ChangeNotifier {
 
   // Blocked users
   List<UserProfile> _blockedUsers = <UserProfile>[];
+
+  // Group chats
+  List<GroupChat> _groupChats = <GroupChat>[];
+  String? _selectedGroupChatId;
+  List<GroupChatInvitation> _pendingGroupInvitations = <GroupChatInvitation>[];
 
   // Selected chat for drawing
   String? _selectedChatRequestId;
@@ -80,6 +90,10 @@ class HomeController extends ChangeNotifier {
   List<ChatRequest> get sentChatRequests => _sentChatRequests;
   List<SavedChat> get savedChats => _savedChats;
   List<UserProfile> get blockedUsers => _blockedUsers;
+
+  List<GroupChat> get groupChats => _groupChats;
+  String? get selectedGroupChatId => _selectedGroupChatId;
+  List<GroupChatInvitation> get pendingGroupInvitations => _pendingGroupInvitations;
 
   String? get selectedChatRequestId => _selectedChatRequestId;
   String? get joinedChatRequestId => _joinedChatRequestId;
@@ -137,6 +151,8 @@ class HomeController extends ChangeNotifier {
             _socialApi.listSentChatRequests(),
             _socialApi.listSavedChats(),
             _socialApi.listBlockedUsers(),
+            _groupApi.listGroupChats(),
+            _groupApi.listPendingInvitations(),
           ]);
 
           _profile = results[0] as UserProfile;
@@ -151,6 +167,8 @@ class HomeController extends ChangeNotifier {
 
           _savedChats = results[3] as List<SavedChat>;
           _blockedUsers = results[4] as List<UserProfile>;
+          _groupChats = results[5] as List<GroupChat>;
+          _pendingGroupInvitations = results[6] as List<GroupChatInvitation>;
 
           // Build connected user sets
           _connectedUserIds.clear();
@@ -223,6 +241,30 @@ class HomeController extends ChangeNotifier {
       _onDrawPeerWaiting(data);
     });
 
+    socket.on('group.invite', (dynamic data) {
+      _onGroupInvite(data);
+    });
+
+    socket.on('group.invite.response', (dynamic data) {
+      _onGroupInviteResponse(data);
+    });
+
+    socket.on('group.member.added', (dynamic data) {
+      _onGroupMemberAdded(data);
+    });
+
+    socket.on('group.removed', (dynamic data) {
+      _onGroupRemoved(data);
+    });
+
+    socket.on('group.deleted', (dynamic data) {
+      _onGroupDeleted(data);
+    });
+
+    socket.on('draw.room.closed', (dynamic data) {
+      _onDrawRoomClosed(data);
+    });
+
     socket.on('connect_error', (dynamic error) {
       _error = _socketService.mapConnectionErrorMessage(error);
       notifyListeners();
@@ -287,6 +329,99 @@ class HomeController extends ChangeNotifier {
     }
   }
 
+  void _onGroupInvite(dynamic data) {
+    if (data is! Map<String, dynamic>) return;
+    try {
+      final GroupInvitePayload payload = GroupInvitePayload.fromJson(data);
+      _notice =
+          '${payload.inviterName} invited you to ${payload.groupName}';
+      // Refresh so the new invitation appears in the sidebar
+      loadDashboardData(showLoading: false);
+    } catch (_) {}
+  }
+
+  void _onGroupInviteResponse(dynamic data) {
+    if (data is! Map<String, dynamic>) return;
+    try {
+      final GroupInviteResponsePayload payload =
+          GroupInviteResponsePayload.fromJson(data);
+      if (payload.accepted) {
+        _notice =
+            '${payload.inviteeName} accepted your invitation to "${payload.groupName}"';
+        // Refresh group list so the new member shows up
+        loadDashboardData(showLoading: false);
+      } else {
+        _notice =
+            '${payload.inviteeName} declined your invitation to "${payload.groupName}"';
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
+
+  void _onGroupMemberAdded(dynamic data) {
+    if (data is! Map<String, dynamic>) return;
+    final String? groupId = data['groupId'] as String?;
+    if (groupId == null || groupId.isEmpty) return;
+    // Refresh the group list then navigate into the new group
+    loadDashboardData(showLoading: false).then((_) {
+      openGroupChat(groupId);
+    });
+  }
+
+  Future<void> handleGroupAddedNotificationOpen(String groupId) async {
+    if (groupId.trim().isEmpty) return;
+    await loadDashboardData(showLoading: false);
+    openGroupChat(groupId);
+  }
+
+  void _onGroupRemoved(dynamic data) {
+    String reason = 'You were removed from the group.';
+    if (data is Map<String, dynamic>) {
+      try {
+        final GroupRemovedPayload payload = GroupRemovedPayload.fromJson(data);
+        if (payload.reason.isNotEmpty) {
+          reason = payload.reason;
+        }
+      } catch (_) {
+        // keep default reason
+      }
+    }
+    _notice = reason;
+    _selectedGroupChatId = null;
+    notifyListeners();
+  }
+
+  void _onGroupDeleted(dynamic data) {
+    String? groupId;
+    if (data is Map<String, dynamic>) {
+      try {
+        final GroupDeletedPayload payload = GroupDeletedPayload.fromJson(data);
+        if (payload.groupId.isNotEmpty) groupId = payload.groupId;
+      } catch (_) {}
+    }
+    if (groupId != null) {
+      _groupChats.removeWhere((GroupChat g) => g.id == groupId);
+      if (_selectedGroupChatId == groupId) {
+        _selectedGroupChatId = null;
+      }
+    } else {
+      // No groupId in payload — clear current selection as fallback.
+      _selectedGroupChatId = null;
+    }
+    _notice = 'This group was deleted by the owner.';
+    notifyListeners();
+  }
+
+  void _onDrawRoomClosed(dynamic data) {
+    // group.deleted handles group chat deletion exclusively.
+    // This handles 1:1 chat room closure (e.g. the peer terminates the session).
+    if (_selectedChatRequestId != null) {
+      _selectedChatRequestId = null;
+      _notice = 'The other peer left the room.';
+      notifyListeners();
+    }
+  }
+
   /// Disconnect socket and clean up
   void disconnectSocket() {
     _socketService.disconnect();
@@ -302,6 +437,12 @@ class HomeController extends ChangeNotifier {
     socket.off('chat.requested');
     socket.off('chat.response');
     socket.off('draw.peer.waiting');
+    socket.off('group.invite');
+    socket.off('group.invite.response');
+    socket.off('group.member.added');
+    socket.off('group.removed');
+    socket.off('group.deleted');
+    socket.off('draw.room.closed');
     socket.off('connect_error');
   }
 
@@ -552,6 +693,150 @@ class HomeController extends ChangeNotifier {
       fallback: false,
     );
   }
+
+  // ─── Group Chat Methods ────────────────────────────────────────────────────
+
+  /// Open a group chat room
+  void openGroupChat(String groupId) {
+    _selectedGroupChatId = groupId;
+    notifyListeners();
+  }
+
+  /// Close the currently selected group chat
+  void closeGroupChat() {
+    _selectedGroupChatId = null;
+    notifyListeners();
+  }
+
+  /// Create a new group chat
+  Future<bool> createGroupChat(String name) async {
+    return _runGuarded<bool>(
+      () async {
+        final GroupChat group = await _groupApi.createGroupChat(name: name);
+        _groupChats = <GroupChat>[group, ..._groupChats];
+        _notice = 'Group "${group.name}" created';
+        return true;
+      },
+      fallback: false,
+    );
+  }
+
+  /// Refresh a single group chat from the server
+  Future<void> refreshGroupChat(String groupId) async {
+    try {
+      final GroupChat updated = await _groupApi.getGroupChat(groupId: groupId);
+      final int index = _groupChats.indexWhere((GroupChat g) => g.id == groupId);
+      if (index != -1) {
+        _groupChats[index] = updated;
+      } else {
+        _groupChats = <GroupChat>[updated, ..._groupChats];
+      }
+      notifyListeners();
+    } on ApiException catch (e) {
+      if (e.statusCode == 404) {
+        // Group was deleted; remove it from local state silently.
+        _groupChats.removeWhere((GroupChat g) => g.id == groupId);
+        if (_selectedGroupChatId == groupId) {
+          _selectedGroupChatId = null;
+        }
+        notifyListeners();
+      } else {
+        _error = e.message;
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = 'Unexpected error: $e';
+      notifyListeners();
+    }
+  }
+
+  /// Add a member to a group by display name (owner only) — sends an invitation
+  Future<bool> addGroupMember({
+    required String groupId,
+    required String displayName,
+  }) async {
+    return _runGuarded<bool>(
+      () async {
+        await _groupApi.addGroupMember(
+          groupId: groupId,
+          displayName: displayName,
+        );
+        _notice = 'Invitation sent';
+        return true;
+      },
+      fallback: false,
+    );
+  }
+
+  /// Accept or reject a group chat invitation
+  Future<bool> respondToGroupInvitation({
+    required String invitationId,
+    required bool accept,
+  }) async {
+    return _runGuarded<bool>(
+      () async {
+        await _groupApi.respondToInvitation(
+          invitationId: invitationId,
+          accept: accept,
+        );
+        // Remove from local pending list immediately
+        _pendingGroupInvitations.removeWhere(
+            (GroupChatInvitation i) => i.id == invitationId);
+        if (accept) {
+          _notice = 'You joined the group';
+          await loadDashboardData(showLoading: false);
+        } else {
+          _notice = 'Invitation declined';
+          notifyListeners();
+        }
+        return true;
+      },
+      fallback: false,
+    );
+  }
+
+  /// Remove a member from a group, or leave if it's the current user
+  Future<bool> removeGroupMember({
+    required String groupId,
+    required String userId,
+  }) async {
+    return _runGuarded<bool>(
+      () async {
+        await _groupApi.removeGroupMember(groupId: groupId, userId: userId);
+        // If the current user left, remove the group from the list
+        if (userId == _profile?.id) {
+          _groupChats.removeWhere((GroupChat g) => g.id == groupId);
+          if (_selectedGroupChatId == groupId) {
+            _selectedGroupChatId = null;
+          }
+          _notice = 'You left the group';
+        } else {
+          await refreshGroupChat(groupId);
+          _notice = 'Member removed';
+        }
+        return true;
+      },
+      fallback: false,
+    );
+  }
+
+  /// Delete a group (owner only)
+  Future<bool> deleteGroup({required String groupId}) async {
+    return _runGuarded<bool>(
+      () async {
+        await _groupApi.deleteGroup(groupId: groupId);
+        _groupChats.removeWhere((GroupChat g) => g.id == groupId);
+        if (_selectedGroupChatId == groupId) {
+          _selectedGroupChatId = null;
+        }
+        _notice = 'Group deleted';
+        return true;
+      },
+      fallback: false,
+    );
+  }
+
+  // ─── Chat Methods ──────────────────────────────────────────────────────────
 
   /// Open a chat (for drawing)
   void openChat(String chatRequestId) {

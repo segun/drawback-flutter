@@ -26,6 +26,10 @@ class PushNotificationService {
   StreamSubscription<RemoteMessage>? _openedAppSubscription;
   final StreamController<String> _openedRequestController =
       StreamController<String>.broadcast();
+  final StreamController<String> _openedGroupAddedController =
+      StreamController<String>.broadcast();
+  final StreamController<String> _openedGroupInviteController =
+      StreamController<String>.broadcast();
   final Map<String, DateTime> _recentRequestSignals = <String, DateTime>{};
 
   static const Duration _requestSignalTtl = Duration(seconds: 15);
@@ -83,6 +87,10 @@ class PushNotificationService {
   Stream<String> get onTokenRefresh => _messaging.onTokenRefresh;
   Stream<String> get onRequestNotificationOpened =>
       _openedRequestController.stream;
+  Stream<String> get onGroupAddedNotificationOpened =>
+      _openedGroupAddedController.stream;
+  Stream<String> get onGroupInviteNotificationOpened =>
+      _openedGroupInviteController.stream;
 
   void markRequestAsHandled(String requestId) {
     if (requestId.isEmpty) {
@@ -170,6 +178,24 @@ class PushNotificationService {
   }
 
   void _handleOpenedMessage(RemoteMessage message) {
+    final String type = message.data['type'] as String? ?? '';
+
+    if (type == 'group_member_added') {
+      final String groupId = message.data['groupId'] as String? ?? '';
+      if (groupId.isNotEmpty) {
+        _openedGroupAddedController.add(groupId);
+      }
+      return;
+    }
+
+    if (type == 'group_invite') {
+      final String invitationId = message.data['invitationId'] as String? ?? '';
+      if (invitationId.isNotEmpty) {
+        _openedGroupInviteController.add(invitationId);
+      }
+      return;
+    }
+
     final String requestId = _extractRequestId(message.data);
     if (requestId.isEmpty) {
       return;
@@ -212,5 +238,7 @@ class PushNotificationService {
     await _foregroundSubscription?.cancel();
     await _openedAppSubscription?.cancel();
     await _openedRequestController.close();
+    await _openedGroupAddedController.close();
+    await _openedGroupInviteController.close();
   }
 }

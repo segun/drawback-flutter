@@ -11,16 +11,19 @@ import '../../../discovery/presentation/screens/discovery_game_screen.dart';
 import '../../../discovery/presentation/screens/discovery_paywall_screen.dart';
 import '../../../discovery/presentation/screens/discovery_swipe_screen.dart';
 import '../../../drawing/presentation/screens/chat_room_screen.dart';
+import '../../../drawing/presentation/screens/group_room_screen.dart';
 import '../../domain/home_models.dart';
 import '../home_controller.dart';
 import '../widgets/blocked_users_widget.dart';
 import '../widgets/chat_requests_widget.dart';
+import '../widgets/group_chats_widget.dart';
 import '../widgets/recent_chats_widget.dart';
 import '../widgets/saved_chats_widget.dart';
 import 'profile_screen.dart';
 
 enum DashboardView {
   chat,
+  groupChat,
   profile,
   discoveryPaywall,
   discoveryGame,
@@ -184,6 +187,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
     widget.controller.openChat(chatRequestId);
     setState(() {
       _currentView = DashboardView.chat;
+      _isSidebarOpen = false;
+    });
+  }
+
+  void _handleGroupChatOpen(String groupId) {
+    widget.controller.openGroupChat(groupId);
+    setState(() {
+      _currentView = DashboardView.groupChat;
       _isSidebarOpen = false;
     });
   }
@@ -529,6 +540,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
           const SizedBox(height: 16),
 
+          GroupChatsWidget(
+            controller: widget.controller,
+            onGroupOpen: _handleGroupChatOpen,
+          ),
+
+          const SizedBox(height: 16),
+
           SavedChatsWidget(
             controller: widget.controller,
             onChatOpen: _handleChatOpen,
@@ -543,7 +561,62 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildContent() {
+    // Auto-redirect away from groupChat view when that group is deselected.
+    if (_currentView == DashboardView.groupChat &&
+        widget.controller.selectedGroupChatId == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _currentView = DashboardView.chat;
+          });
+        }
+      });
+    }
+
     switch (_currentView) {
+      case DashboardView.groupChat:
+        if (widget.controller.selectedGroupChatId == null ||
+            widget.controller.profile == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        final String groupId = widget.controller.selectedGroupChatId!;
+        final groupChat = widget.controller.groupChats
+            .where((g) => g.id == groupId)
+            .firstOrNull;
+        if (groupChat == null) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return GroupRoomScreen(
+          key: ValueKey(groupId),
+          groupId: groupId,
+          groupChat: groupChat,
+          profile: widget.controller.profile!,
+          onRefreshGroupChat: () =>
+              widget.controller.refreshGroupChat(groupId),
+          onNotice: (String message, String type) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(message),
+                  backgroundColor: type == 'error'
+                      ? Colors.red
+                      : type == 'success'
+                          ? Colors.green
+                          : Colors.blue,
+                ),
+              );
+            }
+          },
+          onCloseRoom: () {
+            widget.controller.closeGroupChat();
+            if (mounted) {
+              setState(() {
+                _currentView = DashboardView.chat;
+              });
+            }
+          },
+        );
+
       case DashboardView.profile:
         return ProfileScreen(controller: widget.controller);
       case DashboardView.discoveryPaywall:

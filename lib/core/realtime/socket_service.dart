@@ -226,6 +226,138 @@ class DrawPeerWaitingPayload {
   final String requestId;
 }
 
+/// Payload for group.joined event
+class GroupJoinedPayload {
+  const GroupJoinedPayload({
+    required this.roomId,
+    required this.groupId,
+    required this.peers,
+  });
+
+  factory GroupJoinedPayload.fromJson(Map<String, dynamic> json) {
+    return GroupJoinedPayload(
+      roomId: json['roomId'] as String,
+      groupId: json['groupId'] as String,
+      peers: (json['peers'] as List<dynamic>).cast<String>(),
+    );
+  }
+
+  final String roomId;
+  final String groupId;
+  final List<String> peers;
+}
+
+/// Payload for group.member.joined / group.member.left events
+class GroupMemberEventPayload {
+  const GroupMemberEventPayload({required this.userId});
+
+  factory GroupMemberEventPayload.fromJson(Map<String, dynamic> json) {
+    return GroupMemberEventPayload(
+      userId: json['userId'] as String,
+    );
+  }
+
+  final String userId;
+}
+
+/// Payload for group.removed event (you were kicked)
+class GroupRemovedPayload {
+  const GroupRemovedPayload({required this.roomId, required this.reason});
+
+  factory GroupRemovedPayload.fromJson(Map<String, dynamic> json) {
+    return GroupRemovedPayload(
+      roomId: json['roomId'] as String? ?? '',
+      reason: json['reason'] as String? ?? 'You were removed from the group.',
+    );
+  }
+
+  final String roomId;
+  final String reason;
+}
+
+/// Payload for draw.room.closed event (group deleted)
+class DrawRoomClosedPayload {
+  const DrawRoomClosedPayload({required this.reason});
+
+  factory DrawRoomClosedPayload.fromJson(Map<String, dynamic> json) {
+    return DrawRoomClosedPayload(
+      reason: json['reason'] as String? ?? 'This group was deleted.',
+    );
+  }
+
+  final String reason;
+}
+
+/// Payload for group.deleted event (owner deleted the group)
+class GroupDeletedPayload {
+  const GroupDeletedPayload({required this.groupId});
+
+  factory GroupDeletedPayload.fromJson(Map<String, dynamic> json) {
+    return GroupDeletedPayload(
+      groupId: json['groupId'] as String? ?? '',
+    );
+  }
+
+  final String groupId;
+}
+
+/// Payload for group.invite event (you have been invited to a group)
+class GroupInvitePayload {
+  const GroupInvitePayload({
+    required this.invitationId,
+    required this.groupId,
+    required this.groupName,
+    required this.inviterUserId,
+    required this.inviterName,
+  });
+
+  factory GroupInvitePayload.fromJson(Map<String, dynamic> json) {
+    return GroupInvitePayload(
+      invitationId: json['invitationId'] as String,
+      groupId: json['groupId'] as String,
+      groupName: json['groupName'] as String,
+      inviterUserId: json['inviterUserId'] as String,
+      inviterName: json['inviterName'] as String,
+    );
+  }
+
+  final String invitationId;
+  final String groupId;
+  final String groupName;
+  final String inviterUserId;
+  final String inviterName;
+}
+
+/// Payload for group.invite.response event (someone responded to your invite)
+class GroupInviteResponsePayload {
+  const GroupInviteResponsePayload({
+    required this.invitationId,
+    required this.groupId,
+    required this.groupName,
+    required this.inviteeUserId,
+    required this.inviteeName,
+    required this.accepted,
+  });
+
+  factory GroupInviteResponsePayload.fromJson(Map<String, dynamic> json) {
+    return GroupInviteResponsePayload(
+      invitationId: json['invitationId'] as String,
+      groupId: json['groupId'] as String,
+      groupName: json['groupName'] as String? ?? '',
+      inviteeUserId: json['inviteeUserId'] as String,
+      inviteeName: json['inviteeName'] as String,
+      accepted: json['accepted'] as bool,
+    );
+  }
+
+  final String invitationId;
+  final String groupId;
+  final String groupName;
+  final String inviteeUserId;
+  final String inviteeName;
+  final bool accepted;
+}
+
 /// Socket service singleton for managing Socket.IO connection
 class SocketService {
   factory SocketService() {
@@ -521,6 +653,49 @@ class SocketService {
     }
     _socket!.emit('draw.emote', <String, dynamic>{
       'requestId': requestId,
+      'emoji': emoji,
+      'userId': userId,
+    });
+  }
+
+  /// Emit group.join event
+  void emitGroupJoin(String groupId) {
+    if (_socket == null || groupId.trim().isEmpty) {
+      return;
+    }
+    _socket!.emit('group.join', <String, dynamic>{'groupId': groupId});
+  }
+
+  /// Emit draw.stroke for a group room
+  void emitGroupDrawStroke(String groupId, dynamic stroke, String userId) {
+    if (_socket == null || groupId.trim().isEmpty) {
+      return;
+    }
+    _socket!.emit('draw.stroke', <String, dynamic>{
+      'groupId': groupId,
+      'stroke': stroke,
+      'userId': userId,
+    });
+  }
+
+  /// Emit draw.clear for a group room
+  void emitGroupDrawClear(String groupId, String userId) {
+    if (_socket == null || groupId.trim().isEmpty) {
+      return;
+    }
+    _socket!.emit('draw.clear', <String, dynamic>{
+      'groupId': groupId,
+      'userId': userId,
+    });
+  }
+
+  /// Emit draw.emote for a group room
+  void emitGroupDrawEmote(String groupId, String emoji, String userId) {
+    if (_socket == null || groupId.trim().isEmpty) {
+      return;
+    }
+    _socket!.emit('draw.emote', <String, dynamic>{
+      'groupId': groupId,
       'emoji': emoji,
       'userId': userId,
     });
